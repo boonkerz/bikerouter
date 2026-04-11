@@ -1,0 +1,40 @@
+# Segment data (large binary files, ~1GB)
+segments4/
+
+# Node modules (web frontend)
+web/node_modules/
+web/dist/
+
+# Flutter
+app/.dart_tool/
+app/.packages
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/pubspec.lock
+
+# iOS
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+
+# Android
+app/android/.gradle/
+app/android/local.properties
+app/android/key.properties
+app/android/*.jks
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env

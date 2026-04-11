@@ -1,0 +1,86 @@
+workflows:
+  ios-release:
+    name: iOS Release
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: de.bikerouter.bikerouter
+      groups:
+        - app_store_connect
+    scripts:
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "de.bikerouter.bikerouter" --type IOS_APP_STORE
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Install dependencies
+        script: |
+          cd app
+          flutter pub get
+
+      - name: Build IPA
+        script: |
+          cd app
+          flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - app/build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        expire_build_submitted_for_review: true
+
+  ios-debug:
+    name: iOS Debug Build
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Install dependencies
+        script: |
+          cd app
+          flutter pub get
+
+      - name: Build (no signing)
+        script: |
+          cd app
+          flutter build ios --debug --no-codesign
+
+  android-release:
+    name: Android Release
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      java: 17
+      groups:
+        - android_signing
+    scripts:
+      - name: Install dependencies
+        script: |
+          cd app
+          flutter pub get
+
+      - name: Build APK
+        script: |
+          cd app
+          flutter build apk --release
+
+      - name: Build App Bundle
+        script: |
+          cd app
+          flutter build appbundle --release
+
+    artifacts:
+      - app/build/app/outputs/flutter-apk/*.apk
+      - app/build/app/outputs/bundle/release/*.aab

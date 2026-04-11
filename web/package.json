@@ -1,0 +1,21 @@
+{
+  "name": "bikerouter-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/geojson": "^7946.0.16",
+    "d3": "^7.9.0",
+    "maplibre-gl": "^5.22.0"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8"
+  }
+}

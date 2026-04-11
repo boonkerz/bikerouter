@@ -1,0 +1,11 @@
+services:
+  brouter:
+    build:
+      context: .
+      dockerfile: Dockerfile.brouter
+    ports:
+      - "17777:17777"
+    volumes:
+      - ./segments4:/segments4
+      - ./customprofiles:/brouter/customprofiles
+    restart: unless-stopped

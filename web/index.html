@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BikeRouter</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <header class="sidebar-header">
+        <h1>BikeRouter</h1>
+      </header>
+
+      <div class="sidebar-section">
+        <label class="section-label">Modus</label>
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="route">A → B</button>
+          <button class="mode-btn" data-mode="roundtrip">Rundtour</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <label class="section-label">Profil</label>
+        <div class="profile-quick">
+          <button class="profile-btn active" data-profile="fastbike" title="Rennrad">Rennrad</button>
+          <button class="profile-btn" data-profile="quaelnix-gravel" title="Gravel">Gravel</button>
+          <button class="profile-btn" data-profile="trekking" title="Trekking">Trekking</button>
+          <button class="profile-btn" data-profile="mtb-zossebart" title="MTB">MTB</button>
+        </div>
+        <select id="profile-dropdown" class="profile-dropdown">
+          <optgroup label="Rennrad">
+            <option value="fastbike" selected>Rennrad</option>
+            <option value="fastbike-lowtraffic">Rennrad wenig Verkehr</option>
+            <option value="fastbike-verylowtraffic">Rennrad sehr wenig Verkehr</option>
+            <option value="randonneur">Randonneur</option>
+          </optgroup>
+          <optgroup label="Gravel">
+            <option value="quaelnix-gravel">Gravel (quaelnix)</option>
+            <option value="m11n-gravel">Gravel (m11n)</option>
+            <option value="cxb-gravel">Gravel (cxb)</option>
+          </optgroup>
+          <optgroup label="Trekking">
+            <option value="trekking">Trekking</option>
+            <option value="safety">Sicherste Route</option>
+          </optgroup>
+          <optgroup label="MTB">
+            <option value="mtb-zossebart">MTB</option>
+            <option value="mtb-zossebart-hard">MTB (hart)</option>
+          </optgroup>
+          <optgroup label="Sonstige">
+            <option value="hiking-beta">Wandern</option>
+            <option value="shortest">Kürzeste</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div id="waypoints-panel" class="sidebar-section">
+        <label class="section-label">Wegpunkte</label>
+        <div id="waypoints-list"></div>
+        <button id="clear-route" class="btn-secondary" style="display:none">Route löschen</button>
+      </div>
+
+      <div id="roundtrip-panel" class="sidebar-section" style="display:none">
+        <label class="section-label">Rundtour</label>
+        <div class="control-group">
+          <label>Distanz: <span id="rt-distance-label">20</span> km</label>
+          <input type="range" id="rt-distance" min="5" max="200" value="20" step="5" />
+        </div>
+        <div class="control-group">
+          <label>Richtung: <span id="rt-direction-label">0</span>°</label>
+          <input type="range" id="rt-direction" min="0" max="350" value="0" step="10" />
+          <div class="direction-compass">
+            <span data-dir="0">N</span>
+            <span data-dir="90">O</span>
+            <span data-dir="180">S</span>
+            <span data-dir="270">W</span>
+          </div>
+        </div>
+        <button id="rt-generate" class="btn-primary">Rundtour berechnen</button>
+        <button id="rt-shuffle" class="btn-secondary" style="display:none">Andere Variante</button>
+      </div>
+
+      <div id="stats-panel" class="sidebar-section" style="display:none">
+        <label class="section-label">Route</label>
+        <div class="stats-grid">
+          <div class="stat">
+            <span class="stat-value" id="stat-distance">—</span>
+            <span class="stat-label">Distanz</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-ascent">—</span>
+            <span class="stat-label">Anstieg</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-descent">—</span>
+            <span class="stat-label">Abstieg</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-time">—</span>
+            <span class="stat-label">Zeit</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="export-panel" class="sidebar-section" style="display:none">
+        <label class="section-label">Export</label>
+        <div class="export-buttons">
+          <button id="export-gpx" class="btn-secondary">GPX</button>
+          <button id="export-geojson" class="btn-secondary">GeoJSON</button>
+        </div>
+      </div>
+    </aside>
+
+    <div id="map-container">
+      <div id="map"></div>
+      <div id="elevation-container" style="display:none">
+        <div id="elevation-chart"></div>
+        <button id="elevation-close" title="Schließen">&times;</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

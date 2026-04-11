@@ -1,0 +1,20 @@
+FROM gradle:8-jdk17 AS build
+WORKDIR /tmp/brouter
+RUN git clone --depth 1 --branch v1.7.8 https://github.com/abrensch/brouter.git .
+RUN ./gradlew clean build -x test
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /brouter
+COPY --from=build /tmp/brouter/brouter-server/build/libs/brouter-*-all.jar /brouter/brouter.jar
+COPY --from=build /tmp/brouter/misc/profiles2 /brouter/profiles2
+
+RUN mkdir -p /brouter/customprofiles
+
+# On startup: copy custom profiles into profiles2 (so they sit next to lookups.dat), then start
+EXPOSE 17777
+
+ENTRYPOINT ["sh", "-c", \
+  "cp /brouter/customprofiles/*.brf /brouter/profiles2/ 2>/dev/null; \
+   exec java -Xmx256M -Xms128M -Xmn32M -DmaxRunningTime=300 \
+   -cp /brouter/brouter.jar btools.server.RouteServer \
+   /segments4 /brouter/profiles2 /brouter/customprofiles 17777 1"]
