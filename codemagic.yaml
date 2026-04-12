@@ -54,7 +54,7 @@ workflows:
       - name: Build (no signing)
         script: |
           cd app
-          flutter build ios --debug --no-codesign
+          flutter build ios --debug --simulator
 
   android-release:
     name: Android Release
