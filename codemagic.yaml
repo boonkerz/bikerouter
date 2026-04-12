@@ -51,11 +51,20 @@ workflows:
           cd app
           flutter pub get
 
-      - name: Resolve Xcode dependencies
+      - name: Resolve SPM dependencies
         script: |
-          cd app/ios
+          cd app
+          flutter pub get
+          cd ios
           pod install
-          xcodebuild -resolvePackageDependencies -workspace Runner.xcworkspace -scheme Runner
+          # Resolve Swift Package Manager deps so Package.resolved exists
+          xcodebuild -resolvePackageDependencies \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -clonedSourcePackagesDirPath "${HOME}/Library/Developer/Xcode/DerivedData/spm" \
+            CODE_SIGNING_ALLOWED=NO
+          # Verify the file exists
+          ls -la Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
       - name: Build (no signing)
         script: |
