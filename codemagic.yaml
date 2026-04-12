@@ -10,12 +10,12 @@ workflows:
       xcode: latest
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: de.bikerouter.bikerouter
+        bundle_identifier: com.thomaspeterson.bikerouter
     scripts:
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "de.bikerouter.bikerouter" --type IOS_APP_STORE
+          app-store-connect fetch-signing-files "com.thomaspeterson.bikerouter" --type IOS_APP_STORE
           keychain add-certificates
           xcode-project use-profiles
 

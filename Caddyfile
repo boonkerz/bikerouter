@@ -1,0 +1,11 @@
+bikerouter.thomas-peterson.de {
+	# BRouter API
+	handle /brouter* {
+		reverse_proxy brouter:17777
+	}
+
+	# Block everything else
+	handle {
+		respond "BikeRouter API" 200
+	}
+}

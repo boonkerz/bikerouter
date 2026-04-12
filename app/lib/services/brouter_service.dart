@@ -4,9 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/route_result.dart';
 
 class BRouterService {
-  // For Android emulator use 10.0.2.2, for real device use your server IP
-  // For Linux desktop use localhost
-  static String baseUrl = 'http://localhost:17777/brouter';
+  static String baseUrl = 'https://bikerouter.thomas-peterson.de/brouter';
 
   static Future<RouteResult> calculateRoute({
     required List<List<double>> waypoints,

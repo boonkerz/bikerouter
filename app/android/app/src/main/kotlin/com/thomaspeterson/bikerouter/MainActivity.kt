@@ -1,4 +1,4 @@
-package de.bikerouter.bikerouter
+package com.thomaspeterson.bikerouter
 
 import io.flutter.embedding.android.FlutterActivity
 
