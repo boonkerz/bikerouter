@@ -1,0 +1,15 @@
+{
+  "originHash" : "",
+  "pins" : [
+    {
+      "identity" : "maplibre-gl-native-distribution",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/maplibre/maplibre-gl-native-distribution",
+      "state" : {
+        "revision" : "9f091e5bb7ab4154e98cad3c8b162098f3236376",
+        "version" : "6.21.0"
+      }
+    }
+  ],
+  "version" : 3
+}
