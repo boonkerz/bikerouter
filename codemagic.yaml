@@ -51,6 +51,12 @@ workflows:
           cd app
           flutter pub get
 
+      - name: Resolve Xcode dependencies
+        script: |
+          cd app/ios
+          pod install
+          xcodebuild -resolvePackageDependencies -workspace Runner.xcworkspace -scheme Runner
+
       - name: Build (no signing)
         script: |
           cd app
