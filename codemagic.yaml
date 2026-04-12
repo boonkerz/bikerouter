@@ -7,7 +7,7 @@ workflows:
       app_store_connect: Codemagic
     environment:
       flutter: stable
-      xcode: latest
+      xcode: 16.3
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.thomaspeterson.bikerouter
@@ -44,7 +44,7 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: stable
-      xcode: latest
+      xcode: 16.3
     scripts:
       - name: Install dependencies
         script: |
