@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import '../services/gpx_export.dart';
 
 import '../models/profile.dart';
 import '../models/route_result.dart';
@@ -534,7 +532,6 @@ class _MapScreenState extends State<MapScreen> {
     if (_route == null) return;
 
     try {
-      // For roundtrip, use stored route coordinates; for A→B use waypoints
       final String gpx;
       if (_roundtripMode) {
         gpx = await BRouterService.fetchRoundtripGpx(
@@ -548,14 +545,10 @@ class _MapScreenState extends State<MapScreen> {
         gpx = await BRouterService.fetchGpx(waypoints: pts, profile: _profile);
       }
 
-      final dir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final file = File('${dir.path}/bikerouter-$_profile-$timestamp.gpx');
-      await file.writeAsString(gpx);
+      final filename = 'bikerouter-$_profile-$timestamp.gpx';
 
-      await SharePlus.instance.share(ShareParams(
-        files: [XFile(file.path, mimeType: 'application/gpx+xml')],
-      ));
+      await exportGpxFile(filename, gpx);
     } catch (e) {
       _showError('Export fehlgeschlagen: $e');
     }
