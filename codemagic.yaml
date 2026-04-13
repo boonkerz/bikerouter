@@ -6,20 +6,21 @@ workflows:
     integrations:
       app_store_connect: codemagic
     environment:
-      flutter: master
+      flutter: stable
       xcode: latest
     scripts:
+      - name: Install dependencies
+        script: |
+          cd app
+          flutter pub get
+
       - name: Set up code signing
         script: |
           keychain initialize
           app-store-connect fetch-signing-files "com.thomaspeterson.bikerouter" --type IOS_APP_STORE --create
           keychain add-certificates
-          xcode-project use-profiles
-
-      - name: Install dependencies
-        script: |
           cd app
-          flutter pub get
+          xcode-project use-profiles --project=ios/Runner.xcodeproj
 
       - name: Get latest build number
         script: |
@@ -51,7 +52,7 @@ workflows:
     max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
-      flutter: master
+      flutter: stable
       xcode: latest
     scripts:
       - name: Install dependencies
@@ -69,7 +70,7 @@ workflows:
     max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
-      flutter: master
+      flutter: stable
       java: 17
       groups:
         - android_signing
