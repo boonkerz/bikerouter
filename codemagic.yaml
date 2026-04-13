@@ -6,7 +6,7 @@ workflows:
     integrations:
       app_store_connect: Codemagic
     environment:
-      flutter: beta
+      flutter: master
       xcode: latest
       ios_signing:
         distribution_type: app_store
@@ -46,7 +46,7 @@ workflows:
     max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
-      flutter: beta
+      flutter: master
       xcode: latest
     scripts:
       - name: Install dependencies
@@ -64,7 +64,7 @@ workflows:
     max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
-      flutter: beta
+      flutter: master
       java: 17
       groups:
         - android_signing
