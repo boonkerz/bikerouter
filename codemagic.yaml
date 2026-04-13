@@ -8,9 +8,6 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.thomaspeterson.bikerouter
     scripts:
       - name: Install dependencies
         script: |
@@ -20,6 +17,7 @@ workflows:
       - name: Set up code signing
         script: |
           keychain initialize
+          app-store-connect fetch-signing-files "com.thomaspeterson.bikerouter" --type IOS_APP_STORE
           keychain add-certificates
           cd app
           xcode-project use-profiles --project=ios/Runner.xcodeproj
