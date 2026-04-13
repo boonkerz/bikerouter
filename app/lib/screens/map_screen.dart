@@ -12,6 +12,7 @@ import '../widgets/elevation_chart.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/profile_selector.dart';
 import '../widgets/roundtrip_panel.dart';
+import '../widgets/address_search.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -178,6 +179,19 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const Spacer(),
+                // Search button
+                GestureDetector(
+                  onTap: () => _searchAddress(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.search, color: Color(0xFF4fc3f7), size: 20),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 if (_roundtripMode)
                   GestureDetector(
                     onTap: () => setState(() => _showControls = !_showControls),
@@ -297,6 +311,27 @@ class _MapScreenState extends State<MapScreen> {
       _showError('Standort konnte nicht ermittelt werden: $e');
     } finally {
       if (mounted) setState(() => _locatingUser = false);
+    }
+  }
+
+  // -- Address Search --
+
+  Future<void> _searchAddress(BuildContext context) async {
+    final result = await showAddressSearch(context);
+    if (result == null || !mounted) return;
+
+    final latLng = LatLng(result.lat, result.lon);
+    _mapController.move(latLng, 14);
+
+    // Add as waypoint
+    if (_roundtripMode) {
+      _clearAll();
+    }
+    setState(() {
+      _waypoints.add(latLng);
+    });
+    if (!_roundtripMode && _waypoints.length >= 2) {
+      _calculateRoute();
     }
   }
 

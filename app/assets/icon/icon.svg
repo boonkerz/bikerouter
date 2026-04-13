@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <!-- Route line -->
+  <path d="M280 720 Q350 400 512 350 Q674 300 744 580"
+        fill="none" stroke="#4fc3f7" stroke-width="40" stroke-linecap="round" opacity="0.3"/>
+  <path d="M280 720 Q350 400 512 350 Q674 300 744 580"
+        fill="none" stroke="#4fc3f7" stroke-width="24" stroke-linecap="round"/>
+  <!-- Bike wheel left -->
+  <circle cx="340" cy="620" r="100" fill="none" stroke="#4fc3f7" stroke-width="20"/>
+  <circle cx="340" cy="620" r="12" fill="#4fc3f7"/>
+  <!-- Bike wheel right -->
+  <circle cx="684" cy="620" r="100" fill="none" stroke="#4fc3f7" stroke-width="20"/>
+  <circle cx="684" cy="620" r="12" fill="#4fc3f7"/>
+  <!-- Bike frame -->
+  <path d="M340 620 L480 460 L684 620 M480 460 L580 460 L684 620 M480 460 L440 400 L520 400"
+        fill="none" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Location pin -->
+  <g transform="translate(512, 200)">
+    <path d="M0 -80 C-44 -80 -60 -44 -60 -20 C-60 20 0 70 0 70 C0 70 60 20 60 -20 C60 -44 44 -80 0 -80Z"
+          fill="#ef5350"/>
+    <circle cx="0" cy="-24" r="18" fill="white"/>
+  </g>
+</svg>

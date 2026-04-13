@@ -4,8 +4,10 @@ bikerouter.thomas-peterson.de {
 		reverse_proxy brouter:17777
 	}
 
-	# Block everything else
+	# Flutter Web App
 	handle {
-		respond "BikeRouter API" 200
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
 	}
 }

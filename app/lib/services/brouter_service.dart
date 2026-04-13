@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import '../models/route_result.dart';
 
 class BRouterService {
-  static String baseUrl = 'https://bikerouter.thomas-peterson.de/brouter';
+  static String baseUrl = kIsWeb
+      ? '/brouter'
+      : 'https://bikerouter.thomas-peterson.de/brouter';
 
   static Future<RouteResult> calculateRoute({
     required List<List<double>> waypoints,
