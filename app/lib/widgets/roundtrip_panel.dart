@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/profile.dart';
 
 class RoundtripPanel extends StatefulWidget {
   final int distanceKm;
   final int direction;
   final bool hasStart;
+  final String profile;
   final ValueChanged<int> onDistanceChanged;
   final ValueChanged<int> onDirectionChanged;
   final VoidCallback onGenerate;
@@ -14,6 +16,7 @@ class RoundtripPanel extends StatefulWidget {
     required this.distanceKm,
     required this.direction,
     required this.hasStart,
+    required this.profile,
     required this.onDistanceChanged,
     required this.onDirectionChanged,
     required this.onGenerate,
@@ -28,12 +31,11 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
   bool _useTime = false;
   int _timeMinutes = 120; // 2h default
 
-  // Average speeds per profile category (km/h)
-  static const _defaultSpeed = 20;
+  int get _speed => BikeProfile.byId(widget.profile)?.avgSpeedKmh ?? 20;
 
   int get _computedDistanceKm {
     if (!_useTime) return widget.distanceKm;
-    return (_timeMinutes / 60 * _defaultSpeed).round();
+    return (_timeMinutes / 60 * _speed).round();
   }
 
   @override
@@ -71,7 +73,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               },
             ),
             Text(
-              '~$_computedDistanceKm km bei ~$_defaultSpeed km/h',
+              '~$_computedDistanceKm km bei ~$_speed km/h',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
             ),
           ] else ...[

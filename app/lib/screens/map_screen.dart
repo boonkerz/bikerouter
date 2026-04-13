@@ -227,6 +227,7 @@ class _MapScreenState extends State<MapScreen> {
                   distanceKm: _rtDistanceKm,
                   direction: _rtDirection,
                   hasStart: _waypoints.isNotEmpty,
+                  profile: _profile,
                   onDistanceChanged: (v) => setState(() => _rtDistanceKm = v),
                   onDirectionChanged: (v) => setState(() => _rtDirection = v),
                   onGenerate: () {
