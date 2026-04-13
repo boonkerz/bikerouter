@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/gpx_export.dart';
 
+import '../models/map_style.dart';
 import '../models/profile.dart';
 import '../models/route_result.dart';
 import '../services/brouter_service.dart';
@@ -27,6 +28,7 @@ class _MapScreenState extends State<MapScreen> {
   List<LatLng> _routePoints = [];
   bool _loading = false;
   String _profile = 'fastbike';
+  MapStyle _mapStyle = mapStyles[0];
   bool _roundtripMode = false;
   int _rtDistanceKm = 20;
   int _rtDirection = 0;
@@ -57,8 +59,8 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate: _mapStyle.urlTemplate,
+                      maxZoom: _mapStyle.maxZoom.toDouble(),
                       userAgentPackageName: 'de.bikerouter.app',
                     ),
                     if (_routePoints.isNotEmpty) ...[
@@ -178,6 +180,19 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const Spacer(),
+                // Map style button
+                GestureDetector(
+                  onTap: () => _showMapStyleSheet(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.layers, color: Color(0xFF4fc3f7), size: 20),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 // Search button
                 GestureDetector(
                   onTap: () => _searchAddress(context),
@@ -352,6 +367,41 @@ class _MapScreenState extends State<MapScreen> {
       selectedProfile: _profile,
       onChanged: _setProfile,
     ).showSheet(context);
+  }
+
+  void _showMapStyleSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.all(16),
+        children: [
+          const Center(
+            child: Text(
+              'Kartenstil',
+              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...mapStyles.map((style) => ListTile(
+            dense: true,
+            leading: Text(style.icon, style: const TextStyle(fontSize: 18)),
+            title: Text(style.name, style: const TextStyle(color: Colors.white)),
+            selected: style.id == _mapStyle.id,
+            selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            onTap: () {
+              setState(() => _mapStyle = style);
+              Navigator.pop(ctx);
+            },
+          )),
+        ],
+      ),
+    );
   }
 
   void _showError(String msg) {
