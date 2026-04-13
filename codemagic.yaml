@@ -24,10 +24,12 @@ workflows:
           cd app
           flutter pub get
 
-      - name: Increment build number
+      - name: Build IPA with auto build number
         script: |
           cd app
-          BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number "com.thomaspeterson.bikerouter" || echo 0) + 1))
+          LATEST=$(app-store-connect get-latest-testflight-build-number "com.thomaspeterson.bikerouter" || echo 0)
+          BUILD_NUMBER=$((LATEST + 1))
+          echo "Latest build: $LATEST → Building: $BUILD_NUMBER"
           flutter build ipa --release \
             --build-number=$BUILD_NUMBER \
             --export-options-plist=/Users/builder/export_options.plist
