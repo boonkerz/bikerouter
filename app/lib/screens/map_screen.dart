@@ -63,6 +63,12 @@ class _MapScreenState extends State<MapScreen> {
                       maxZoom: _mapStyle.maxZoom.toDouble(),
                       userAgentPackageName: 'de.bikerouter.app',
                     ),
+                    if (_mapStyle.labelsOverlay != null)
+                      TileLayer(
+                        urlTemplate: _mapStyle.labelsOverlay!,
+                        maxZoom: _mapStyle.maxZoom.toDouble(),
+                        userAgentPackageName: 'de.bikerouter.app',
+                      ),
                     if (_routePoints.isNotEmpty) ...[
                       PolylineLayer(
                         polylines: [

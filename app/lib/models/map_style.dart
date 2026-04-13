@@ -5,6 +5,7 @@ class MapStyle {
   final String urlTemplate;
   final String attribution;
   final int maxZoom;
+  final String? labelsOverlay;
 
   const MapStyle({
     required this.id,
@@ -13,6 +14,7 @@ class MapStyle {
     required this.urlTemplate,
     required this.attribution,
     this.maxZoom = 19,
+    this.labelsOverlay,
   });
 }
 
@@ -48,5 +50,6 @@ const mapStyles = [
     urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: '© Esri',
     maxZoom: 19,
+    labelsOverlay: 'https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
   ),
 ];
