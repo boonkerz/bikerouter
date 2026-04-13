@@ -30,12 +30,17 @@ class _MapScreenState extends State<MapScreen> {
   int _rtDistanceKm = 20;
   int _rtDirection = 0;
   bool _showElevation = true;
+  bool _showControls = false;
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return Scaffold(
       body: Stack(
         children: [
+          // Map + bottom panels
           Column(
             children: [
               Expanded(
@@ -52,7 +57,6 @@ class _MapScreenState extends State<MapScreen> {
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'de.bikerouter.app',
                     ),
-                    // Route
                     if (_routePoints.isNotEmpty) ...[
                       PolylineLayer(
                         polylines: [
@@ -69,11 +73,8 @@ class _MapScreenState extends State<MapScreen> {
                         ],
                       ),
                     ],
-                    // Waypoint markers
                     if (_waypoints.isNotEmpty)
-                      MarkerLayer(
-                        markers: _buildMarkers(),
-                      ),
+                      MarkerLayer(markers: _buildMarkers()),
                   ],
                 ),
               ),
@@ -83,54 +84,80 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
 
-          // Top controls
+          // Top bar: mode toggle + profile chip
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 0,
-            right: 0,
-            child: Column(
+            top: topPadding + 8,
+            left: 8,
+            right: 8,
+            child: Row(
               children: [
-                Center(
+                // Mode toggle
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _modeChip('A\u2009\u2192\u2009B', false),
+                      _modeChip('Runde', true),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Profile button
+                GestureDetector(
+                  onTap: () => _showProfileSheet(context),
                   child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.all(3),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _modeButton('A → B', false),
-                        _modeButton('Rundtour', true),
+                        Text(
+                          _profileLabel(),
+                          style: const TextStyle(color: Color(0xFF4fc3f7), fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.expand_more, color: Color(0xFF4fc3f7), size: 18),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(12),
+                const Spacer(),
+                // Settings/roundtrip toggle
+                if (_roundtripMode)
+                  GestureDetector(
+                    onTap: () => setState(() => _showControls = !_showControls),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        _showControls ? Icons.close : Icons.tune,
+                        color: const Color(0xFF4fc3f7),
+                        size: 20,
+                      ),
+                    ),
                   ),
-                  child: ProfileSelector(
-                    selectedProfile: _profile,
-                    onChanged: _setProfile,
-                  ),
-                ),
               ],
             ),
           ),
 
-          // Roundtrip panel
-          if (_roundtripMode)
+          // Roundtrip controls (togglable)
+          if (_roundtripMode && _showControls)
             Positioned(
-              bottom: (_route != null ? 160 + 50.0 : 0) +
-                  MediaQuery.of(context).padding.bottom,
-              left: 0,
-              right: 0,
+              top: topPadding + 56,
+              left: 8,
+              right: 8,
               child: Container(
-                margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(12),
@@ -141,7 +168,10 @@ class _MapScreenState extends State<MapScreen> {
                   hasStart: _waypoints.isNotEmpty,
                   onDistanceChanged: (v) => setState(() => _rtDistanceKm = v),
                   onDirectionChanged: (v) => setState(() => _rtDirection = v),
-                  onGenerate: _calculateRoundtrip,
+                  onGenerate: () {
+                    _calculateRoundtrip();
+                    setState(() => _showControls = false);
+                  },
                   onShuffle: () {
                     setState(() => _rtDirection = (_rtDirection + 60) % 360);
                     _calculateRoundtrip();
@@ -155,11 +185,11 @@ class _MapScreenState extends State<MapScreen> {
             const Center(
                 child: CircularProgressIndicator(color: Color(0xFF4fc3f7))),
 
-          // Action buttons
+          // Action buttons (right side)
           Positioned(
             right: 12,
-            bottom: (_route != null ? 160 + 50.0 : 0) +
-                MediaQuery.of(context).padding.bottom +
+            bottom: (_route != null ? (_showElevation ? 210 : 50) : 0) +
+                bottomPadding +
                 12,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -181,6 +211,24 @@ class _MapScreenState extends State<MapScreen> {
         ],
       ),
     );
+  }
+
+  String _profileLabel() {
+    const labels = {
+      'fastbike': 'Rennrad',
+      'fastbike-lowtraffic': 'Gravel',
+      'trekking': 'Trekking',
+      'mtb': 'MTB',
+    };
+    return labels[_profile] ?? _profile;
+  }
+
+  void _showProfileSheet(BuildContext context) {
+    // Delegate to ProfileSelector's sheet
+    ProfileSelector(
+      selectedProfile: _profile,
+      onChanged: _setProfile,
+    ).showSheet(context);
   }
 
   List<Marker> _buildMarkers() {
@@ -221,19 +269,22 @@ class _MapScreenState extends State<MapScreen> {
     }).toList();
   }
 
-  Widget _modeButton(String label, bool isRoundtrip) {
+  Widget _modeChip(String label, bool isRoundtrip) {
     final active = _roundtripMode == isRoundtrip;
     return GestureDetector(
       onTap: () {
         if (_roundtripMode == isRoundtrip) return;
         _clearAll();
-        setState(() => _roundtripMode = isRoundtrip);
+        setState(() {
+          _roundtripMode = isRoundtrip;
+          _showControls = isRoundtrip;
+        });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: active ? const Color(0xFF4fc3f7) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
@@ -328,13 +379,12 @@ class _MapScreenState extends State<MapScreen> {
         .map((c) => LatLng(c[1], c[0]))
         .toList();
 
-    // Fit bounds
     if (points.isNotEmpty) {
       final bounds = LatLngBounds.fromPoints(points);
       _mapController.fitCamera(
         CameraFit.bounds(
           bounds: bounds,
-          padding: const EdgeInsets.fromLTRB(40, 160, 40, 220),
+          padding: const EdgeInsets.fromLTRB(40, 80, 40, 220),
         ),
       );
     }

@@ -23,7 +23,7 @@ class ElevationChart extends StatelessWidget {
     final maxDist = points.last.x;
 
     return Container(
-      height: 160,
+      height: 140,
       padding: const EdgeInsets.fromLTRB(0, 8, 16, 0),
       decoration: BoxDecoration(
         color: const Color(0xFF1a1a2e),
