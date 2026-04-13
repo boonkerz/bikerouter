@@ -69,4 +69,26 @@ class BRouterService {
     }
     return response.body;
   }
+
+  static Future<String> fetchRoundtripGpx({
+    required List<double> start,
+    required String profile,
+    required int distanceKm,
+    required int direction,
+  }) async {
+    final radius = (distanceKm * 1000 / pi).round();
+    final uri = Uri.parse('$baseUrl?lonlats=${start[0]},${start[1]}'
+        '&profile=$profile'
+        '&engineMode=4'
+        '&roundTripDistance=$radius'
+        '&direction=$direction'
+        '&format=gpx'
+        '&timode=3');
+
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      throw Exception('GPX export failed');
+    }
+    return response.body;
+  }
 }

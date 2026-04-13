@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -31,6 +32,9 @@ class _MapScreenState extends State<MapScreen> {
   int _rtDirection = 0;
   bool _showElevation = true;
   bool _showControls = false;
+  int? _highlightIndex;
+  LatLng? _currentPosition;
+  bool _locatingUser = false;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +77,49 @@ class _MapScreenState extends State<MapScreen> {
                         ],
                       ),
                     ],
+                    // Highlight marker from elevation chart
+                    if (_highlightIndex != null &&
+                        _route != null &&
+                        _highlightIndex! < _route!.coordinates.length)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(
+                              _route!.coordinates[_highlightIndex!][1],
+                              _route!.coordinates[_highlightIndex!][0],
+                            ),
+                            width: 16,
+                            height: 16,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFF4fc3f7), width: 2),
+                                boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    // Current position marker
+                    if (_currentPosition != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _currentPosition!,
+                            width: 20,
+                            height: 20,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2196F3),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     if (_waypoints.isNotEmpty)
                       MarkerLayer(markers: _buildMarkers()),
                   ],
@@ -80,18 +127,20 @@ class _MapScreenState extends State<MapScreen> {
               ),
               if (_route != null) StatsBar(route: _route!),
               if (_route != null && _showElevation)
-                ElevationChart(coordinates: _route!.coordinates),
+                ElevationChart(
+                  coordinates: _route!.coordinates,
+                  onHover: (index) => setState(() => _highlightIndex = index),
+                ),
             ],
           ),
 
-          // Top bar: mode toggle + profile chip
+          // Top bar
           Positioned(
             top: topPadding + 8,
             left: 8,
             right: 8,
             child: Row(
               children: [
-                // Mode toggle
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
@@ -107,7 +156,6 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Profile button
                 GestureDetector(
                   onTap: () => _showProfileSheet(context),
                   child: Container(
@@ -130,7 +178,6 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const Spacer(),
-                // Settings/roundtrip toggle
                 if (_roundtripMode)
                   GestureDetector(
                     onTap: () => setState(() => _showControls = !_showControls),
@@ -151,7 +198,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // Roundtrip controls (togglable)
+          // Roundtrip controls
           if (_roundtripMode && _showControls)
             Positioned(
               top: topPadding + 56,
@@ -185,7 +232,7 @@ class _MapScreenState extends State<MapScreen> {
             const Center(
                 child: CircularProgressIndicator(color: Color(0xFF4fc3f7))),
 
-          // Action buttons (right side)
+          // Action buttons
           Positioned(
             right: 12,
             bottom: (_route != null ? (_showElevation ? 210 : 50) : 0) +
@@ -194,6 +241,12 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // GPS location button
+                _fab(
+                  _locatingUser ? Icons.hourglass_top : Icons.my_location,
+                  _locateUser,
+                ),
+                const SizedBox(height: 8),
                 if (_route != null) ...[
                   _fab(Icons.file_download, _exportGpx),
                   const SizedBox(height: 8),
@@ -213,22 +266,64 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  // -- GPS Location --
+
+  Future<void> _locateUser() async {
+    if (_locatingUser) return;
+    setState(() => _locatingUser = true);
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _showError('Standort-Berechtigung verweigert');
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        _showError('Standort-Berechtigung dauerhaft verweigert. Bitte in den Einstellungen aktivieren.');
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      final latLng = LatLng(position.latitude, position.longitude);
+
+      setState(() => _currentPosition = latLng);
+      _mapController.move(latLng, 14);
+    } catch (e) {
+      _showError('Standort konnte nicht ermittelt werden: $e');
+    } finally {
+      if (mounted) setState(() => _locatingUser = false);
+    }
+  }
+
+  // -- Helpers --
+
   String _profileLabel() {
     const labels = {
       'fastbike': 'Rennrad',
       'fastbike-lowtraffic': 'Gravel',
       'trekking': 'Trekking',
-      'mtb': 'MTB',
+      'mtb-zossebart': 'MTB',
     };
     return labels[_profile] ?? _profile;
   }
 
   void _showProfileSheet(BuildContext context) {
-    // Delegate to ProfileSelector's sheet
     ProfileSelector(
       selectedProfile: _profile,
       onChanged: _setProfile,
     ).showSheet(context);
+  }
+
+  void _showError(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   List<Marker> _buildMarkers() {
@@ -250,9 +345,7 @@ class _MapScreenState extends State<MapScreen> {
             color: color,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 4),
-            ],
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
           ),
           child: Center(
             child: Text(
@@ -332,19 +425,14 @@ class _MapScreenState extends State<MapScreen> {
     setState(() => _loading = true);
 
     try {
-      final pts =
-          _waypoints.map((w) => [w.longitude, w.latitude]).toList();
+      final pts = _waypoints.map((w) => [w.longitude, w.latitude]).toList();
       final result = await BRouterService.calculateRoute(
         waypoints: pts,
         profile: _profile,
       );
       _displayRoute(result);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Routing fehlgeschlagen: $e')),
-        );
-      }
+      _showError('Routing fehlgeschlagen: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -364,11 +452,7 @@ class _MapScreenState extends State<MapScreen> {
       );
       _displayRoute(result);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rundtour fehlgeschlagen: $e')),
-        );
-      }
+      _showError('Rundtour fehlgeschlagen: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -393,32 +477,38 @@ class _MapScreenState extends State<MapScreen> {
       _route = result;
       _routePoints = points;
       _showElevation = true;
+      _highlightIndex = null;
     });
   }
 
   Future<void> _exportGpx() async {
-    if (_waypoints.length < 2 && !_roundtripMode) return;
+    if (_route == null) return;
 
     try {
-      final pts =
-          _waypoints.map((w) => [w.longitude, w.latitude]).toList();
-      final gpx =
-          await BRouterService.fetchGpx(waypoints: pts, profile: _profile);
+      // For roundtrip, use stored route coordinates; for A→B use waypoints
+      final String gpx;
+      if (_roundtripMode) {
+        gpx = await BRouterService.fetchRoundtripGpx(
+          start: [_waypoints.first.longitude, _waypoints.first.latitude],
+          profile: _profile,
+          distanceKm: _rtDistanceKm,
+          direction: _rtDirection,
+        );
+      } else {
+        final pts = _waypoints.map((w) => [w.longitude, w.latitude]).toList();
+        gpx = await BRouterService.fetchGpx(waypoints: pts, profile: _profile);
+      }
 
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/bikerouter-$_profile.gpx');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${dir.path}/bikerouter-$_profile-$timestamp.gpx');
       await file.writeAsString(gpx);
 
       await SharePlus.instance.share(ShareParams(
-        files: [XFile(file.path)],
-        title: 'BikeRouter GPX Export',
+        files: [XFile(file.path, mimeType: 'application/gpx+xml')],
       ));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export fehlgeschlagen: $e')),
-        );
-      }
+      _showError('Export fehlgeschlagen: $e');
     }
   }
 
@@ -427,6 +517,7 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _route = null;
       _routePoints = [];
+      _highlightIndex = null;
     });
   }
 }

@@ -14,7 +14,8 @@ class ElevationChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final points = _buildPoints();
+    final result = _buildPoints();
+    final points = result.spots;
     if (points.isEmpty) return const SizedBox.shrink();
 
     final elevations = points.map((p) => p.y).toList();
@@ -75,7 +76,11 @@ class ElevationChart extends StatelessWidget {
             handleBuiltInTouches: true,
             touchCallback: (event, response) {
               if (response?.lineBarSpots != null && response!.lineBarSpots!.isNotEmpty) {
-                onHover?.call(response.lineBarSpots!.first.spotIndex);
+                final spotIdx = response.lineBarSpots!.first.spotIndex;
+                // Map sampled spot index back to original coordinate index
+                if (spotIdx < result.originalIndices.length) {
+                  onHover?.call(result.originalIndices[spotIdx]);
+                }
               } else {
                 onHover?.call(null);
               }
@@ -110,22 +115,23 @@ class ElevationChart extends StatelessWidget {
     );
   }
 
-  List<FlSpot> _buildPoints() {
+  _SampledPoints _buildPoints() {
     final spots = <FlSpot>[];
+    final originalIndices = <int>[];
     double dist = 0;
 
     for (int i = 0; i < coordinates.length; i++) {
       if (i > 0) {
         dist += _haversine(coordinates[i - 1], coordinates[i]);
       }
-      // Sample every ~100m
       if (i == 0 ||
           i == coordinates.length - 1 ||
           dist - (spots.isEmpty ? 0 : spots.last.x) > 0.1) {
         spots.add(FlSpot(dist, coordinates[i][2]));
+        originalIndices.add(i);
       }
     }
-    return spots;
+    return _SampledPoints(spots: spots, originalIndices: originalIndices);
   }
 
   double _haversine(List<double> a, List<double> b) {
@@ -149,4 +155,11 @@ class ElevationChart extends StatelessWidget {
     if (residual <= 7) return 5 * magnitude;
     return 10 * magnitude;
   }
+}
+
+class _SampledPoints {
+  final List<FlSpot> spots;
+  final List<int> originalIndices;
+
+  _SampledPoints({required this.spots, required this.originalIndices});
 }
