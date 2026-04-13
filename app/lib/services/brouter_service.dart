@@ -30,6 +30,29 @@ class BRouterService {
     return RouteResult.fromGeojson(geojson);
   }
 
+  static Future<RouteResult> _fetchRoundtripOnce({
+    required List<double> start,
+    required String profile,
+    required int radius,
+    required int direction,
+  }) async {
+    final uri = Uri.parse('$baseUrl?lonlats=${start[0]},${start[1]}'
+        '&profile=$profile'
+        '&engineMode=4'
+        '&roundTripDistance=$radius'
+        '&direction=$direction'
+        '&format=geojson'
+        '&timode=3');
+
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      throw Exception('Roundtrip failed: ${response.body}');
+    }
+
+    final geojson = jsonDecode(response.body) as Map<String, dynamic>;
+    return RouteResult.fromGeojson(geojson);
+  }
+
   static Future<RouteResult> calculateRoundtrip({
     required List<double> start,
     required String profile,
@@ -40,32 +63,40 @@ class BRouterService {
     var radius = (targetDistance / pi).round();
 
     RouteResult? result;
-    // Iteratively adjust radius to match target distance
     for (var i = 0; i < 3; i++) {
-      final uri = Uri.parse('$baseUrl?lonlats=${start[0]},${start[1]}'
-          '&profile=$profile'
-          '&engineMode=4'
-          '&roundTripDistance=$radius'
-          '&direction=$direction'
-          '&format=geojson'
-          '&timode=3');
-
-      final response = await http.get(uri);
-      if (response.statusCode != 200) {
-        throw Exception('Roundtrip failed: ${response.body}');
-      }
-
-      final geojson = jsonDecode(response.body) as Map<String, dynamic>;
-      result = RouteResult.fromGeojson(geojson);
-
-      final actualDistance = result.distance * 1000; // km → m
-      final ratio = actualDistance / targetDistance;
-      // Close enough (within 10%)
+      result = await _fetchRoundtripOnce(
+        start: start, profile: profile, radius: radius, direction: direction,
+      );
+      final ratio = (result.distance * 1000) / targetDistance;
       if ((ratio - 1.0).abs() < 0.10) break;
-      // Adjust radius inversely proportional to the deviation
       radius = (radius / ratio).round();
     }
+    return result!;
+  }
 
+  static Future<RouteResult> calculateRoundtripByTime({
+    required List<double> start,
+    required String profile,
+    required int timeMinutes,
+    required int avgSpeedKmh,
+    required int direction,
+  }) async {
+    // Initial estimate: distance from avg speed
+    final targetSeconds = timeMinutes * 60.0;
+    var estimatedKm = (timeMinutes / 60.0 * avgSpeedKmh);
+    var radius = (estimatedKm * 1000 / pi).round();
+
+    RouteResult? result;
+    for (var i = 0; i < 3; i++) {
+      result = await _fetchRoundtripOnce(
+        start: start, profile: profile, radius: radius, direction: direction,
+      );
+      final ratio = result.time / targetSeconds;
+      // Close enough (within 10%)
+      if ((ratio - 1.0).abs() < 0.10) break;
+      // Adjust radius inversely proportional to time deviation
+      radius = (radius / ratio).round();
+    }
     return result!;
   }
 

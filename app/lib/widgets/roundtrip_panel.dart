@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
 import '../models/profile.dart';
 
+class RoundtripRequest {
+  final bool useTime;
+  final int distanceKm;
+  final int timeMinutes;
+
+  const RoundtripRequest({
+    required this.useTime,
+    required this.distanceKm,
+    required this.timeMinutes,
+  });
+}
+
 class RoundtripPanel extends StatefulWidget {
   final int distanceKm;
   final int direction;
@@ -8,8 +20,8 @@ class RoundtripPanel extends StatefulWidget {
   final String profile;
   final ValueChanged<int> onDistanceChanged;
   final ValueChanged<int> onDirectionChanged;
-  final VoidCallback onGenerate;
-  final VoidCallback onShuffle;
+  final ValueChanged<RoundtripRequest> onGenerate;
+  final ValueChanged<RoundtripRequest> onShuffle;
 
   const RoundtripPanel({
     super.key,
@@ -37,6 +49,12 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
     if (!_useTime) return widget.distanceKm;
     return (_timeMinutes / 60 * _speed).round();
   }
+
+  RoundtripRequest get _request => RoundtripRequest(
+    useTime: _useTime,
+    distanceKm: _computedDistanceKm,
+    timeMinutes: _timeMinutes,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +144,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
           ),
           const SizedBox(height: 8),
           ElevatedButton(
-            onPressed: widget.hasStart ? widget.onGenerate : null,
+            onPressed: widget.hasStart ? () => widget.onGenerate(_request) : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4fc3f7),
               foregroundColor: Colors.black,
@@ -139,7 +157,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
           ),
           const SizedBox(height: 6),
           OutlinedButton(
-            onPressed: widget.hasStart ? widget.onShuffle : null,
+            onPressed: widget.hasStart ? () => widget.onShuffle(_request) : null,
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF4fc3f7),
               side: const BorderSide(color: Color(0xFF4fc3f7)),

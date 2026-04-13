@@ -7,11 +7,32 @@
   </defs>
   <!-- Background -->
   <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
-  <!-- Route line -->
-  <path d="M280 720 Q350 400 512 350 Q674 300 744 580"
-        fill="none" stroke="#4fc3f7" stroke-width="40" stroke-linecap="round" opacity="0.3"/>
-  <path d="M280 720 Q350 400 512 350 Q674 300 744 580"
-        fill="none" stroke="#4fc3f7" stroke-width="24" stroke-linecap="round"/>
+  <!-- Subtle map grid/streets in background -->
+  <g opacity="0.08" stroke="#4fc3f7" stroke-width="3" fill="none">
+    <!-- Horizontal streets -->
+    <line x1="100" y1="200" x2="924" y2="200"/>
+    <line x1="100" y1="380" x2="924" y2="380"/>
+    <line x1="100" y1="560" x2="924" y2="560"/>
+    <line x1="100" y1="740" x2="924" y2="740"/>
+    <!-- Vertical streets -->
+    <line x1="200" y1="100" x2="200" y2="924"/>
+    <line x1="400" y1="100" x2="400" y2="924"/>
+    <line x1="624" y1="100" x2="624" y2="924"/>
+    <line x1="824" y1="100" x2="824" y2="924"/>
+    <!-- Diagonal / curved streets -->
+    <path d="M100 300 Q300 250 500 320 Q700 390 924 340"/>
+    <path d="M100 650 Q350 600 512 660 Q700 720 924 670"/>
+    <path d="M300 100 Q260 400 320 700 Q350 850 300 924"/>
+    <path d="M720 100 Q750 350 700 550 Q660 750 720 924"/>
+  </g>
+  <!-- Subtle map blocks -->
+  <g opacity="0.04" fill="#4fc3f7">
+    <rect x="220" y="220" width="160" height="140" rx="4"/>
+    <rect x="420" y="400" width="180" height="140" rx="4"/>
+    <rect x="640" y="220" width="160" height="140" rx="4"/>
+    <rect x="220" y="580" width="160" height="140" rx="4"/>
+    <rect x="640" y="580" width="160" height="140" rx="4"/>
+  </g>
   <!-- Bike wheel left -->
   <circle cx="340" cy="620" r="100" fill="none" stroke="#4fc3f7" stroke-width="20"/>
   <circle cx="340" cy="620" r="12" fill="#4fc3f7"/>

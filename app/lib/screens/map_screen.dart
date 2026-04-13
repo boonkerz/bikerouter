@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../models/profile.dart';
 import '../models/route_result.dart';
 import '../services/brouter_service.dart';
 import '../widgets/elevation_chart.dart';
@@ -230,13 +231,13 @@ class _MapScreenState extends State<MapScreen> {
                   profile: _profile,
                   onDistanceChanged: (v) => setState(() => _rtDistanceKm = v),
                   onDirectionChanged: (v) => setState(() => _rtDirection = v),
-                  onGenerate: () {
-                    _calculateRoundtrip();
+                  onGenerate: (req) {
+                    _calculateRoundtrip(req);
                     setState(() => _showControls = false);
                   },
-                  onShuffle: () {
+                  onShuffle: (req) {
                     setState(() => _rtDirection = (_rtDirection + 60) % 360);
-                    _calculateRoundtrip();
+                    _calculateRoundtrip(req);
                   },
                 ),
               ),
@@ -474,18 +475,30 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _calculateRoundtrip() async {
+  Future<void> _calculateRoundtrip(RoundtripRequest req) async {
     if (_loading || _waypoints.isEmpty) return;
     setState(() => _loading = true);
 
     try {
       final start = _waypoints.first;
-      final result = await BRouterService.calculateRoundtrip(
-        start: [start.longitude, start.latitude],
-        profile: _profile,
-        distanceKm: _rtDistanceKm,
-        direction: _rtDirection,
-      );
+      final RouteResult result;
+      if (req.useTime) {
+        final speed = BikeProfile.byId(_profile)?.avgSpeedKmh ?? 20;
+        result = await BRouterService.calculateRoundtripByTime(
+          start: [start.longitude, start.latitude],
+          profile: _profile,
+          timeMinutes: req.timeMinutes,
+          avgSpeedKmh: speed,
+          direction: _rtDirection,
+        );
+      } else {
+        result = await BRouterService.calculateRoundtrip(
+          start: [start.longitude, start.latitude],
+          profile: _profile,
+          distanceKm: req.distanceKm,
+          direction: _rtDirection,
+        );
+      }
       _displayRoute(result);
     } catch (e) {
       _showError('Rundtour fehlgeschlagen: $e');
