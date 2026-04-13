@@ -1,10 +1,10 @@
-Incident Identifier: 3FE09F1C-1E8B-4A73-9D58-337B19035C47
+Incident Identifier: C45E059E-C680-4B96-8795-6B20DB6BCE45
 Distributor ID:      com.apple.TestFlight
 Hardware Model:      iPhone17,2
-Process:             Runner [14919]
-Path:                /private/var/containers/Bundle/Application/AB7859C2-89EF-4763-B06F-D6F4E1526EB4/Runner.app/Runner
+Process:             Runner [15139]
+Path:                /private/var/containers/Bundle/Application/1816F0B2-0577-4E3F-AF9A-D5B6A85F6DC2/Runner.app/Runner
 Identifier:          com.thomaspeterson.bikerouter
-Version:             1.0.0 (1)
+Version:             1.0.0 (2)
 AppStoreTools:       17E187
 AppVariant:          1:iPhone17,2:26
 Beta:                YES
@@ -13,8 +13,8 @@ Role:                Foreground
 Parent Process:      launchd [1]
 Coalition:           com.thomaspeterson.bikerouter [3554]
 
-Date/Time:           2026-04-12 19:47:00.6690 +0200
-Launch Time:         2026-04-12 19:47:00.0240 +0200
+Date/Time:           2026-04-12 21:39:30.7209 +0200
+Launch Time:         2026-04-12 21:39:30.5095 +0200
 OS Version:          iPhone OS 26.4 (23E246)
 Release Type:        User
 Baseband Version:    2.51.06
@@ -23,22 +23,22 @@ Report Version:      104
 Exception Type:  EXC_BAD_ACCESS (SIGSEGV)
 Exception Subtype: KERN_INVALID_ADDRESS at 0x0000000000000000
 Exception Codes: 0x0000000000000001, 0x0000000000000000
-VM Region Info: 0 is not in any region.  Bytes before following region: 4366368768
+VM Region Info: 0 is not in any region.  Bytes before following region: 4377001984
       REGION TYPE                 START - END      [ VSIZE] PRT/MAX SHRMOD  REGION DETAIL
       UNUSED SPACE AT START
 --->  
-      __TEXT                   104418000-10441c000 [   16K] r-x/r-x SM=COW  /var/containers/Bundle/Application/AB7859C2-89EF-4763-B06F-D6F4E1526EB4/Runner.app/Runner
+      __TEXT                   104e3c000-104e40000 [   16K] r-x/r-x SM=COW  /var/containers/Bundle/Application/1816F0B2-0577-4E3F-AF9A-D5B6A85F6DC2/Runner.app/Runner
 Termination Reason: SIGNAL 11 Segmentation fault: 11
-Terminating Process: exc handler [14919]
+Terminating Process: exc handler [15139]
 
 Triggered by Thread:  0
 
 
 Thread 0 name:
 Thread 0 Crashed:
-0   Flutter                       	0x0000000106f4f0f8 0x106ec8000 + 553208
-1   Flutter                       	0x0000000106f39b8c 0x106ec8000 + 465804
-2   Flutter                       	0x0000000106f376f8 0x106ec8000 + 456440
+0   Flutter                       	0x00000001079d30f8 0x10794c000 + 553208
+1   Flutter                       	0x00000001079bdb8c 0x10794c000 + 465804
+2   Flutter                       	0x00000001079bb6f8 0x10794c000 + 456440
 3   UIKitCore                     	0x000000018d163c60 -[UIViewController _sendViewDidLoadWithAppearanceProxyObjectTaggingEnabled] + 84 (UIViewController.m:3125)
 4   UIKitCore                     	0x000000018d14a38c -[UIViewController loadViewIfRequired] + 968 (UIViewController.m:5057)
 5   UIKitCore                     	0x000000018d149fa4 -[UIViewController view] + 24 (UIViewController.m:5079)
@@ -74,9 +74,9 @@ Thread 0 Crashed:
 35  UIKitCore                     	0x000000018d2652cc -[UIApplication _run] + 796 (UIApplication.m:3904)
 36  UIKitCore                     	0x000000018d1d0158 UIApplicationMain + 332 (UIApplication.m:5586)
 37  UIKitCore                     	0x000000018d3dc6a0 UIApplicationMain(_:_:_:_:) + 104 (UIApplication.swift:13)
-38  Runner                        	0x000000010441c698 0x104418000 + 18072
-39  Runner                        	0x000000010441c608 0x104418000 + 17928
-40  Runner                        	0x000000010441c714 0x104418000 + 18196
+38  Runner                        	0x0000000104e40698 0x104e3c000 + 18072
+39  Runner                        	0x0000000104e40608 0x104e3c000 + 17928
+40  Runner                        	0x0000000104e40714 0x104e3c000 + 18196
 41  dyld                          	0x00000001841b5c1c start + 6928
 
 Thread 1:
@@ -85,8 +85,10 @@ Thread 2:
 
 Thread 3:
 
-Thread 4 name:
 Thread 4:
+
+Thread 5 name:
+Thread 5:
 0   libsystem_kernel.dylib        	0x000000023640f120 __ulock_wait + 8
 1   libdispatch.dylib             	0x00000001c17b45d8 _dispatch_thread_main_event_wait_slow + 76 (lock.c:570)
 2   libdispatch.dylib             	0x00000001c17c264c __DISPATCH_WAIT_FOR_QUEUE__ + 464 (queue.c:1762)
@@ -101,10 +103,10 @@ Thread 4:
 11  libsystem_pthread.dylib       	0x00000001e63b4374 _pthread_wqthread + 232 (pthread.c:2709)
 12  libsystem_pthread.dylib       	0x00000001e63b38c0 start_wqthread + 8
 
-Thread 5 name:
-Thread 5:
-0   CoreFoundation                	0x0000000187583a84 -[__NSCFString retain] + 0 (CFObject.m:374)
-1   AXCoreUtilities               	0x0000000195e575b4 -[AXCodeLoader _accessibilityCodeItemMatchingName:type:path:] + 324 (AXCodeLoader.m:435)
+Thread 6 name:
+Thread 6:
+0   libobjc.A.dylib               	0x000000018412f424 objc_msgSend + 36
+1   AXCoreUtilities               	0x0000000195e57598 -[AXCodeLoader _accessibilityCodeItemMatchingName:type:path:] + 296 (AXCodeLoader.m:435)
 2   AXCoreUtilities               	0x0000000195e57740 -[AXCodeLoader _associateAccessibilityCodeItemWithLoadedCodeItem:] + 160 (AXCodeLoader.m:452)
 3   AXCoreUtilities               	0x0000000195e5630c __36-[AXCodeLoader _addTrackedCodeItem:]_block_invoke + 168 (AXCodeLoader.m:204)
 4   libdispatch.dylib             	0x00000001c17b29a8 _dispatch_call_block_and_release + 32 (init.c:1597)
@@ -115,8 +117,6 @@ Thread 5:
 9   libdispatch.dylib             	0x00000001c17c56ac _dispatch_workloop_worker_thread + 720 (queue.c:6923)
 10  libsystem_pthread.dylib       	0x00000001e63b43b0 _pthread_wqthread + 292 (pthread.c:2696)
 11  libsystem_pthread.dylib       	0x00000001e63b38c0 start_wqthread + 8
-
-Thread 6:
 
 Thread 7 name:
 Thread 7:
@@ -140,23 +140,24 @@ Thread 9:
 
 
 Thread 0 crashed with ARM Thread State (64-bit):
-    x0: 0x00000001055d0cb0   x1: 0x03000001f17f38f1   x2: 0xfffffbd6ae5a4f60   x3: 0x0000000fffffc088
+    x0: 0x0000000105db8c30   x1: 0x03000001f17f38f1   x2: 0xfffffbc4164d50f8   x3: 0x0000000fffffc088
     x4: 0x0000000000000000   x5: 0x0000000000000000   x6: 0x0000000000000000   x7: 0x0000000000000000
-    x8: 0x0000000108e318b0   x9: 0x0000000000000002  x10: 0x0000000000000000  x11: 0x0000000000000002
+    x8: 0x00000001098b58b0   x9: 0x0000000000000002  x10: 0x0000000000000000  x11: 0x0000000000000002
    x12: 0x0000000000000000  x13: 0x0000000000000000  x14: 0x02000001f17f38f1  x15: 0x00000001f17f38f0
-   x16: 0x03000001f17f38f1  x17: 0x04000001f17f38f1  x18: 0x0000000000000000  x19: 0x0000000105425f00
-   x20: 0x0000000000000000  x21: 0x00000001055d0cb0  x22: 0x000000016b9e4f68  x23: 0x0000000108ec9000
-   x24: 0x0000000105425f00  x25: 0x0000000105796400  x26: 0x00000001f33df968  x27: 0x00000001055f0140
-   x28: 0x000000002b8704b0   fp: 0x000000016b9e4fc0   lr: 0x0000000106f4f0e4
-    sp: 0x000000016b9e4f50   pc: 0x0000000106f4f0f8 cpsr: 0x60000000
+   x16: 0x03000001f17f38f1  x17: 0x04000001f17f38f1  x18: 0x0000000000000000  x19: 0x0000000105f31680
+   x20: 0x0000000000000000  x21: 0x0000000105db8c30  x22: 0x000000016afc0f68  x23: 0x000000010994d000
+   x24: 0x0000000105f31680  x25: 0x0000000105f6c8c0  x26: 0x00000001f33df968  x27: 0x0000000105dd41c0
+   x28: 0x000000002b8704b0   fp: 0x000000016afc0fc0   lr: 0x00000001079d30e4
+    sp: 0x000000016afc0f50   pc: 0x00000001079d30f8 cpsr: 0x60000000
    esr: 0x92000006 (Data Abort) byte read Translation fault
 
 
 Binary Images:
-        0x104418000 -         0x104423fff Runner arm64  <9a43d5f3cf283f26b09e550ffdfd3b7f> /private/var/containers/Bundle/Application/AB7859C2-89EF-4763-B06F-D6F4E1526EB4/Runner.app/Runner
-        0x10446c000 -         0x104477fff libobjc-trampolines.dylib arm64e  <e51a481b92f532ba9e8bfcecda3b8431> /private/preboot/Cryptexes/OS/usr/lib/libobjc-trampolines.dylib
-        0x104568000 -         0x104573fff share_plus arm64  <2fb20f8e6ade3089ab6e16bd99ce55d4> /private/var/containers/Bundle/Application/AB7859C2-89EF-4763-B06F-D6F4E1526EB4/Runner.app/Frameworks/share_plus.framework/share_plus
-        0x106ec8000 -         0x108e2ffff Flutter arm64  <4c4c448155553144a10ccf742b372f8a> /private/var/containers/Bundle/Application/AB7859C2-89EF-4763-B06F-D6F4E1526EB4/Runner.app/Frameworks/Flutter.framework/Flutter
+        0x104e3c000 -         0x104e47fff Runner arm64  <17012e528c0f34b594369c244bbc0244> /private/var/containers/Bundle/Application/1816F0B2-0577-4E3F-AF9A-D5B6A85F6DC2/Runner.app/Runner
+        0x104e90000 -         0x104e9bfff libobjc-trampolines.dylib arm64e  <e51a481b92f532ba9e8bfcecda3b8431> /private/preboot/Cryptexes/OS/usr/lib/libobjc-trampolines.dylib
+        0x104f8c000 -         0x104f97fff share_plus arm64  <2fb20f8e6ade3089ab6e16bd99ce55d4> /private/var/containers/Bundle/Application/1816F0B2-0577-4E3F-AF9A-D5B6A85F6DC2/Runner.app/Frameworks/share_plus.framework/share_plus
+        0x10794c000 -         0x1098b3fff Flutter arm64  <4c4c448155553144a10ccf742b372f8a> /private/var/containers/Bundle/Application/1816F0B2-0577-4E3F-AF9A-D5B6A85F6DC2/Runner.app/Frameworks/Flutter.framework/Flutter
+        0x18412c000 -         0x18417d47f libobjc.A.dylib arm64e  <dbe3f13eefc431c5b7623455cee83e7f> /usr/lib/libobjc.A.dylib
         0x1841b1000 -         0x184255ebf dyld arm64e  <80dd1800f68d354f81068cb5ea621aca> /usr/lib/dyld
         0x18480a000 -         0x18569245f Foundation arm64e  <66bf417c1d003457a302196bbaec23d0> /System/Library/Frameworks/Foundation.framework/Foundation
         0x187573000 -         0x187b0f0ff CoreFoundation arm64e  <11f13078e01b343ba0208d60bae7bbb6> /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation
