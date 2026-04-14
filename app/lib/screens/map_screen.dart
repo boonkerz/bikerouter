@@ -90,21 +90,6 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ],
                         ),
-                      // Invisible fat polyline for tap detection (via-points)
-                      if (!_roundtripMode && _waypoints.length >= 2)
-                        GestureDetector(
-                          onTapUp: (details) => _onRouteTap(details),
-                          child: PolylineLayer(
-                            polylines: [
-                              Polyline(
-                                points: _routePoints,
-                                color: Colors.transparent,
-                                strokeWidth: 30,
-                                useStrokeWidthInMeter: false,
-                              ),
-                            ],
-                          ),
-                        ),
                     ],
                     // Highlight marker from elevation chart
                     if (_highlightIndex != null &&
@@ -379,24 +364,6 @@ class _MapScreenState extends State<MapScreen> {
 
   // -- Via-Point on Route --
 
-  void _onRouteTap(TapUpDetails details) {
-    if (_routePoints.isEmpty || _roundtripMode) return;
-
-    // Convert screen tap to map coordinate
-    final renderBox = context.findRenderObject() as RenderBox;
-    final localPos = renderBox.globalToLocal(details.globalPosition);
-    final tapLatLng = _mapController.camera.screenOffsetToLatLng(
-      Offset(localPos.dx, localPos.dy),
-    );
-
-    final insertIdx = _findWaypointInsertIndex(tapLatLng);
-
-    setState(() {
-      _waypoints.insert(insertIdx, tapLatLng);
-    });
-    _calculateRoute();
-  }
-
   int _findWaypointInsertIndex(LatLng point) {
     if (_waypoints.length < 2) return _waypoints.length;
 
@@ -664,13 +631,36 @@ class _MapScreenState extends State<MapScreen> {
   void _onMapTap(LatLng latLng) {
     if (_roundtripMode) {
       _clearAll();
+      setState(() => _waypoints.add(latLng));
+      return;
     }
-    setState(() {
-      _waypoints.add(latLng);
-    });
-    if (!_roundtripMode && _waypoints.length >= 2) {
+
+    // Check if tap is near existing route → insert via-point
+    if (_routePoints.isNotEmpty && _waypoints.length >= 2) {
+      final tapDist = _minDistToRoute(latLng);
+      // Threshold in degrees — roughly 20px at current zoom
+      final threshold = 360.0 / (pow(2, _mapController.camera.zoom) * 256) * 20;
+      if (tapDist < threshold) {
+        final insertIdx = _findWaypointInsertIndex(latLng);
+        setState(() => _waypoints.insert(insertIdx, latLng));
+        _calculateRoute();
+        return;
+      }
+    }
+
+    setState(() => _waypoints.add(latLng));
+    if (_waypoints.length >= 2) {
       _calculateRoute();
     }
+  }
+
+  double _minDistToRoute(LatLng point) {
+    double best = double.infinity;
+    for (int i = 0; i < _routePoints.length - 1; i++) {
+      final d = _distToSegment(point, _routePoints[i], _routePoints[i + 1]);
+      if (d < best) best = d;
+    }
+    return best;
   }
 
   void _setProfile(String profile) {
