@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -37,6 +38,8 @@ class _MapScreenState extends State<MapScreen> {
   int? _highlightIndex;
   LatLng? _currentPosition;
   bool _locatingUser = false;
+  final bool _gradientRoute = true;
+  int? _draggingWaypointIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -70,20 +73,38 @@ class _MapScreenState extends State<MapScreen> {
                         userAgentPackageName: 'de.bikerouter.app',
                       ),
                     if (_routePoints.isNotEmpty) ...[
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: _routePoints,
-                            color: const Color(0xFF1565c0).withValues(alpha: 0.4),
-                            strokeWidth: 8,
+                      if (_gradientRoute && _route != null)
+                        PolylineLayer(polylines: _buildGradientPolylines())
+                      else
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: _routePoints,
+                              color: const Color(0xFF1565c0).withValues(alpha: 0.4),
+                              strokeWidth: 8,
+                            ),
+                            Polyline(
+                              points: _routePoints,
+                              color: const Color(0xFF4fc3f7),
+                              strokeWidth: 4,
+                            ),
+                          ],
+                        ),
+                      // Invisible fat polyline for tap detection (via-points)
+                      if (!_roundtripMode && _waypoints.length >= 2)
+                        GestureDetector(
+                          onTapUp: (details) => _onRouteTap(details),
+                          child: PolylineLayer(
+                            polylines: [
+                              Polyline(
+                                points: _routePoints,
+                                color: Colors.transparent,
+                                strokeWidth: 30,
+                                useStrokeWidthInMeter: false,
+                              ),
+                            ],
                           ),
-                          Polyline(
-                            points: _routePoints,
-                            color: const Color(0xFF4fc3f7),
-                            strokeWidth: 4,
-                          ),
-                        ],
-                      ),
+                        ),
                     ],
                     // Highlight marker from elevation chart
                     if (_highlightIndex != null &&
@@ -301,6 +322,117 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  // -- Gradient Route Polylines --
+
+  List<Polyline> _buildGradientPolylines() {
+    final coords = _route!.coordinates;
+    if (coords.length < 2) return [];
+
+    final polylines = <Polyline>[];
+    // Background shadow
+    polylines.add(Polyline(
+      points: _routePoints,
+      color: Colors.black.withValues(alpha: 0.3),
+      strokeWidth: 8,
+    ));
+
+    // Colored segments by gradient
+    for (int i = 0; i < coords.length - 1; i++) {
+      final elevDiff = coords[i + 1][2] - coords[i][2];
+      final dist = _haversine(coords[i], coords[i + 1]) * 1000; // meters
+      final gradient = dist > 0 ? (elevDiff / dist * 100) : 0.0; // percent
+
+      polylines.add(Polyline(
+        points: [
+          LatLng(coords[i][1], coords[i][0]),
+          LatLng(coords[i + 1][1], coords[i + 1][0]),
+        ],
+        color: _gradientColor(gradient),
+        strokeWidth: 5,
+      ));
+    }
+    return polylines;
+  }
+
+  Color _gradientColor(double gradientPercent) {
+    // Downhill: blue, flat: green, mild: yellow, steep: orange, very steep: red
+    if (gradientPercent < -8) return const Color(0xFF1565C0); // steep downhill
+    if (gradientPercent < -3) return const Color(0xFF42A5F5); // downhill
+    if (gradientPercent < -1) return const Color(0xFF81D4FA); // mild downhill
+    if (gradientPercent < 1) return const Color(0xFF66BB6A);  // flat
+    if (gradientPercent < 3) return const Color(0xFFFFEB3B);  // mild uphill
+    if (gradientPercent < 6) return const Color(0xFFFFA726);  // uphill
+    if (gradientPercent < 10) return const Color(0xFFEF5350); // steep
+    return const Color(0xFFB71C1C);                           // very steep
+  }
+
+  double _haversine(List<double> a, List<double> b) {
+    const r = 6371.0;
+    final dLat = (b[1] - a[1]) * pi / 180;
+    final dLon = (b[0] - a[0]) * pi / 180;
+    final lat1 = a[1] * pi / 180;
+    final lat2 = b[1] * pi / 180;
+    final x = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2);
+    return r * 2 * atan2(sqrt(x), sqrt(1 - x));
+  }
+
+  // -- Via-Point on Route --
+
+  void _onRouteTap(TapUpDetails details) {
+    if (_routePoints.isEmpty || _roundtripMode) return;
+
+    // Convert screen tap to map coordinate
+    final renderBox = context.findRenderObject() as RenderBox;
+    final localPos = renderBox.globalToLocal(details.globalPosition);
+    final tapLatLng = _mapController.camera.screenOffsetToLatLng(
+      Offset(localPos.dx, localPos.dy),
+    );
+
+    final insertIdx = _findWaypointInsertIndex(tapLatLng);
+
+    setState(() {
+      _waypoints.insert(insertIdx, tapLatLng);
+    });
+    _calculateRoute();
+  }
+
+  int _findWaypointInsertIndex(LatLng point) {
+    if (_waypoints.length < 2) return _waypoints.length;
+
+    // Find which pair of waypoints the point is closest to being between
+    double bestDist = double.infinity;
+    int bestIdx = _waypoints.length;
+
+    for (int i = 0; i < _waypoints.length - 1; i++) {
+      final d = _distToSegment(point, _waypoints[i], _waypoints[i + 1]);
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = i + 1;
+      }
+    }
+    return bestIdx;
+  }
+
+  double _distToSegment(LatLng p, LatLng a, LatLng b) {
+    final dx = b.longitude - a.longitude;
+    final dy = b.latitude - a.latitude;
+    if (dx == 0 && dy == 0) {
+      return _latLngDist(p, a);
+    }
+    var t = ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) /
+        (dx * dx + dy * dy);
+    t = t.clamp(0.0, 1.0);
+    final proj = LatLng(a.latitude + t * dy, a.longitude + t * dx);
+    return _latLngDist(p, proj);
+  }
+
+  double _latLngDist(LatLng a, LatLng b) {
+    final dx = a.longitude - b.longitude;
+    final dy = a.latitude - b.latitude;
+    return sqrt(dx * dx + dy * dy);
+  }
+
   // -- GPS Location --
 
   Future<void> _locateUser() async {
@@ -421,32 +553,69 @@ class _MapScreenState extends State<MapScreen> {
     return _waypoints.indexed.map((entry) {
       final (i, wp) = entry;
       final isStart = i == 0;
-      final label = isStart ? 'A' : String.fromCharCode(65 + i);
-      final color = isStart ? const Color(0xFF66bb6a) : const Color(0xFFef5350);
+      final isEnd = i == _waypoints.length - 1 && _waypoints.length > 1;
+      final label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
+      final color = isStart
+          ? const Color(0xFF66bb6a)
+          : (isEnd && !_roundtripMode
+              ? const Color(0xFFef5350)
+              : const Color(0xFF4fc3f7));
+      final isVia = !isStart && !(isEnd && !_roundtripMode);
 
       return Marker(
         point: wp,
-        width: 28,
-        height: 28,
+        width: isVia ? 20 : 28,
+        height: isVia ? 20 : 28,
         alignment: Alignment.topCenter,
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+        child: GestureDetector(
+          onPanStart: (_) {
+            setState(() => _draggingWaypointIndex = i);
+          },
+          onPanUpdate: (details) {
+            if (_draggingWaypointIndex == null) return;
+            final renderBox = context.findRenderObject() as RenderBox;
+            final localPos = renderBox.globalToLocal(details.globalPosition);
+            final newLatLng = _mapController.camera.screenOffsetToLatLng(
+              Offset(localPos.dx, localPos.dy),
+            );
+            setState(() {
+              _waypoints[_draggingWaypointIndex!] = newLatLng;
+            });
+          },
+          onPanEnd: (_) {
+            _draggingWaypointIndex = null;
+            if (!_roundtripMode && _waypoints.length >= 2) {
+              _calculateRoute();
+            }
+          },
+          onLongPress: () {
+            // Long press to remove via-point
+            if (_waypoints.length > 2 && !isStart && !(isEnd && !_roundtripMode)) {
+              setState(() => _waypoints.removeAt(i));
+              _calculateRoute();
+            }
+          },
+          child: Container(
+            width: isVia ? 20 : 28,
+            height: isVia ? 20 : 28,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
             ),
+            child: label.isNotEmpty
+                ? Center(
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : null,
           ),
         ),
       );
