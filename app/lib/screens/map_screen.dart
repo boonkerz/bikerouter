@@ -409,29 +409,52 @@ class _MapScreenState extends State<MapScreen> {
   int _findWaypointInsertIndex(LatLng point) {
     if (_waypoints.length < 2) return _waypoints.length;
 
-    double bestDist = double.infinity;
-    int bestIdx = _waypoints.length;
-
-    for (int i = 0; i < _waypoints.length - 1; i++) {
-      final d = _distToSegment(point, _waypoints[i], _waypoints[i + 1]);
-      if (d < bestDist) {
-        bestDist = d;
-        bestIdx = i + 1;
+    // Find the nearest point on the actual route
+    int bestRouteIdx = 0;
+    double bestRouteDist = double.infinity;
+    for (int i = 0; i < _routePoints.length; i++) {
+      final d = _latLngDist(point, _routePoints[i]);
+      if (d < bestRouteDist) {
+        bestRouteDist = d;
+        bestRouteIdx = i;
       }
     }
-    // In roundtrip mode, also check segment from last waypoint back to start
-    if (_roundtripMode && _waypoints.length >= 2) {
-      final d = _distToSegment(point, _waypoints.last, _waypoints.first);
-      if (d < bestDist) {
-        bestIdx = _waypoints.length;
+
+    // Now find which waypoint pair this route point falls between
+    // by finding the nearest route point to each waypoint
+    final wpRouteIndices = <int>[];
+    for (final wp in _waypoints) {
+      int bestIdx = 0;
+      double bestDist = double.infinity;
+      for (int i = 0; i < _routePoints.length; i++) {
+        final d = _latLngDist(wp, _routePoints[i]);
+        if (d < bestDist) {
+          bestDist = d;
+          bestIdx = i;
+        }
+      }
+      wpRouteIndices.add(bestIdx);
+    }
+
+    // Find between which waypoints the route index falls
+    for (int i = 0; i < wpRouteIndices.length - 1; i++) {
+      final startIdx = wpRouteIndices[i];
+      final endIdx = wpRouteIndices[i + 1];
+      if (startIdx <= endIdx) {
+        if (bestRouteIdx >= startIdx && bestRouteIdx <= endIdx) return i + 1;
+      } else {
+        if (bestRouteIdx >= startIdx || bestRouteIdx <= endIdx) return i + 1;
       }
     }
-    return bestIdx;
+
+    // For roundtrip: check last waypoint → start segment
+    if (_roundtripMode) {
+      return _waypoints.length;
+    }
+
+    return _waypoints.length;
   }
 
-  double _distToSegment(LatLng p, LatLng a, LatLng b) {
-    return _latLngDist(p, _projectOnSegment(p, a, b));
-  }
 
   double _latLngDist(LatLng a, LatLng b) {
     final dx = a.longitude - b.longitude;
@@ -556,14 +579,33 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   List<Marker> _buildMarkers() {
-    return _waypoints.indexed
-        .where((entry) => !_anchorIndices.contains(entry.$1))
-        .map((entry) {
+    return _waypoints.indexed.map((entry) {
       final (i, wp) = entry;
+      final isAnchor = _anchorIndices.contains(i);
       final isStart = i == 0;
       final isEnd = i == _waypoints.length - 1 && _waypoints.length > 1;
-      final isVia = !isStart && !(isEnd && !_roundtripMode);
       final isDragging = _draggingWaypointIndex == i;
+
+      // Anchor points: small subtle dots
+      if (isAnchor) {
+        return Marker(
+          point: wp,
+          width: 10,
+          height: 10,
+          alignment: Alignment.topCenter,
+          child: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
+            ),
+          ),
+        );
+      }
+
+      final isVia = !isStart && !(isEnd && !_roundtripMode);
       final label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
       final color = isStart
           ? const Color(0xFF66bb6a)
