@@ -40,8 +40,10 @@ class _MapScreenState extends State<MapScreen> {
   bool _locatingUser = false;
   final bool _gradientRoute = true;
   int? _draggingWaypointIndex;
+  int? _hoveredWaypointIndex; // Waypoint near cursor
+  int? _selectedWaypointIndex; // Tapped waypoint showing delete option
   LatLng? _routeHoverPoint; // Preview point when hovering near route
-  final Set<int> _anchorIndices = {}; // Hidden anchor points for roundtrip shape
+  final Set<int> _anchorIndices = {}; // Anchor points for roundtrip shape
 
   @override
   Widget build(BuildContext context) {
@@ -579,81 +581,106 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   List<Marker> _buildMarkers() {
-    return _waypoints.indexed.map((entry) {
+    final markers = <Marker>[];
+    for (final entry in _waypoints.indexed) {
       final (i, wp) = entry;
       final isAnchor = _anchorIndices.contains(i);
       final isStart = i == 0;
       final isEnd = i == _waypoints.length - 1 && _waypoints.length > 1;
       final isDragging = _draggingWaypointIndex == i;
+      final isHovered = _hoveredWaypointIndex == i;
+      final isSelected = _selectedWaypointIndex == i;
+      final canDelete = !isStart && _waypoints.length > 2;
 
-      // Anchor points: small blue dots
-      if (isAnchor) {
-        return Marker(
-          point: wp,
-          width: isDragging ? 22.0 : 14.0,
-          height: isDragging ? 22.0 : 14.0,
-          alignment: Alignment.topCenter,
-          child: Container(
-            width: isDragging ? 22.0 : 14.0,
-            height: isDragging ? 22.0 : 14.0,
-            decoration: BoxDecoration(
-              color: const Color(0xFF4fc3f7).withValues(alpha: isDragging ? 0.9 : 0.7),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: isDragging ? 2 : 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: isDragging ? const Color(0xFF4fc3f7).withValues(alpha: 0.5) : Colors.black26,
-                  blurRadius: isDragging ? 8 : 2,
-                ),
-              ],
-            ),
-          ),
-        );
+      final Color color;
+      if (isStart) {
+        color = const Color(0xFF66bb6a);
+      } else if (isEnd && !_roundtripMode) {
+        color = const Color(0xFFef5350);
+      } else {
+        color = const Color(0xFF4fc3f7);
       }
 
-      final isVia = !isStart && !(isEnd && !_roundtripMode);
-      final label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
-      final color = isStart
-          ? const Color(0xFF66bb6a)
-          : (isEnd && !_roundtripMode
-              ? const Color(0xFFef5350)
-              : const Color(0xFF4fc3f7));
-      final size = isVia ? 20.0 : 28.0;
+      double size;
+      if (isAnchor) {
+        size = isDragging ? 22.0 : (isHovered ? 20.0 : 14.0);
+      } else if (isStart || (isEnd && !_roundtripMode)) {
+        size = isDragging ? 36.0 : (isHovered ? 32.0 : 28.0);
+      } else {
+        size = isDragging ? 28.0 : (isHovered ? 24.0 : 20.0);
+      }
 
-      return Marker(
+      final label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
+
+      markers.add(Marker(
         point: wp,
-        width: size + (isDragging ? 8 : 0),
-        height: size + (isDragging ? 8 : 0),
+        width: isSelected ? 36 : size,
+        height: isSelected ? 56 : size,
         alignment: Alignment.topCenter,
-        child: Container(
-          width: size + (isDragging ? 8 : 0),
-          height: size + (isDragging ? 8 : 0),
-          decoration: BoxDecoration(
-            color: isDragging ? color.withValues(alpha: 0.8) : color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: isDragging ? 3 : 2),
-            boxShadow: [
-              BoxShadow(
-                color: isDragging ? color.withValues(alpha: 0.5) : Colors.black26,
-                blurRadius: isDragging ? 12 : 4,
-              ),
-            ],
-          ),
-          child: label.isNotEmpty
-              ? Center(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+        child: isSelected && canDelete
+            ? GestureDetector(
+                onTap: () => _deleteWaypoint(i),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFef5350),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6)],
+                      ),
+                      child: const Icon(Icons.delete, color: Colors.white, size: 16),
                     ),
-                  ),
-                )
-              : null,
-        ),
-      );
-    }).toList();
+                    Container(
+                      width: 2,
+                      height: 8,
+                      color: const Color(0xFFef5350),
+                    ),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: (isDragging || isHovered) ? color : color.withValues(alpha: isAnchor ? 0.7 : 1.0),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: isDragging ? 3 : (isHovered ? 2.5 : isAnchor ? 1.5 : 2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isDragging || isHovered) ? color.withValues(alpha: 0.5) : Colors.black26,
+                      blurRadius: isDragging ? 12 : (isHovered ? 8 : isAnchor ? 2 : 4),
+                    ),
+                  ],
+                ),
+                child: label.isNotEmpty
+                    ? Center(
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+      ));
+    }
+    return markers;
   }
 
   Widget _modeChip(String label, bool isRoundtrip) {
@@ -701,6 +728,20 @@ class _MapScreenState extends State<MapScreen> {
   void _onMapHover(LatLng latLng) {
     if (_draggingWaypointIndex != null) return;
 
+    // Check if near an existing waypoint
+    final nearWp = _findNearestWaypoint(latLng);
+    if (nearWp != null) {
+      setState(() {
+        _hoveredWaypointIndex = nearWp;
+        _routeHoverPoint = null;
+      });
+      return;
+    }
+
+    if (_hoveredWaypointIndex != null) {
+      setState(() => _hoveredWaypointIndex = null);
+    }
+
     if (_routePoints.isEmpty || _route == null) {
       if (_routeHoverPoint != null) setState(() => _routeHoverPoint = null);
       return;
@@ -716,8 +757,37 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  int? _findNearestWaypoint(LatLng point) {
+    final threshold = _hoverThreshold * 1.5;
+    double bestDist = double.infinity;
+    int? bestIdx;
+    for (int i = 0; i < _waypoints.length; i++) {
+      final d = _latLngDist(point, _waypoints[i]);
+      if (d < bestDist && d < threshold) {
+        bestDist = d;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }
+
   void _onMapTap(LatLng latLng) {
     if (_draggingWaypointIndex != null) return; // Drag handled by Listener
+
+    // Check if tapping near a waypoint → select/deselect
+    final nearWp = _findNearestWaypoint(latLng);
+    if (nearWp != null) {
+      setState(() {
+        _selectedWaypointIndex = _selectedWaypointIndex == nearWp ? null : nearWp;
+      });
+      return;
+    }
+
+    // Tap elsewhere → deselect any selected waypoint
+    if (_selectedWaypointIndex != null) {
+      setState(() => _selectedWaypointIndex = null);
+      return;
+    }
 
     if (_roundtripMode && _waypoints.isEmpty) {
       setState(() => _waypoints.add(latLng));
@@ -961,6 +1031,52 @@ class _MapScreenState extends State<MapScreen> {
       await exportGpxFile(filename, gpx);
     } catch (e) {
       _showError('Export fehlgeschlagen: $e');
+    }
+  }
+
+  void _deleteWaypoint(int index) {
+    if (index < 0 || index >= _waypoints.length) return;
+
+    // Remove waypoint and adjust anchor indices
+    _waypoints.removeAt(index);
+    final shifted = <int>{};
+    for (final i in _anchorIndices) {
+      if (i < index) {
+        shifted.add(i);
+      } else if (i > index) {
+        shifted.add(i - 1);
+      }
+      // i == index → removed, don't add
+    }
+    _anchorIndices.clear();
+    _anchorIndices.addAll(shifted);
+
+    setState(() {
+      _selectedWaypointIndex = null;
+      _hoveredWaypointIndex = null;
+    });
+
+    // Recalculate or clear route
+    if (_roundtripMode) {
+      if (_waypoints.length <= 1) {
+        // Only start point left or empty → exit roundtrip editing
+        setState(() {
+          _route = null;
+          _routePoints = [];
+          _highlightIndex = null;
+          _anchorIndices.clear();
+        });
+      } else {
+        _recalculate();
+      }
+    } else if (_waypoints.length >= 2) {
+      _recalculate();
+    } else {
+      setState(() {
+        _route = null;
+        _routePoints = [];
+        _highlightIndex = null;
+      });
     }
   }
 
