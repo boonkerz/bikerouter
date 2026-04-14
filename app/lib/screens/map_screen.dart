@@ -763,12 +763,15 @@ class _MapScreenState extends State<MapScreen> {
   /// then inserts the new via-point and starts drag.
   void _convertRoundtripToWaypoints(LatLng newVia) {
     final start = _waypoints.first;
-    // Sample ~6 anchor points evenly around the route to keep its shape
-    const anchorCount = 6;
-    final step = _routePoints.length ~/ anchorCount;
+    // Sample anchor points every ~2km to keep BRouter close to original route
     final anchors = <LatLng>[start];
-    for (int i = step; i < _routePoints.length - step; i += step) {
-      anchors.add(_routePoints[i]);
+    double dist = 0;
+    for (int i = 1; i < _routePoints.length - 1; i++) {
+      dist += _latLngDist(_routePoints[i - 1], _routePoints[i]) * 111; // rough km
+      if (dist >= 2.0) {
+        anchors.add(_routePoints[i]);
+        dist = 0;
+      }
     }
 
     _waypoints.clear();
