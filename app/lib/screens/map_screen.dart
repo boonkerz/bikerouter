@@ -820,12 +820,10 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _insertViaPoint(LatLng point) {
-    final insertIdx = _findWaypointInsertIndex(point);
+    // Exit roundtrip mode on manual edit
+    if (_roundtripMode) _exitRoundtripMode();
 
-    // Shift anchor indices after insert point
-    final shifted = _anchorIndices.map((i) => i >= insertIdx ? i + 1 : i).toSet();
-    _anchorIndices.clear();
-    _anchorIndices.addAll(shifted);
+    final insertIdx = _findWaypointInsertIndex(point);
 
     setState(() {
       _waypoints.insert(insertIdx, point);
@@ -854,19 +852,23 @@ class _MapScreenState extends State<MapScreen> {
   void _finishDrag() {
     final idx = _draggingWaypointIndex;
     setState(() => _draggingWaypointIndex = null);
-    if (idx != null) _recalculate();
+    if (idx != null) {
+      if (_roundtripMode) _exitRoundtripMode();
+      _recalculate();
+    }
+  }
+
+  /// Exit roundtrip mode: close the loop with explicit waypoints
+  void _exitRoundtripMode() {
+    // Add start point as end to close the loop explicitly
+    _waypoints.add(LatLng(_waypoints.first.latitude, _waypoints.first.longitude));
+    _anchorIndices.clear();
+    setState(() => _roundtripMode = false);
   }
 
   /// Recalculate route: works for both A→B and roundtrip (with via-points)
   void _recalculate() {
-    if (_roundtripMode) {
-      if (_waypoints.length == 1) {
-        // No via-points, would need roundtrip panel to generate
-        return;
-      }
-      // Roundtrip with via-points → regular route: start → vias → start
-      _calculateRoute();
-    } else if (_waypoints.length >= 2) {
+    if (_waypoints.length >= 2) {
       _calculateRoute();
     }
   }
@@ -1056,20 +1058,13 @@ class _MapScreenState extends State<MapScreen> {
       _hoveredWaypointIndex = null;
     });
 
-    // Recalculate or clear route
+    // Exit roundtrip mode on manual edit
     if (_roundtripMode) {
-      if (_waypoints.length <= 1) {
-        // Only start point left or empty → exit roundtrip editing
-        setState(() {
-          _route = null;
-          _routePoints = [];
-          _highlightIndex = null;
-          _anchorIndices.clear();
-        });
-      } else {
-        _recalculate();
-      }
-    } else if (_waypoints.length >= 2) {
+      _exitRoundtripMode();
+    }
+
+    // Recalculate or clear route
+    if (_waypoints.length >= 2) {
       _recalculate();
     } else {
       setState(() {
