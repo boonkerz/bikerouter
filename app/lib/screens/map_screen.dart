@@ -750,53 +750,15 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _insertViaPoint(LatLng point) {
-    // In roundtrip mode with only start point, convert route to waypoint-based
-    if (_roundtripMode && _waypoints.length == 1 && _routePoints.isNotEmpty) {
-      _convertRoundtripToWaypoints(point);
-      return;
-    }
-
     final insertIdx = _findWaypointInsertIndex(point);
-    setState(() {
-      _waypoints.insert(insertIdx, point);
-      _routeHoverPoint = null;
-      _draggingWaypointIndex = insertIdx;
-    });
-  }
 
-  /// Convert a roundtrip route into waypoints so the user can reshape it.
-  /// Samples anchor points from the original route to keep its shape,
-  /// then inserts the new via-point and starts drag.
-  void _convertRoundtripToWaypoints(LatLng newVia) {
-    final start = _waypoints.first;
-    // Sample anchor points every ~2km to keep BRouter close to original route
-    final anchors = <LatLng>[start];
-    double dist = 0;
-    for (int i = 1; i < _routePoints.length - 1; i++) {
-      dist += _latLngDist(_routePoints[i - 1], _routePoints[i]) * 111; // rough km
-      if (dist >= 2.0) {
-        anchors.add(_routePoints[i]);
-        dist = 0;
-      }
-    }
-
-    _waypoints.clear();
-    _waypoints.addAll(anchors);
-
-    // Track which indices are auto-anchors (not start = 0)
-    _anchorIndices.clear();
-    for (int i = 1; i < _waypoints.length; i++) {
-      _anchorIndices.add(i);
-    }
-
-    final insertIdx = _findWaypointInsertIndex(newVia);
-    // Shift anchor indices that come after the insert point
+    // Shift anchor indices after insert point
     final shifted = _anchorIndices.map((i) => i >= insertIdx ? i + 1 : i).toSet();
     _anchorIndices.clear();
     _anchorIndices.addAll(shifted);
 
     setState(() {
-      _waypoints.insert(insertIdx, newVia);
+      _waypoints.insert(insertIdx, point);
       _routeHoverPoint = null;
       _draggingWaypointIndex = insertIdx;
     });
@@ -946,6 +908,34 @@ class _MapScreenState extends State<MapScreen> {
       _showElevation = true;
       _highlightIndex = null;
     });
+
+    // In roundtrip mode with only start point, auto-generate anchor points
+    if (_roundtripMode && _waypoints.length == 1 && points.length > 2) {
+      _generateAnchors();
+    }
+  }
+
+  void _generateAnchors() {
+    final start = _waypoints.first;
+    _anchorIndices.clear();
+
+    final anchors = <LatLng>[];
+    double dist = 0;
+    for (int i = 1; i < _routePoints.length - 1; i++) {
+      dist += _latLngDist(_routePoints[i - 1], _routePoints[i]) * 111;
+      if (dist >= 2.0) {
+        anchors.add(_routePoints[i]);
+        dist = 0;
+      }
+    }
+
+    _waypoints.clear();
+    _waypoints.add(start);
+    for (final a in anchors) {
+      _waypoints.add(a);
+      _anchorIndices.add(_waypoints.length - 1);
+    }
+    setState(() {});
   }
 
   Future<void> _exportGpx() async {
