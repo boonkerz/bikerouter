@@ -60,7 +60,13 @@ class _MapScreenState extends State<MapScreen> {
                     initialCenter: const LatLng(51.16, 10.45),
                     initialZoom: 6,
                     onTap: (tapPos, latLng) => _onMapTap(latLng),
+                    onLongPress: (tapPos, latLng) => _onMapLongPress(latLng),
                     onPointerHover: (event, latLng) => _onMapHover(latLng),
+                    interactionOptions: InteractionOptions(
+                      flags: _draggingWaypointIndex != null
+                          ? InteractiveFlag.none
+                          : InteractiveFlag.all,
+                    ),
                   ),
                   children: [
                     TileLayer(
@@ -388,7 +394,6 @@ class _MapScreenState extends State<MapScreen> {
   int _findWaypointInsertIndex(LatLng point) {
     if (_waypoints.length < 2) return _waypoints.length;
 
-    // Find which pair of waypoints the point is closest to being between
     double bestDist = double.infinity;
     int bestIdx = _waypoints.length;
 
@@ -397,6 +402,13 @@ class _MapScreenState extends State<MapScreen> {
       if (d < bestDist) {
         bestDist = d;
         bestIdx = i + 1;
+      }
+    }
+    // In roundtrip mode, also check segment from last waypoint back to start
+    if (_roundtripMode && _waypoints.length >= 2) {
+      final d = _distToSegment(point, _waypoints.last, _waypoints.first);
+      if (d < bestDist) {
+        bestIdx = _waypoints.length;
       }
     }
     return bestIdx;
@@ -533,69 +545,47 @@ class _MapScreenState extends State<MapScreen> {
       final (i, wp) = entry;
       final isStart = i == 0;
       final isEnd = i == _waypoints.length - 1 && _waypoints.length > 1;
+      final isVia = !isStart && !(isEnd && !_roundtripMode);
+      final isDragging = _draggingWaypointIndex == i;
       final label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
       final color = isStart
           ? const Color(0xFF66bb6a)
           : (isEnd && !_roundtripMode
               ? const Color(0xFFef5350)
               : const Color(0xFF4fc3f7));
-      final isVia = !isStart && !(isEnd && !_roundtripMode);
+      final size = isVia ? 20.0 : 28.0;
 
       return Marker(
         point: wp,
-        width: isVia ? 20 : 28,
-        height: isVia ? 20 : 28,
+        width: size + (isDragging ? 8 : 0),
+        height: size + (isDragging ? 8 : 0),
         alignment: Alignment.topCenter,
-        child: GestureDetector(
-          onPanStart: (_) {
-            setState(() => _draggingWaypointIndex = i);
-          },
-          onPanUpdate: (details) {
-            if (_draggingWaypointIndex == null) return;
-            final renderBox = context.findRenderObject() as RenderBox;
-            final localPos = renderBox.globalToLocal(details.globalPosition);
-            final newLatLng = _mapController.camera.screenOffsetToLatLng(
-              Offset(localPos.dx, localPos.dy),
-            );
-            setState(() {
-              _waypoints[_draggingWaypointIndex!] = newLatLng;
-            });
-          },
-          onPanEnd: (_) {
-            _draggingWaypointIndex = null;
-            if (!_roundtripMode && _waypoints.length >= 2) {
-              _calculateRoute();
-            }
-          },
-          onLongPress: () {
-            // Long press to remove via-point
-            if (_waypoints.length > 2 && !isStart && !(isEnd && !_roundtripMode)) {
-              setState(() => _waypoints.removeAt(i));
-              _calculateRoute();
-            }
-          },
-          child: Container(
-            width: isVia ? 20 : 28,
-            height: isVia ? 20 : 28,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
-            ),
-            child: label.isNotEmpty
-                ? Center(
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                : null,
+        child: Container(
+          width: size + (isDragging ? 8 : 0),
+          height: size + (isDragging ? 8 : 0),
+          decoration: BoxDecoration(
+            color: isDragging ? color.withValues(alpha: 0.8) : color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: isDragging ? 3 : 2),
+            boxShadow: [
+              BoxShadow(
+                color: isDragging ? color.withValues(alpha: 0.5) : Colors.black26,
+                blurRadius: isDragging ? 12 : 4,
+              ),
+            ],
           ),
+          child: label.isNotEmpty
+              ? Center(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : null,
         ),
       );
     }).toList();
@@ -644,7 +634,13 @@ class _MapScreenState extends State<MapScreen> {
       360.0 / (pow(2, _mapController.camera.zoom) * 256) * 25;
 
   void _onMapHover(LatLng latLng) {
-    if (_routePoints.isEmpty || _waypoints.length < 2 || _roundtripMode) {
+    // Also handle drag movement on hover (for web mouse drag)
+    if (_draggingWaypointIndex != null) {
+      setState(() => _waypoints[_draggingWaypointIndex!] = latLng);
+      return;
+    }
+
+    if (_routePoints.isEmpty || _route == null) {
       if (_routeHoverPoint != null) setState(() => _routeHoverPoint = null);
       return;
     }
@@ -660,39 +656,84 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _onMapTap(LatLng latLng) {
-    if (_roundtripMode) {
-      if (_waypoints.isEmpty) {
-        setState(() => _waypoints.add(latLng));
-      }
-      // In roundtrip mode with existing route, ignore taps (use delete to reset)
+    // Finish drag if active
+    if (_draggingWaypointIndex != null) {
+      _finishDrag();
       return;
     }
 
-    // If hovering on route → insert via-point at that position
+    if (_roundtripMode && _waypoints.isEmpty) {
+      setState(() => _waypoints.add(latLng));
+      return;
+    }
+
+    // If hovering on route → insert via-point
     if (_routeHoverPoint != null) {
-      final insertIdx = _findWaypointInsertIndex(_routeHoverPoint!);
-      setState(() {
-        _waypoints.insert(insertIdx, _routeHoverPoint!);
-        _routeHoverPoint = null;
-      });
-      _calculateRoute();
+      _insertViaPoint(_routeHoverPoint!);
       return;
     }
 
-    // Check if tap is near existing route (for touch devices without hover)
-    if (_routePoints.isNotEmpty && _waypoints.length >= 2) {
+    // Touch: check if near route → insert via-point
+    if (_routePoints.isNotEmpty && _route != null) {
       final nearest = _nearestPointOnRoute(latLng);
       final dist = _latLngDist(latLng, nearest);
       if (dist < _hoverThreshold) {
-        final insertIdx = _findWaypointInsertIndex(nearest);
-        setState(() => _waypoints.insert(insertIdx, nearest));
-        _calculateRoute();
+        _insertViaPoint(nearest);
         return;
       }
     }
 
+    // Roundtrip mode with existing route: don't add new points
+    if (_roundtripMode && _route != null) return;
+
     setState(() => _waypoints.add(latLng));
-    if (_waypoints.length >= 2) {
+    if (!_roundtripMode && _waypoints.length >= 2) {
+      _calculateRoute();
+    }
+  }
+
+  void _insertViaPoint(LatLng point) {
+    final insertIdx = _findWaypointInsertIndex(point);
+    setState(() {
+      _waypoints.insert(insertIdx, point);
+      _routeHoverPoint = null;
+    });
+    _recalculate();
+  }
+
+  void _onMapLongPress(LatLng latLng) {
+    // Find nearest waypoint for drag
+    double bestDist = double.infinity;
+    int bestIdx = -1;
+    for (int i = 0; i < _waypoints.length; i++) {
+      final d = _latLngDist(latLng, _waypoints[i]);
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = i;
+      }
+    }
+    // Start drag if close enough to a waypoint
+    if (bestIdx >= 0 && bestDist < _hoverThreshold * 2) {
+      setState(() => _draggingWaypointIndex = bestIdx);
+    }
+  }
+
+  void _finishDrag() {
+    final idx = _draggingWaypointIndex;
+    setState(() => _draggingWaypointIndex = null);
+    if (idx != null) _recalculate();
+  }
+
+  /// Recalculate route: works for both A→B and roundtrip (with via-points)
+  void _recalculate() {
+    if (_roundtripMode) {
+      if (_waypoints.length == 1) {
+        // No via-points, would need roundtrip panel to generate
+        return;
+      }
+      // Roundtrip with via-points → regular route: start → vias → start
+      _calculateRoute();
+    } else if (_waypoints.length >= 2) {
       _calculateRoute();
     }
   }
@@ -735,6 +776,10 @@ class _MapScreenState extends State<MapScreen> {
 
     try {
       final pts = _waypoints.map((w) => [w.longitude, w.latitude]).toList();
+      // In roundtrip mode with via-points, close the loop back to start
+      if (_roundtripMode && pts.length >= 2) {
+        pts.add(pts.first);
+      }
       final result = await BRouterService.calculateRoute(
         waypoints: pts,
         profile: _profile,
