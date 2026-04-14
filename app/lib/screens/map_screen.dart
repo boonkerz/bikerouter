@@ -41,6 +41,7 @@ class _MapScreenState extends State<MapScreen> {
   final bool _gradientRoute = true;
   int? _draggingWaypointIndex;
   LatLng? _routeHoverPoint; // Preview point when hovering near route
+  final Set<int> _anchorIndices = {}; // Hidden anchor points for roundtrip shape
 
   @override
   Widget build(BuildContext context) {
@@ -555,7 +556,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   List<Marker> _buildMarkers() {
-    return _waypoints.indexed.map((entry) {
+    return _waypoints.indexed
+        .where((entry) => !_anchorIndices.contains(entry.$1))
+        .map((entry) {
       final (i, wp) = entry;
       final isStart = i == 0;
       final isEnd = i == _waypoints.length - 1 && _waypoints.length > 1;
@@ -725,13 +728,22 @@ class _MapScreenState extends State<MapScreen> {
     for (int i = step; i < _routePoints.length - step; i += step) {
       anchors.add(_routePoints[i]);
     }
-    // Don't add start again — _calculateRoute adds it for roundtrip
 
-    // Find where to insert the new via-point among the anchors
     _waypoints.clear();
     _waypoints.addAll(anchors);
 
+    // Track which indices are auto-anchors (not start = 0)
+    _anchorIndices.clear();
+    for (int i = 1; i < _waypoints.length; i++) {
+      _anchorIndices.add(i);
+    }
+
     final insertIdx = _findWaypointInsertIndex(newVia);
+    // Shift anchor indices that come after the insert point
+    final shifted = _anchorIndices.map((i) => i >= insertIdx ? i + 1 : i).toSet();
+    _anchorIndices.clear();
+    _anchorIndices.addAll(shifted);
+
     setState(() {
       _waypoints.insert(insertIdx, newVia);
       _routeHoverPoint = null;
@@ -913,6 +925,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void _clearAll() {
     _waypoints.clear();
+    _anchorIndices.clear();
     setState(() {
       _route = null;
       _routePoints = [];
