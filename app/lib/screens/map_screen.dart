@@ -699,11 +699,42 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _insertViaPoint(LatLng point) {
+    // In roundtrip mode with only start point, convert route to waypoint-based
+    if (_roundtripMode && _waypoints.length == 1 && _routePoints.isNotEmpty) {
+      _convertRoundtripToWaypoints(point);
+      return;
+    }
+
     final insertIdx = _findWaypointInsertIndex(point);
     setState(() {
       _waypoints.insert(insertIdx, point);
       _routeHoverPoint = null;
-      // Immediately start dragging the new via-point
+      _draggingWaypointIndex = insertIdx;
+    });
+  }
+
+  /// Convert a roundtrip route into waypoints so the user can reshape it.
+  /// Samples anchor points from the original route to keep its shape,
+  /// then inserts the new via-point and starts drag.
+  void _convertRoundtripToWaypoints(LatLng newVia) {
+    final start = _waypoints.first;
+    // Sample ~6 anchor points evenly around the route to keep its shape
+    const anchorCount = 6;
+    final step = _routePoints.length ~/ anchorCount;
+    final anchors = <LatLng>[start];
+    for (int i = step; i < _routePoints.length - step; i += step) {
+      anchors.add(_routePoints[i]);
+    }
+    // Don't add start again — _calculateRoute adds it for roundtrip
+
+    // Find where to insert the new via-point among the anchors
+    _waypoints.clear();
+    _waypoints.addAll(anchors);
+
+    final insertIdx = _findWaypointInsertIndex(newVia);
+    setState(() {
+      _waypoints.insert(insertIdx, newVia);
+      _routeHoverPoint = null;
       _draggingWaypointIndex = insertIdx;
     });
   }
