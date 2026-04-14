@@ -586,20 +586,26 @@ class _MapScreenState extends State<MapScreen> {
       final isEnd = i == _waypoints.length - 1 && _waypoints.length > 1;
       final isDragging = _draggingWaypointIndex == i;
 
-      // Anchor points: small subtle dots
+      // Anchor points: small blue dots
       if (isAnchor) {
         return Marker(
           point: wp,
-          width: 10,
-          height: 10,
+          width: isDragging ? 22.0 : 14.0,
+          height: isDragging ? 22.0 : 14.0,
           alignment: Alignment.topCenter,
           child: Container(
-            width: 10,
-            height: 10,
+            width: isDragging ? 22.0 : 14.0,
+            height: isDragging ? 22.0 : 14.0,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: const Color(0xFF4fc3f7).withValues(alpha: isDragging ? 0.9 : 0.7),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
+              border: Border.all(color: Colors.white, width: isDragging ? 2 : 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: isDragging ? const Color(0xFF4fc3f7).withValues(alpha: 0.5) : Colors.black26,
+                  blurRadius: isDragging ? 8 : 2,
+                ),
+              ],
             ),
           ),
         );
