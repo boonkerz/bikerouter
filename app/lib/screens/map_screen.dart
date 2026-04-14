@@ -40,6 +40,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _locatingUser = false;
   final bool _gradientRoute = true;
   int? _draggingWaypointIndex;
+  LatLng? _routeHoverPoint; // Preview point when hovering near route
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +60,7 @@ class _MapScreenState extends State<MapScreen> {
                     initialCenter: const LatLng(51.16, 10.45),
                     initialZoom: 6,
                     onTap: (tapPos, latLng) => _onMapTap(latLng),
+                    onPointerHover: (event, latLng) => _onMapHover(latLng),
                   ),
                   children: [
                     TileLayer(
@@ -129,6 +131,25 @@ class _MapScreenState extends State<MapScreen> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.white, width: 3),
                                 boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    // Hover preview point on route
+                    if (_routeHoverPoint != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _routeHoverPoint!,
+                            width: 18,
+                            height: 18,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4fc3f7).withValues(alpha: 0.6),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                               ),
                             ),
                           ),
@@ -382,16 +403,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   double _distToSegment(LatLng p, LatLng a, LatLng b) {
-    final dx = b.longitude - a.longitude;
-    final dy = b.latitude - a.latitude;
-    if (dx == 0 && dy == 0) {
-      return _latLngDist(p, a);
-    }
-    var t = ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) /
-        (dx * dx + dy * dy);
-    t = t.clamp(0.0, 1.0);
-    final proj = LatLng(a.latitude + t * dy, a.longitude + t * dx);
-    return _latLngDist(p, proj);
+    return _latLngDist(p, _projectOnSegment(p, a, b));
   }
 
   double _latLngDist(LatLng a, LatLng b) {
@@ -628,21 +640,52 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _onMapTap(LatLng latLng) {
-    if (_roundtripMode) {
-      _clearAll();
-      setState(() => _waypoints.add(latLng));
+  double get _hoverThreshold =>
+      360.0 / (pow(2, _mapController.camera.zoom) * 256) * 25;
+
+  void _onMapHover(LatLng latLng) {
+    if (_routePoints.isEmpty || _waypoints.length < 2 || _roundtripMode) {
+      if (_routeHoverPoint != null) setState(() => _routeHoverPoint = null);
       return;
     }
 
-    // Check if tap is near existing route → insert via-point
+    final nearestPoint = _nearestPointOnRoute(latLng);
+    final dist = _latLngDist(latLng, nearestPoint);
+
+    if (dist < _hoverThreshold) {
+      setState(() => _routeHoverPoint = nearestPoint);
+    } else if (_routeHoverPoint != null) {
+      setState(() => _routeHoverPoint = null);
+    }
+  }
+
+  void _onMapTap(LatLng latLng) {
+    if (_roundtripMode) {
+      if (_waypoints.isEmpty) {
+        setState(() => _waypoints.add(latLng));
+      }
+      // In roundtrip mode with existing route, ignore taps (use delete to reset)
+      return;
+    }
+
+    // If hovering on route → insert via-point at that position
+    if (_routeHoverPoint != null) {
+      final insertIdx = _findWaypointInsertIndex(_routeHoverPoint!);
+      setState(() {
+        _waypoints.insert(insertIdx, _routeHoverPoint!);
+        _routeHoverPoint = null;
+      });
+      _calculateRoute();
+      return;
+    }
+
+    // Check if tap is near existing route (for touch devices without hover)
     if (_routePoints.isNotEmpty && _waypoints.length >= 2) {
-      final tapDist = _minDistToRoute(latLng);
-      // Threshold in degrees — roughly 20px at current zoom
-      final threshold = 360.0 / (pow(2, _mapController.camera.zoom) * 256) * 20;
-      if (tapDist < threshold) {
-        final insertIdx = _findWaypointInsertIndex(latLng);
-        setState(() => _waypoints.insert(insertIdx, latLng));
+      final nearest = _nearestPointOnRoute(latLng);
+      final dist = _latLngDist(latLng, nearest);
+      if (dist < _hoverThreshold) {
+        final insertIdx = _findWaypointInsertIndex(nearest);
+        setState(() => _waypoints.insert(insertIdx, nearest));
         _calculateRoute();
         return;
       }
@@ -654,13 +697,29 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  double _minDistToRoute(LatLng point) {
-    double best = double.infinity;
+  LatLng _nearestPointOnRoute(LatLng point) {
+    double bestDist = double.infinity;
+    LatLng bestPoint = _routePoints.first;
+
     for (int i = 0; i < _routePoints.length - 1; i++) {
-      final d = _distToSegment(point, _routePoints[i], _routePoints[i + 1]);
-      if (d < best) best = d;
+      final projected = _projectOnSegment(point, _routePoints[i], _routePoints[i + 1]);
+      final d = _latLngDist(point, projected);
+      if (d < bestDist) {
+        bestDist = d;
+        bestPoint = projected;
+      }
     }
-    return best;
+    return bestPoint;
+  }
+
+  LatLng _projectOnSegment(LatLng p, LatLng a, LatLng b) {
+    final dx = b.longitude - a.longitude;
+    final dy = b.latitude - a.latitude;
+    if (dx == 0 && dy == 0) return a;
+    var t = ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) /
+        (dx * dx + dy * dy);
+    t = t.clamp(0.0, 1.0);
+    return LatLng(a.latitude + t * dy, a.longitude + t * dx);
   }
 
   void _setProfile(String profile) {
