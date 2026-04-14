@@ -54,7 +54,21 @@ class _MapScreenState extends State<MapScreen> {
           Column(
             children: [
               Expanded(
-                child: FlutterMap(
+                child: Listener(
+                  onPointerMove: (event) {
+                    if (_draggingWaypointIndex != null) {
+                      final latLng = _mapController.camera.screenOffsetToLatLng(
+                        event.localPosition,
+                      );
+                      setState(() => _waypoints[_draggingWaypointIndex!] = latLng);
+                    }
+                  },
+                  onPointerUp: (_) {
+                    if (_draggingWaypointIndex != null) {
+                      _finishDrag();
+                    }
+                  },
+                  child: FlutterMap(
                   mapController: _mapController,
                   options: MapOptions(
                     initialCenter: const LatLng(51.16, 10.45),
@@ -165,7 +179,7 @@ class _MapScreenState extends State<MapScreen> {
                       MarkerLayer(markers: _buildMarkers()),
                   ],
                 ),
-              ),
+              ),),
               if (_route != null) StatsBar(route: _route!),
               if (_route != null && _showElevation)
                 ElevationChart(
@@ -634,11 +648,7 @@ class _MapScreenState extends State<MapScreen> {
       360.0 / (pow(2, _mapController.camera.zoom) * 256) * 25;
 
   void _onMapHover(LatLng latLng) {
-    // Also handle drag movement on hover (for web mouse drag)
-    if (_draggingWaypointIndex != null) {
-      setState(() => _waypoints[_draggingWaypointIndex!] = latLng);
-      return;
-    }
+    if (_draggingWaypointIndex != null) return;
 
     if (_routePoints.isEmpty || _route == null) {
       if (_routeHoverPoint != null) setState(() => _routeHoverPoint = null);
@@ -656,11 +666,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _onMapTap(LatLng latLng) {
-    // Finish drag if active
-    if (_draggingWaypointIndex != null) {
-      _finishDrag();
-      return;
-    }
+    if (_draggingWaypointIndex != null) return; // Drag handled by Listener
 
     if (_roundtripMode && _waypoints.isEmpty) {
       setState(() => _waypoints.add(latLng));
@@ -697,8 +703,9 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _waypoints.insert(insertIdx, point);
       _routeHoverPoint = null;
+      // Immediately start dragging the new via-point
+      _draggingWaypointIndex = insertIdx;
     });
-    _recalculate();
   }
 
   void _onMapLongPress(LatLng latLng) {
