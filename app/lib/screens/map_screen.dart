@@ -8,13 +8,16 @@ import '../services/gpx_export.dart';
 import '../models/map_style.dart';
 import '../models/profile.dart';
 import '../models/route_result.dart';
+import '../models/saved_route.dart';
 import '../services/brouter_service.dart';
+import '../services/route_storage.dart';
 import '../widgets/elevation_chart.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/profile_selector.dart';
 import '../widgets/roundtrip_panel.dart';
 import '../widgets/address_search.dart';
 import 'settings_screen.dart';
+import 'saved_routes_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -263,18 +266,45 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Settings button
-                GestureDetector(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                // Menu button
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.more_vert, color: Color(0xFF4fc3f7), size: 20),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Color(0xFF4fc3f7), size: 20),
+                    color: const Color(0xFF1a1a2e),
+                    padding: EdgeInsets.zero,
+                    onSelected: _onMenuSelected,
+                    itemBuilder: (ctx) => [
+                      PopupMenuItem(
+                        value: 'save',
+                        enabled: _route != null,
+                        child: const Row(children: [
+                          Icon(Icons.bookmark_add_outlined, color: Color(0xFF4fc3f7), size: 20),
+                          SizedBox(width: 12),
+                          Text('Route speichern', style: TextStyle(color: Colors.white)),
+                        ]),
+                      ),
+                      const PopupMenuItem(
+                        value: 'load',
+                        child: Row(children: [
+                          Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
+                          SizedBox(width: 12),
+                          Text('Gespeicherte Routen', style: TextStyle(color: Colors.white)),
+                        ]),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'settings',
+                        child: Row(children: [
+                          Icon(Icons.settings_outlined, color: Color(0xFF4fc3f7), size: 20),
+                          SizedBox(width: 12),
+                          Text('Einstellungen', style: TextStyle(color: Colors.white)),
+                        ]),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1024,6 +1054,103 @@ class _MapScreenState extends State<MapScreen> {
       _anchorIndices.add(_waypoints.length - 1);
     }
     setState(() {});
+  }
+
+  Future<void> _onMenuSelected(String value) async {
+    switch (value) {
+      case 'save':
+        await _saveRoute();
+        break;
+      case 'load':
+        final loaded = await Navigator.of(context).push<SavedRoute>(
+          MaterialPageRoute(builder: (_) => const SavedRoutesScreen()),
+        );
+        if (loaded != null) await _loadSavedRoute(loaded);
+        break;
+      case 'settings':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        );
+        break;
+    }
+  }
+
+  Future<void> _saveRoute() async {
+    if (_route == null) return;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final controller = TextEditingController(
+          text: 'Route ${DateTime.now().day}.${DateTime.now().month}.',
+        );
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1a1a2e),
+          title: const Text('Route speichern', style: TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Name der Route',
+              hintStyle: TextStyle(color: Colors.white38),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF4fc3f7)),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Abbrechen'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: const Text('Speichern', style: TextStyle(color: Color(0xFF4fc3f7))),
+            ),
+          ],
+        );
+      },
+    );
+    if (name == null || name.isEmpty) return;
+
+    final saved = SavedRoute(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      profile: _profile,
+      waypoints: _waypoints.map((w) => [w.longitude, w.latitude]).toList(),
+      distanceKm: _route!.distance,
+      durationSeconds: _route!.time.toInt(),
+      ascent: _route!.ascent.round(),
+      createdAt: DateTime.now(),
+      isRoundtrip: _roundtripMode,
+      rtDistanceKm: _roundtripMode ? _rtDistanceKm : null,
+      rtDirection: _roundtripMode ? _rtDirection : null,
+    );
+    await RouteStorage.save(saved);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('„$name" gespeichert')),
+    );
+  }
+
+  Future<void> _loadSavedRoute(SavedRoute r) async {
+    setState(() {
+      _waypoints.clear();
+      _waypoints.addAll(r.waypoints.map((w) => LatLng(w[1], w[0])));
+      _profile = r.profile;
+      _roundtripMode = r.isRoundtrip;
+      if (r.rtDistanceKm != null) _rtDistanceKm = r.rtDistanceKm!;
+      if (r.rtDirection != null) _rtDirection = r.rtDirection!;
+      _anchorIndices.clear();
+      _selectedWaypointIndex = null;
+      _hoveredWaypointIndex = null;
+    });
+    if (_waypoints.length >= 2) {
+      await _calculateRoute();
+    }
   }
 
   Future<void> _exportGpx() async {
