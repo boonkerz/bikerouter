@@ -14,6 +14,7 @@ import '../widgets/stats_bar.dart';
 import '../widgets/profile_selector.dart';
 import '../widgets/roundtrip_panel.dart';
 import '../widgets/address_search.dart';
+import 'settings_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -259,6 +260,21 @@ class _MapScreenState extends State<MapScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.search, color: Color(0xFF4fc3f7), size: 20),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Settings button
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.more_vert, color: Color(0xFF4fc3f7), size: 20),
                   ),
                 ),
                 const SizedBox(width: 8),
