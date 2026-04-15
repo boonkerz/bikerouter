@@ -25,22 +25,22 @@ class BikeProfile {
 const profiles = [
   // Rennrad
   BikeProfile(id: 'fastbike', name: 'Rennrad', category: 'Rennrad', icon: '🏎️', avgSpeedKmh: 28),
-  BikeProfile(id: 'fastbike-lowtraffic', name: 'Wenig Verkehr', category: 'Rennrad', icon: '🏎️', avgSpeedKmh: 27),
-  BikeProfile(id: 'fastbike-verylowtraffic', name: 'Sehr wenig Verkehr', category: 'Rennrad', icon: '🏎️', avgSpeedKmh: 26),
+  BikeProfile(id: 'fastbike-lowtraffic', name: 'Rennrad (weniger Verkehr)', category: 'Rennrad', icon: '🏎️', avgSpeedKmh: 27),
+  BikeProfile(id: 'fastbike-verylowtraffic', name: 'Rennrad (sehr wenig Verkehr)', category: 'Rennrad', icon: '🏎️', avgSpeedKmh: 26),
   BikeProfile(id: 'randonneur', name: 'Randonneur', category: 'Rennrad', icon: '🏎️', avgSpeedKmh: 25),
   // Gravel
-  BikeProfile(id: 'quaelnix-gravel', name: 'Gravel (quaelnix)', category: 'Gravel', icon: '🪨', avgSpeedKmh: 22),
-  BikeProfile(id: 'm11n-gravel', name: 'Gravel (m11n)', category: 'Gravel', icon: '🪨', avgSpeedKmh: 22),
-  BikeProfile(id: 'cxb-gravel', name: 'Gravel (cxb)', category: 'Gravel', icon: '🪨', avgSpeedKmh: 22),
+  BikeProfile(id: 'm11n-gravel', name: 'Gravel „m11n“ (mehr offroad)', category: 'Gravel', icon: '🪨', avgSpeedKmh: 22),
+  BikeProfile(id: 'quaelnix-gravel', name: 'Gravel „quaelnix“ (wenig Verkehr)', category: 'Gravel', icon: '🪨', avgSpeedKmh: 22),
+  BikeProfile(id: 'cxb-gravel', name: 'Gravel „CXB“ (mehr offroad)', category: 'Gravel', icon: '🪨', avgSpeedKmh: 22),
   // Trekking
-  BikeProfile(id: 'trekking', name: 'Trekking', category: 'Trekking', icon: '🚲', avgSpeedKmh: 18),
+  BikeProfile(id: 'trekking', name: 'Trekkingrad', category: 'Trekking', icon: '🚲', avgSpeedKmh: 18),
   BikeProfile(id: 'safety', name: 'Sicherste Route', category: 'Trekking', icon: '🛡️', avgSpeedKmh: 16),
   // MTB
-  BikeProfile(id: 'mtb-zossebart', name: 'MTB', category: 'MTB', icon: '⛰️', avgSpeedKmh: 15),
-  BikeProfile(id: 'mtb-zossebart-hard', name: 'MTB (hart)', category: 'MTB', icon: '⛰️', avgSpeedKmh: 13),
+  BikeProfile(id: 'mtb-zossebart', name: 'MTB „Zossebart“', category: 'MTB', icon: '⛰️', avgSpeedKmh: 15),
+  BikeProfile(id: 'mtb-zossebart-hard', name: 'MTB „Zossebart“ (hart)', category: 'MTB', icon: '⛰️', avgSpeedKmh: 13),
   // Sonstige
-  BikeProfile(id: 'hiking-beta', name: 'Wandern', category: 'Sonstige', icon: '🥾', avgSpeedKmh: 5),
-  BikeProfile(id: 'shortest', name: 'Kürzeste', category: 'Sonstige', icon: '📏', avgSpeedKmh: 20),
+  BikeProfile(id: 'hiking-beta', name: 'Wandern (beta)', category: 'Sonstige', icon: '🥾', avgSpeedKmh: 5),
+  BikeProfile(id: 'shortest', name: 'Kürzeste Route', category: 'Sonstige', icon: '📏', avgSpeedKmh: 20),
 ];
 
 const quickProfiles = ['fastbike', 'quaelnix-gravel', 'trekking', 'mtb-zossebart'];
