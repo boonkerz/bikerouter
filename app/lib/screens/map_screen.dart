@@ -8,8 +8,10 @@ import '../services/gpx_export.dart';
 import '../models/map_style.dart';
 import '../models/profile.dart';
 import '../models/route_result.dart';
+import '../models/route_poi.dart';
 import '../models/saved_route.dart';
 import '../services/brouter_service.dart';
+import '../services/gpx_builder.dart';
 import '../services/route_storage.dart';
 import '../widgets/elevation_chart.dart';
 import '../widgets/stats_bar.dart';
@@ -48,6 +50,7 @@ class _MapScreenState extends State<MapScreen> {
   int? _selectedWaypointIndex; // Tapped waypoint showing delete option
   LatLng? _routeHoverPoint; // Preview point when hovering near route
   final Set<int> _anchorIndices = {}; // Anchor points for roundtrip shape
+  final List<RoutePoi> _pois = [];
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +187,8 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     if (_waypoints.isNotEmpty)
                       MarkerLayer(markers: _buildMarkers()),
+                    if (_pois.isNotEmpty)
+                      MarkerLayer(markers: _buildPoiMarkers()),
                   ],
                 ),
               ),),
@@ -892,7 +897,223 @@ class _MapScreenState extends State<MapScreen> {
     // Start drag if close enough to a waypoint
     if (bestIdx >= 0 && bestDist < _hoverThreshold * 2) {
       setState(() => _draggingWaypointIndex = bestIdx);
+      return;
     }
+    // Otherwise open POI add sheet
+    _showAddPoiSheet(latLng);
+  }
+
+  void _showAddPoiSheet(LatLng latLng) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('POI hinzufügen',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: PoiCategory.values.map((cat) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _addPoi(latLng, cat);
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: cat.color,
+                            shape: BoxShape.circle,
+                            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
+                          ),
+                          child: Icon(cat.icon, color: Colors.white, size: 28),
+                        ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 72,
+                          child: Text(cat.label,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addPoi(LatLng latLng, PoiCategory cat) async {
+    final poi = RoutePoi(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      lat: latLng.latitude,
+      lon: latLng.longitude,
+      category: cat,
+    );
+    setState(() => _pois.add(poi));
+    // Offer to name it right away
+    await _editPoi(poi);
+  }
+
+  Future<void> _editPoi(RoutePoi poi) async {
+    final nameCtrl = TextEditingController(text: poi.name ?? '');
+    final noteCtrl = TextEditingController(text: poi.note ?? '');
+    PoiCategory selectedCat = poi.category;
+
+    final result = await showDialog<_PoiEditResult>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1a1a2e),
+          title: Row(children: [
+            Icon(selectedCat.icon, color: selectedCat.color),
+            const SizedBox(width: 8),
+            const Text('POI bearbeiten', style: TextStyle(color: Colors.white)),
+          ]),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Kategorie',
+                    style: TextStyle(color: Colors.white54, fontSize: 12)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: PoiCategory.values.map((cat) {
+                    final selected = cat == selectedCat;
+                    return GestureDetector(
+                      onTap: () => setDialogState(() => selectedCat = cat),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: selected ? cat.color : Colors.transparent,
+                          border: Border.all(color: cat.color, width: selected ? 0 : 1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(cat.icon, color: selected ? Colors.white : cat.color, size: 14),
+                          const SizedBox(width: 4),
+                          Text(cat.label,
+                              style: TextStyle(
+                                  color: selected ? Colors.white : cat.color, fontSize: 11)),
+                        ]),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    labelStyle: TextStyle(color: Colors.white54),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF4fc3f7))),
+                    focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2)),
+                  ),
+                ),
+                TextField(
+                  controller: noteCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Notiz (optional)',
+                    labelStyle: TextStyle(color: Colors.white54),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF4fc3f7))),
+                    focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, const _PoiEditResult.delete()),
+              child: const Text('Löschen', style: TextStyle(color: Colors.redAccent)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Abbrechen'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                ctx,
+                _PoiEditResult.save(
+                  category: selectedCat,
+                  name: nameCtrl.text.trim(),
+                  note: noteCtrl.text.trim(),
+                ),
+              ),
+              child: const Text('Speichern', style: TextStyle(color: Color(0xFF4fc3f7))),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == null) return;
+    if (result.isDelete) {
+      setState(() => _pois.removeWhere((p) => p.id == poi.id));
+      return;
+    }
+    setState(() {
+      final idx = _pois.indexWhere((p) => p.id == poi.id);
+      if (idx >= 0) {
+        _pois[idx] = poi.copyWith(
+          category: result.category,
+          name: result.name!.isEmpty ? null : result.name,
+          note: result.note!.isEmpty ? null : result.note,
+        );
+      }
+    });
+  }
+
+  List<Marker> _buildPoiMarkers() {
+    return _pois.map((p) {
+      return Marker(
+        point: LatLng(p.lat, p.lon),
+        width: 36,
+        height: 36,
+        child: GestureDetector(
+          onTap: () => _editPoi(p),
+          child: Container(
+            decoration: BoxDecoration(
+              color: p.category.color,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+            ),
+            child: Icon(p.category.icon, color: Colors.white, size: 18),
+          ),
+        ),
+      );
+    }).toList();
   }
 
   void _finishDrag() {
@@ -1128,6 +1349,7 @@ class _MapScreenState extends State<MapScreen> {
       isRoundtrip: _roundtripMode,
       rtDistanceKm: _roundtripMode ? _rtDistanceKm : null,
       rtDirection: _roundtripMode ? _rtDirection : null,
+      pois: List.of(_pois),
     );
     await RouteStorage.save(saved);
     if (!mounted) return;
@@ -1147,6 +1369,8 @@ class _MapScreenState extends State<MapScreen> {
       _anchorIndices.clear();
       _selectedWaypointIndex = null;
       _hoveredWaypointIndex = null;
+      _pois.clear();
+      _pois.addAll(r.pois);
     });
     if (_waypoints.length >= 2) {
       await _calculateRoute();
@@ -1157,18 +1381,14 @@ class _MapScreenState extends State<MapScreen> {
     if (_route == null) return;
 
     try {
-      final String gpx;
-      if (_roundtripMode) {
-        gpx = await BRouterService.fetchRoundtripGpx(
-          start: [_waypoints.first.longitude, _waypoints.first.latitude],
-          profile: _profile,
-          distanceKm: _rtDistanceKm,
-          direction: _rtDirection,
-        );
-      } else {
-        final pts = _waypoints.map((w) => [w.longitude, w.latitude]).toList();
-        gpx = await BRouterService.fetchGpx(waypoints: pts, profile: _profile);
-      }
+      final trackName = _roundtripMode
+          ? 'Rundtour ${_rtDistanceKm}km'
+          : 'BikeRouter-Tour';
+      final gpx = GpxBuilder.build(
+        route: _route!,
+        trackName: trackName,
+        pois: _pois,
+      );
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'bikerouter-$_profile-$timestamp.gpx';
@@ -1221,10 +1441,30 @@ class _MapScreenState extends State<MapScreen> {
   void _clearAll() {
     _waypoints.clear();
     _anchorIndices.clear();
+    _pois.clear();
     setState(() {
       _route = null;
       _routePoints = [];
       _highlightIndex = null;
     });
   }
+}
+
+class _PoiEditResult {
+  final bool isDelete;
+  final PoiCategory? category;
+  final String? name;
+  final String? note;
+
+  const _PoiEditResult.delete()
+      : isDelete = true,
+        category = null,
+        name = null,
+        note = null;
+
+  const _PoiEditResult.save({
+    required this.category,
+    required this.name,
+    required this.note,
+  }) : isDelete = false;
 }

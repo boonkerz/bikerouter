@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'route_poi.dart';
 
 class SavedRoute {
   final String id;
@@ -12,6 +13,7 @@ class SavedRoute {
   final bool isRoundtrip;
   final int? rtDistanceKm;
   final int? rtDirection;
+  final List<RoutePoi> pois;
 
   const SavedRoute({
     required this.id,
@@ -25,6 +27,7 @@ class SavedRoute {
     required this.isRoundtrip,
     this.rtDistanceKm,
     this.rtDirection,
+    this.pois = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -39,6 +42,7 @@ class SavedRoute {
         'isRoundtrip': isRoundtrip,
         'rtDistanceKm': rtDistanceKm,
         'rtDirection': rtDirection,
+        'pois': pois.map((p) => p.toJson()).toList(),
       };
 
   factory SavedRoute.fromJson(Map<String, dynamic> j) => SavedRoute(
@@ -55,6 +59,10 @@ class SavedRoute {
         isRoundtrip: j['isRoundtrip'] as bool,
         rtDistanceKm: j['rtDistanceKm'] as int?,
         rtDirection: j['rtDirection'] as int?,
+        pois: (j['pois'] as List?)
+                ?.map((p) => RoutePoi.fromJson(p as Map<String, dynamic>))
+                .toList() ??
+            const [],
       );
 
   String toJsonString() => jsonEncode(toJson());
