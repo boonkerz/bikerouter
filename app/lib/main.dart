@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'screens/map_screen.dart';
 
 void main() {
-  runApp(const BikeRouterApp());
+  runApp(const WegwieselApp());
 }
 
-class BikeRouterApp extends StatelessWidget {
-  const BikeRouterApp({super.key});
+class WegwieselApp extends StatelessWidget {
+  const WegwieselApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BikeRouter',
+      title: 'Wegwiesel',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

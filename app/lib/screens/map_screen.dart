@@ -96,13 +96,13 @@ class _MapScreenState extends State<MapScreen> {
                     TileLayer(
                       urlTemplate: _mapStyle.urlTemplate,
                       maxZoom: _mapStyle.maxZoom.toDouble(),
-                      userAgentPackageName: 'de.bikerouter.app',
+                      userAgentPackageName: 'app.wegwiesel',
                     ),
                     if (_mapStyle.labelsOverlay != null)
                       TileLayer(
                         urlTemplate: _mapStyle.labelsOverlay!,
                         maxZoom: _mapStyle.maxZoom.toDouble(),
-                        userAgentPackageName: 'de.bikerouter.app',
+                        userAgentPackageName: 'app.wegwiesel',
                       ),
                     if (_routePoints.isNotEmpty) ...[
                       if (_gradientRoute && _route != null)
@@ -1383,7 +1383,7 @@ class _MapScreenState extends State<MapScreen> {
     try {
       final trackName = _roundtripMode
           ? 'Rundtour ${_rtDistanceKm}km'
-          : 'BikeRouter-Tour';
+          : 'Wegwiesel-Tour';
       final gpx = GpxBuilder.build(
         route: _route!,
         trackName: trackName,
@@ -1391,7 +1391,7 @@ class _MapScreenState extends State<MapScreen> {
       );
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filename = 'bikerouter-$_profile-$timestamp.gpx';
+      final filename = 'wegwiesel-$_profile-$timestamp.gpx';
 
       await exportGpxFile(filename, gpx);
     } catch (e) {

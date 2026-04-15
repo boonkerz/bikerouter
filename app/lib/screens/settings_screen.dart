@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  static const _baseUrl = 'https://bikerouter.thomas-peterson.de';
+  static const _baseUrl = 'https://wegwiesel.app';
   static const _impressumUrl = '$_baseUrl/legal/impressum.html';
   static const _datenschutzUrl = '$_baseUrl/legal/datenschutz.html';
   static const _supportEmail = 'support@thomas-peterson.de';
@@ -74,7 +74,7 @@ class SettingsScreen extends StatelessWidget {
             title: 'Open-Source-Lizenzen',
             onTap: () => showLicensePage(
               context: context,
-              applicationName: 'BikeRouter',
+              applicationName: 'Wegwiesel',
               applicationLegalese:
                   '© 2026 Thomas Peterson\nPrivates, nicht-kommerzielles Projekt',
             ),
@@ -90,7 +90,7 @@ class SettingsScreen extends StatelessWidget {
                 border: Border.all(color: const Color(0xFF4fc3f7).withValues(alpha: 0.3)),
               ),
               child: const Text(
-                'BikeRouter ist ein privates, nicht-kommerzielles Projekt, '
+                'Wegwiesel ist ein privates, nicht-kommerzielles Projekt, '
                 'um bikerouter.de besser auf mobilen Plattformen nutzbar zu machen. '
                 'Routing basiert auf BRouter, Karten auf OpenStreetMap.',
                 style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),

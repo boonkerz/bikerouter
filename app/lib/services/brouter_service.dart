@@ -7,7 +7,7 @@ import '../models/route_result.dart';
 class BRouterService {
   static String baseUrl = kIsWeb
       ? '/brouter'
-      : 'https://bikerouter.thomas-peterson.de/brouter';
+      : 'https://wegwiesel.app/brouter';
 
   static Future<RouteResult> calculateRoute({
     required List<List<double>> waypoints,

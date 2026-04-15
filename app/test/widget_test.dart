@@ -3,7 +3,7 @@ import 'package:bikerouter/main.dart';
 
 void main() {
   testWidgets('App starts', (WidgetTester tester) async {
-    await tester.pumpWidget(const BikeRouterApp());
-    expect(find.byType(BikeRouterApp), findsOneWidget);
+    await tester.pumpWidget(const WegwieselApp());
+    expect(find.byType(WegwieselApp), findsOneWidget);
   });
 }

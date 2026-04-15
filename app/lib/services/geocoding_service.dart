@@ -34,7 +34,7 @@ class GeocodingService {
     );
 
     final response = await http.get(uri, headers: {
-      'User-Agent': 'BikeRouter/1.0 (bikerouter.thomas-peterson.de)',
+      'User-Agent': 'Wegwiesel/1.0 (wegwiesel.app)',
     });
 
     if (response.statusCode != 200) return [];

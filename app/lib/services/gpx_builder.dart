@@ -6,7 +6,7 @@ class GpxBuilder {
     required RouteResult route,
     required String trackName,
     required List<RoutePoi> pois,
-    String creator = 'BikeRouter (bikerouter.thomas-peterson.de)',
+    String creator = 'Wegwiesel (wegwiesel.app)',
   }) {
     final buf = StringBuffer();
     final now = DateTime.now().toUtc().toIso8601String();
