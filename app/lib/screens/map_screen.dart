@@ -223,28 +223,32 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _showProfileSheet(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _profileLabel(),
-                          style: const TextStyle(color: Color(0xFF4fc3f7), fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.expand_more, color: Color(0xFF4fc3f7), size: 18),
-                      ],
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _showProfileSheet(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _profileLabel(),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Color(0xFF4fc3f7), fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.expand_more, color: Color(0xFF4fc3f7), size: 18),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 // Map style button
                 GestureDetector(
                   onTap: () => _showMapStyleSheet(context),
@@ -255,61 +259,6 @@ class _MapScreenState extends State<MapScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.layers, color: Color(0xFF4fc3f7), size: 20),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Search button
-                GestureDetector(
-                  onTap: () => _searchAddress(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.search, color: Color(0xFF4fc3f7), size: 20),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Menu button
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Color(0xFF4fc3f7), size: 20),
-                    color: const Color(0xFF1a1a2e),
-                    padding: EdgeInsets.zero,
-                    onSelected: _onMenuSelected,
-                    itemBuilder: (ctx) => [
-                      PopupMenuItem(
-                        value: 'save',
-                        enabled: _route != null,
-                        child: const Row(children: [
-                          Icon(Icons.bookmark_add_outlined, color: Color(0xFF4fc3f7), size: 20),
-                          SizedBox(width: 12),
-                          Text('Route speichern', style: TextStyle(color: Colors.white)),
-                        ]),
-                      ),
-                      const PopupMenuItem(
-                        value: 'load',
-                        child: Row(children: [
-                          Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
-                          SizedBox(width: 12),
-                          Text('Gespeicherte Routen', style: TextStyle(color: Colors.white)),
-                        ]),
-                      ),
-                      const PopupMenuDivider(),
-                      const PopupMenuItem(
-                        value: 'settings',
-                        child: Row(children: [
-                          Icon(Icons.settings_outlined, color: Color(0xFF4fc3f7), size: 20),
-                          SizedBox(width: 12),
-                          Text('Einstellungen', style: TextStyle(color: Colors.white)),
-                        ]),
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -377,6 +326,9 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Search button
+                _fab(Icons.search, () => _searchAddress(context)),
+                const SizedBox(height: 8),
                 // GPS location button
                 _fab(
                   _locatingUser ? Icons.hourglass_top : Icons.my_location,
@@ -395,6 +347,62 @@ class _MapScreenState extends State<MapScreen> {
                 if (_waypoints.isNotEmpty)
                   _fab(Icons.delete_outline, _clearAll),
               ],
+            ),
+          ),
+
+          // Menu button (bottom left, aligned with search at top of right stack)
+          Positioned(
+            left: 12,
+            bottom: (_route != null ? (_showElevation ? 210 : 50) : 0) +
+                bottomPadding +
+                12 +
+                56 + // SizedBox(8) + GPS(40) + SizedBox(8)
+                (_route != null ? 96 : 0) + // Export(40) + SB(8) + Elev(40) + SB(8)
+                (_waypoints.isNotEmpty ? 40 : 0), // Clear(40)
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Material(
+                color: const Color(0xFF222244),
+                shape: const CircleBorder(),
+                elevation: 6,
+                child: PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Color(0xFF4fc3f7), size: 20),
+                  iconSize: 20,
+                  color: const Color(0xFF1a1a2e),
+                  padding: EdgeInsets.zero,
+                  tooltip: '',
+                  onSelected: _onMenuSelected,
+                  itemBuilder: (ctx) => [
+                    PopupMenuItem(
+                      value: 'save',
+                      enabled: _route != null,
+                      child: const Row(children: [
+                        Icon(Icons.bookmark_add_outlined, color: Color(0xFF4fc3f7), size: 20),
+                        SizedBox(width: 12),
+                        Text('Route speichern', style: TextStyle(color: Colors.white)),
+                      ]),
+                    ),
+                    const PopupMenuItem(
+                      value: 'load',
+                      child: Row(children: [
+                        Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
+                        SizedBox(width: 12),
+                        Text('Gespeicherte Routen', style: TextStyle(color: Colors.white)),
+                      ]),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: 'settings',
+                      child: Row(children: [
+                        Icon(Icons.settings_outlined, color: Color(0xFF4fc3f7), size: 20),
+                        SizedBox(width: 12),
+                        Text('Einstellungen', style: TextStyle(color: Colors.white)),
+                      ]),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
