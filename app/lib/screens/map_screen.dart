@@ -309,7 +309,8 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
               ),),
-              if (_route != null) StatsBar(route: _route!),
+              if (_route != null)
+                StatsBar(route: _route!, actions: _buildStatsActions()),
               if (_route != null && _showElevation && _route!.segments.isNotEmpty)
                 SurfaceChart(
                   segments: _route!.segments,
@@ -445,8 +446,8 @@ class _MapScreenState extends State<MapScreen> {
             right: 12,
             bottom: (_route != null
                     ? (_showElevation
-                        ? 210 + (_route!.segments.isNotEmpty ? 90 : 0)
-                        : 50)
+                        ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
+                        : 94)
                     : 0) +
                 bottomPadding +
                 12,
@@ -462,51 +463,7 @@ class _MapScreenState extends State<MapScreen> {
                   _locateUser,
                 ),
                 const SizedBox(height: 8),
-                if (_activeOverlays.isNotEmpty) ...[
-                  _fab(
-                    _loadingRouteInfo
-                        ? Icons.hourglass_top
-                        : (_routeInspectMode ? Icons.close : Icons.info_outline),
-                    () {
-                      setState(() => _routeInspectMode = !_routeInspectMode);
-                      if (_routeInspectMode) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Tippe auf eine Route, um Info zu sehen'),
-                          duration: Duration(seconds: 3),
-                        ));
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                ],
                 if (_route != null) ...[
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _fabSmall(Icons.tune, () => _showSightFilterSheet(context)),
-                      const SizedBox(width: 6),
-                      _fab(
-                        _loadingSights
-                            ? Icons.hourglass_top
-                            : (_sights.isEmpty ? Icons.explore_outlined : Icons.explore_off_outlined),
-                        _toggleSights,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  _fab(Icons.cloud_outlined, _showWeather),
-                  const SizedBox(height: 8),
-                  _fab(Icons.bed_outlined, _showAccommodation),
-                  const SizedBox(height: 8),
-                  _fab(
-                    _stages.isEmpty ? Icons.date_range : Icons.event_available,
-                    _showStagesPlanner,
-                  ),
-                  const SizedBox(height: 8),
-                  _fab(Icons.share, _shareRoute),
-                  const SizedBox(height: 8),
-                  _fab(Icons.file_download, _exportGpx),
-                  const SizedBox(height: 8),
                   _fab(
                     _showElevation ? Icons.expand_more : Icons.expand_less,
                     () => setState(() => _showElevation = !_showElevation),
@@ -1043,20 +1000,65 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _fabSmall(IconData icon, VoidCallback onTap) {
-    return SizedBox(
-      width: 32, height: 32,
-      child: Material(
-        color: const Color(0xFF222244),
-        shape: const CircleBorder(),
-        elevation: 4,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Icon(icon, color: const Color(0xFF4fc3f7), size: 16),
-        ),
+  List<StatsAction> _buildStatsActions() {
+    final actions = <StatsAction>[
+      StatsAction(
+        icon: _sights.isEmpty ? Icons.explore_outlined : Icons.explore_off_outlined,
+        label: _sights.isEmpty ? 'Sights' : 'Sights aus',
+        loading: _loadingSights,
+        active: _sights.isNotEmpty,
+        onTap: _toggleSights,
       ),
-    );
+      StatsAction(
+        icon: Icons.tune,
+        label: 'Filter',
+        onTap: () => _showSightFilterSheet(context),
+      ),
+      StatsAction(
+        icon: Icons.cloud_outlined,
+        label: 'Wetter',
+        onTap: _showWeather,
+      ),
+      StatsAction(
+        icon: Icons.bed_outlined,
+        label: 'Unterkunft',
+        onTap: _showAccommodation,
+      ),
+      StatsAction(
+        icon: _stages.isEmpty ? Icons.date_range : Icons.event_available,
+        label: 'Etappen',
+        active: _stages.isNotEmpty,
+        onTap: _showStagesPlanner,
+      ),
+      StatsAction(
+        icon: Icons.share,
+        label: 'Teilen',
+        onTap: _shareRoute,
+      ),
+      StatsAction(
+        icon: Icons.file_download,
+        label: 'GPX',
+        onTap: _exportGpx,
+      ),
+    ];
+    if (_activeOverlays.isNotEmpty) {
+      actions.add(StatsAction(
+        icon: _routeInspectMode ? Icons.close : Icons.info_outline,
+        label: 'Info',
+        loading: _loadingRouteInfo,
+        active: _routeInspectMode,
+        onTap: () {
+          setState(() => _routeInspectMode = !_routeInspectMode);
+          if (_routeInspectMode) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Tippe auf eine Route, um Info zu sehen'),
+              duration: Duration(seconds: 3),
+            ));
+          }
+        },
+      ));
+    }
+    return actions;
   }
 
   double get _hoverThreshold =>
