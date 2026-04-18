@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -11,16 +12,25 @@ import '../models/map_style.dart';
 import '../models/osm_sight.dart';
 import '../models/profile.dart';
 import '../models/route_result.dart';
+import '../models/route_segment.dart';
 import '../models/route_poi.dart';
 import '../models/saved_route.dart';
 import '../services/brouter_service.dart';
 import '../services/gpx_builder.dart';
 import '../services/route_storage.dart';
+import '../services/geocoding_service.dart';
+import '../services/route_share.dart';
+import '../services/share_url.dart';
 import '../services/sights_service.dart';
 import '../services/sight_prefs.dart';
 import '../services/route_info_service.dart';
 import '../widgets/elevation_chart.dart';
+import '../services/stage_planner.dart';
+import '../widgets/accommodation_sheet.dart';
+import '../widgets/stages_sheet.dart';
+import '../widgets/surface_chart.dart';
 import '../widgets/stats_bar.dart';
+import '../widgets/weather_sheet.dart';
 import '../widgets/profile_selector.dart';
 import '../widgets/roundtrip_panel.dart';
 import '../widgets/address_search.dart';
@@ -50,7 +60,8 @@ class _MapScreenState extends State<MapScreen> {
   int? _highlightIndex;
   LatLng? _currentPosition;
   bool _locatingUser = false;
-  final bool _gradientRoute = true;
+  // 'surface' colors the route by OSM surface tags, 'gradient' by elevation slope.
+  String _routeVizMode = 'surface';
   int? _draggingWaypointIndex;
   int? _hoveredWaypointIndex; // Waypoint near cursor
   int? _selectedWaypointIndex; // Tapped waypoint showing delete option
@@ -63,6 +74,26 @@ class _MapScreenState extends State<MapScreen> {
   Set<String> _activeOverlays = {};
   bool _routeInspectMode = false;
   bool _loadingRouteInfo = false;
+  RoundtripRequest? _lastRoundtripRequest;
+  List<Stage> _stages = [];
+  final Map<String, String> _waypointNames = {}; // key: "lat,lon" at 5 dp
+  final Set<String> _waypointNamesInflight = {};
+
+  String _wpKey(LatLng p) =>
+      '${p.latitude.toStringAsFixed(5)},${p.longitude.toStringAsFixed(5)}';
+
+  Future<void> _resolveWaypointName(LatLng p) async {
+    final key = _wpKey(p);
+    if (_waypointNames.containsKey(key) || _waypointNamesInflight.contains(key)) {
+      return;
+    }
+    _waypointNamesInflight.add(key);
+    final name = await GeocodingService.reverse(p.latitude, p.longitude);
+    _waypointNamesInflight.remove(key);
+    if (name != null && mounted) {
+      setState(() => _waypointNames[key] = name);
+    }
+  }
 
   @override
   void initState() {
@@ -73,7 +104,52 @@ class _MapScreenState extends State<MapScreen> {
     SharedPreferences.getInstance().then((prefs) {
       final list = prefs.getStringList('active_route_overlays_v1');
       if (list != null && mounted) setState(() => _activeOverlays = list.toSet());
+      final mode = prefs.getString('route_viz_mode_v1');
+      if (mode != null && mounted) setState(() => _routeVizMode = mode);
     });
+    _tryLoadSharedRoute();
+  }
+
+  void _tryLoadSharedRoute() {
+    final param = readShareParam();
+    if (param == null || param.isEmpty) return;
+    final shared = SharedRoute.decode(param);
+    if (shared == null) return;
+    final pts = shared.waypoints.map((p) => LatLng(p[0], p[1])).toList();
+    setState(() {
+      _waypoints
+        ..clear()
+        ..addAll(pts);
+      _profile = shared.profile;
+      _roundtripMode = shared.roundtrip;
+      if (shared.roundtripDistanceKm != null) {
+        _rtDistanceKm = shared.roundtripDistanceKm!;
+      }
+      if (shared.roundtripDirection != null) {
+        _rtDirection = shared.roundtripDirection!;
+      }
+    });
+    for (final wp in pts) {
+      _resolveWaypointName(wp);
+    }
+    if (pts.isNotEmpty) {
+      final bounds = LatLngBounds.fromPoints(pts);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mapController.fitCamera(CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(60),
+        ));
+      });
+    }
+    if (_roundtripMode && pts.isNotEmpty) {
+      _calculateRoundtrip(RoundtripRequest(
+        distanceKm: _rtDistanceKm,
+        useTime: false,
+        timeMinutes: 0,
+      ));
+    } else if (pts.length >= 2) {
+      _calculateRoute();
+    }
   }
 
   Future<void> _saveOverlayPrefs() async {
@@ -140,7 +216,9 @@ class _MapScreenState extends State<MapScreen> {
                         userAgentPackageName: 'app.wegwiesel',
                       ),
                     if (_routePoints.isNotEmpty) ...[
-                      if (_gradientRoute && _route != null)
+                      if (_route != null && _routeVizMode == 'surface' && _route!.segments.isNotEmpty)
+                        PolylineLayer(polylines: _buildSurfacePolylines())
+                      else if (_route != null && _routeVizMode == 'gradient')
                         PolylineLayer(polylines: _buildGradientPolylines())
                       else
                         PolylineLayer(
@@ -222,6 +300,8 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     if (_sights.isNotEmpty)
                       MarkerLayer(markers: _buildSightMarkers()),
+                    if (_stages.isNotEmpty)
+                      MarkerLayer(markers: _buildStageMarkers()),
                     if (_waypoints.isNotEmpty)
                       MarkerLayer(markers: _buildMarkers()),
                     if (_pois.isNotEmpty)
@@ -230,6 +310,12 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),),
               if (_route != null) StatsBar(route: _route!),
+              if (_route != null && _showElevation && _route!.segments.isNotEmpty)
+                SurfaceChart(
+                  segments: _route!.segments,
+                  totalDistanceKm: _route!.distance,
+                  onHover: (index) => setState(() => _highlightIndex = index),
+                ),
               if (_route != null && _showElevation)
                 ElevationChart(
                   coordinates: _route!.coordinates,
@@ -357,7 +443,11 @@ class _MapScreenState extends State<MapScreen> {
           // Action buttons
           Positioned(
             right: 12,
-            bottom: (_route != null ? (_showElevation ? 210 : 50) : 0) +
+            bottom: (_route != null
+                    ? (_showElevation
+                        ? 210 + (_route!.segments.isNotEmpty ? 90 : 0)
+                        : 50)
+                    : 0) +
                 bottomPadding +
                 12,
             child: Column(
@@ -403,6 +493,17 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  _fab(Icons.cloud_outlined, _showWeather),
+                  const SizedBox(height: 8),
+                  _fab(Icons.bed_outlined, _showAccommodation),
+                  const SizedBox(height: 8),
+                  _fab(
+                    _stages.isEmpty ? Icons.date_range : Icons.event_available,
+                    _showStagesPlanner,
+                  ),
+                  const SizedBox(height: 8),
+                  _fab(Icons.share, _shareRoute),
                   const SizedBox(height: 8),
                   _fab(Icons.file_download, _exportGpx),
                   const SizedBox(height: 8),
@@ -499,6 +600,35 @@ class _MapScreenState extends State<MapScreen> {
           LatLng(coords[i + 1][1], coords[i + 1][0]),
         ],
         color: _gradientColor(gradient),
+        strokeWidth: 5,
+      ));
+    }
+    return polylines;
+  }
+
+  List<Polyline> _buildSurfacePolylines() {
+    final route = _route!;
+    final coords = route.coordinates;
+    if (coords.length < 2 || route.segments.isEmpty) return [];
+
+    final polylines = <Polyline>[
+      Polyline(
+        points: _routePoints,
+        color: Colors.black.withValues(alpha: 0.3),
+        strokeWidth: 8,
+      ),
+    ];
+
+    for (final seg in route.segments) {
+      final end = seg.endCoordIdx.clamp(seg.startCoordIdx + 1, coords.length - 1);
+      final pts = <LatLng>[
+        for (int i = seg.startCoordIdx; i <= end; i++)
+          LatLng(coords[i][1], coords[i][0]),
+      ];
+      if (pts.length < 2) continue;
+      polylines.add(Polyline(
+        points: pts,
+        color: seg.category.color,
         strokeWidth: 5,
       ));
     }
@@ -636,6 +766,7 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _waypoints.add(latLng);
     });
+    _waypointNames[_wpKey(latLng)] = result.displayName.split(',').take(2).join(',').trim();
     if (!_roundtripMode && _waypoints.length >= 2) {
       _calculateRoute();
     }
@@ -716,6 +847,37 @@ class _MapScreenState extends State<MapScreen> {
                 _saveOverlayPrefs();
               },
             )),
+            const Divider(color: Colors.white24, height: 24),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 4),
+              child: Text(
+                'Routen-Färbung',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            for (final entry in const [
+              ['surface', 'Beschaffenheit', '🛣️'],
+              ['gradient', 'Steigung', '📈'],
+            ])
+              ListTile(
+                dense: true,
+                leading: Text(entry[2], style: const TextStyle(fontSize: 18)),
+                title: Text(entry[1], style: const TextStyle(color: Colors.white)),
+                selected: _routeVizMode == entry[0],
+                selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () {
+                  setSheetState(() => _routeVizMode = entry[0]);
+                  setState(() {});
+                  SharedPreferences.getInstance()
+                      .then((p) => p.setString('route_viz_mode_v1', entry[0]));
+                },
+              ),
           ],
         ),
       ),
@@ -764,6 +926,7 @@ class _MapScreenState extends State<MapScreen> {
       }
 
       final label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
+      final wpName = _waypointNames[_wpKey(wp)];
 
       markers.add(Marker(
         point: wp,
@@ -804,32 +967,37 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
               )
-            : Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  color: (isDragging || isHovered) ? color : color.withValues(alpha: isAnchor ? 0.7 : 1.0),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: isDragging ? 3 : (isHovered ? 2.5 : isAnchor ? 1.5 : 2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isDragging || isHovered) ? color.withValues(alpha: 0.5) : Colors.black26,
-                      blurRadius: isDragging ? 12 : (isHovered ? 8 : isAnchor ? 2 : 4),
-                    ),
-                  ],
-                ),
-                child: label.isNotEmpty
-                    ? Center(
-                        child: Text(
-                          label,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+            : Tooltip(
+                message: wpName ?? '',
+                triggerMode: TooltipTriggerMode.tap,
+                preferBelow: false,
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: (isDragging || isHovered) ? color : color.withValues(alpha: isAnchor ? 0.7 : 1.0),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: isDragging ? 3 : (isHovered ? 2.5 : isAnchor ? 1.5 : 2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isDragging || isHovered) ? color.withValues(alpha: 0.5) : Colors.black26,
+                        blurRadius: isDragging ? 12 : (isHovered ? 8 : isAnchor ? 2 : 4),
+                      ),
+                    ],
+                  ),
+                  child: label.isNotEmpty
+                      ? Center(
+                          child: Text(
+                            label,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      )
-                    : null,
+                        )
+                      : null,
+                ),
               ),
       ));
     }
@@ -965,6 +1133,7 @@ class _MapScreenState extends State<MapScreen> {
 
     if (_roundtripMode && _waypoints.isEmpty) {
       setState(() => _waypoints.add(latLng));
+      _resolveWaypointName(latLng);
       return;
     }
 
@@ -988,6 +1157,7 @@ class _MapScreenState extends State<MapScreen> {
     if (_roundtripMode && _route != null) return;
 
     setState(() => _waypoints.add(latLng));
+    _resolveWaypointName(latLng);
     if (!_roundtripMode && _waypoints.length >= 2) {
       _calculateRoute();
     }
@@ -1004,6 +1174,7 @@ class _MapScreenState extends State<MapScreen> {
       _routeHoverPoint = null;
       _draggingWaypointIndex = insertIdx;
     });
+    _resolveWaypointName(point);
   }
 
   void _onMapLongPress(LatLng latLng) {
@@ -1952,7 +2123,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _addWaypointFromSight(OsmSight s) {
-    setState(() => _waypoints.add(LatLng(s.lat, s.lon)));
+    final p = LatLng(s.lat, s.lon);
+    setState(() => _waypoints.add(p));
+    _waypointNames[_wpKey(p)] = s.name ?? s.subtypeLabel;
     _recalculate();
   }
 
@@ -2007,7 +2180,11 @@ class _MapScreenState extends State<MapScreen> {
 
   void _setProfile(String profile) {
     setState(() => _profile = profile);
-    if (!_roundtripMode && _waypoints.length >= 2) {
+    if (_roundtripMode) {
+      if (_lastRoundtripRequest != null && _waypoints.isNotEmpty) {
+        _calculateRoundtrip(_lastRoundtripRequest!);
+      }
+    } else if (_waypoints.length >= 2) {
       _calculateRoute();
     }
   }
@@ -2036,6 +2213,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _calculateRoundtrip(RoundtripRequest req) async {
     if (_loading || _waypoints.isEmpty) return;
+    _lastRoundtripRequest = req;
     setState(() => _loading = true);
 
     try {
@@ -2087,6 +2265,7 @@ class _MapScreenState extends State<MapScreen> {
       _showElevation = true;
       _highlightIndex = null;
       _sights = [];
+      _stages = [];
     });
 
     // In roundtrip mode with only start point, auto-generate anchor points
@@ -2213,9 +2392,110 @@ class _MapScreenState extends State<MapScreen> {
       _pois.clear();
       _pois.addAll(r.pois);
     });
+    for (final wp in _waypoints) {
+      _resolveWaypointName(wp);
+    }
     if (_waypoints.length >= 2) {
       await _calculateRoute();
     }
+  }
+
+  void _showWeather() {
+    if (_route == null) return;
+    final speed = BikeProfile.byId(_profile)?.avgSpeedKmh ?? 20;
+    showWeatherSheet(
+      context,
+      coordinates: _route!.coordinates,
+      avgSpeedKmh: speed.toDouble(),
+    );
+  }
+
+  Future<void> _showStagesPlanner() async {
+    if (_route == null) return;
+    final result = await showStagesSheet(
+      context,
+      coordinates: _route!.coordinates,
+      totalDistanceKm: _route!.distance,
+    );
+    if (result == null || !mounted) return;
+    setState(() => _stages = result.stages);
+  }
+
+  List<Marker> _buildStageMarkers() {
+    final markers = <Marker>[];
+    for (final s in _stages) {
+      // Don't mark the final arrival (same as end waypoint)
+      if (s.index == _stages.length && _stages.length > 1) continue;
+      markers.add(Marker(
+        point: LatLng(s.lat, s.lon),
+        width: 30,
+        height: 30,
+        alignment: Alignment.center,
+        child: Tooltip(
+          message: s.townName ?? 'Etappe ${s.index}: ${s.lengthKm.toStringAsFixed(0)} km',
+          triggerMode: TooltipTriggerMode.tap,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFffb74d),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+            ),
+            child: Center(
+              child: Text(
+                '${s.index}',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ));
+    }
+    return markers;
+  }
+
+  Future<void> _showAccommodation() async {
+    if (_waypoints.isEmpty) return;
+    final last = _roundtripMode ? _waypoints.first : _waypoints.last;
+    final key = _wpKey(last);
+    final label = _waypointNames[key] ?? 'Zielpunkt';
+    final a = await showAccommodationSheet(
+      context,
+      lat: last.latitude,
+      lon: last.longitude,
+      anchorLabel: label,
+    );
+    if (a == null || !mounted) return;
+    final p = LatLng(a.lat, a.lon);
+    _mapController.move(p, 15);
+    setState(() {
+      _waypoints.add(p);
+      _waypointNames[_wpKey(p)] = a.name ?? a.typeLabel;
+    });
+    if (_roundtripMode) _exitRoundtripMode();
+    _recalculate();
+  }
+
+  Future<void> _shareRoute() async {
+    if (_waypoints.isEmpty) return;
+    final shared = SharedRoute(
+      waypoints: _waypoints.map((w) => [w.latitude, w.longitude]).toList(),
+      profile: _profile,
+      roundtrip: _roundtripMode,
+      roundtripDistanceKm: _roundtripMode ? _rtDistanceKm : null,
+      roundtripDirection: _roundtripMode ? _rtDirection : null,
+    );
+    final url = shared.toUrl(base: currentBaseUrl());
+    updateShareParam(shared.encode());
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Link in die Zwischenablage kopiert')),
+    );
   }
 
   Future<void> _exportGpx() async {
