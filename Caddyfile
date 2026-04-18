@@ -4,6 +4,11 @@ wegwiesel.app {
 		reverse_proxy brouter:17777
 	}
 
+	# Overpass API (eigener Server)
+	handle_path /overpass/* {
+		reverse_proxy overpass:80
+	}
+
 	# Flutter Web App
 	handle {
 		root * /srv/web
@@ -15,15 +20,4 @@ wegwiesel.app {
 # Redirects auf Hauptdomain
 wegwiesel.de, www.wegwiesel.de, wegwiesel.com, www.wegwiesel.com, www.wegwiesel.app {
 	redir https://wegwiesel.app{uri} permanent
-}
-
-# Alte Domain: API weiterhin erreichbar (für bereits installierte App-Versionen),
-# Webseite leitet auf neue Domain um
-bikerouter.thomas-peterson.de {
-	handle /brouter* {
-		reverse_proxy brouter:17777
-	}
-	handle {
-		redir https://wegwiesel.app{uri} permanent
-	}
 }

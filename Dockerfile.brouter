@@ -3,7 +3,7 @@ WORKDIR /tmp/brouter
 RUN git clone --depth 1 --branch v1.7.8 https://github.com/abrensch/brouter.git .
 RUN ./gradlew clean build -x test
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /brouter
 COPY --from=build /tmp/brouter/brouter-server/build/libs/brouter-*-all.jar /brouter/brouter.jar
 COPY --from=build /tmp/brouter/misc/profiles2 /brouter/profiles2

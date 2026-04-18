@@ -4,11 +4,29 @@ services:
       context: .
       dockerfile: Dockerfile.brouter
     volumes:
-      - ./segments4:/segments4
-      - ./customprofiles:/brouter/customprofiles
+      - /opt/wegwiesel/segments4:/segments4
+      - /opt/wegwiesel/customprofiles:/brouter/customprofiles
     restart: unless-stopped
     expose:
       - "17777"
+
+  overpass:
+    image: wiktorn/overpass-api
+    environment:
+      OVERPASS_META: "yes"
+      OVERPASS_MODE: "init"
+      OVERPASS_PLANET_URL: "file:///planet/germany-latest.osm.pbf"
+      OVERPASS_PLANET_PREPROCESS: 'mv /db/planet.osm.bz2 /db/planet.osm.pbf && osmium cat -F osm.pbf -f osm.bz2 -o /db/planet.osm.bz2 /db/planet.osm.pbf && rm /db/planet.osm.pbf'
+      OVERPASS_DIFF_URL: "https://download.geofabrik.de/europe/germany-updates/"
+      OVERPASS_FLUSH_SIZE: 4
+      OVERPASS_RULES_LOAD: 10
+      OVERPASS_UPDATE_SLEEP: 3600
+    volumes:
+      - /opt/wegwiesel/overpass_db:/db
+      - /opt/wegwiesel/pbf:/planet:ro
+    restart: unless-stopped
+    expose:
+      - "80"
 
   caddy:
     image: caddy:2-alpine
@@ -17,12 +35,13 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./web:/srv/web:ro
+      - /opt/wegwiesel/app:/srv/web:ro
       - caddy_data:/data
       - caddy_config:/config
     restart: unless-stopped
     depends_on:
       - brouter
+      - overpass
 
 volumes:
   caddy_data:

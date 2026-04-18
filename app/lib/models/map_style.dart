@@ -18,6 +18,41 @@ class MapStyle {
   });
 }
 
+class RouteOverlay {
+  final String id;
+  final String name;
+  final String icon;
+  final String urlTemplate;
+
+  const RouteOverlay({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.urlTemplate,
+  });
+}
+
+const routeOverlays = [
+  RouteOverlay(
+    id: 'cycling',
+    name: 'Radrouten',
+    icon: '🚴',
+    urlTemplate: 'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png',
+  ),
+  RouteOverlay(
+    id: 'hiking',
+    name: 'Wanderwege',
+    icon: '🥾',
+    urlTemplate: 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',
+  ),
+  RouteOverlay(
+    id: 'mtb',
+    name: 'MTB-Routen',
+    icon: '⛰️',
+    urlTemplate: 'https://tile.waymarkedtrails.org/mtb/{z}/{x}/{y}.png',
+  ),
+];
+
 const mapStyles = [
   MapStyle(
     id: 'osm',

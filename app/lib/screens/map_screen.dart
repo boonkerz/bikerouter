@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/gpx_export.dart';
 
 import '../models/map_style.dart';
+import '../models/osm_sight.dart';
 import '../models/profile.dart';
 import '../models/route_result.dart';
 import '../models/route_poi.dart';
@@ -13,6 +16,9 @@ import '../models/saved_route.dart';
 import '../services/brouter_service.dart';
 import '../services/gpx_builder.dart';
 import '../services/route_storage.dart';
+import '../services/sights_service.dart';
+import '../services/sight_prefs.dart';
+import '../services/route_info_service.dart';
 import '../widgets/elevation_chart.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/profile_selector.dart';
@@ -51,6 +57,29 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _routeHoverPoint; // Preview point when hovering near route
   final Set<int> _anchorIndices = {}; // Anchor points for roundtrip shape
   final List<RoutePoi> _pois = [];
+  List<OsmSight> _sights = [];
+  bool _loadingSights = false;
+  Set<String> _enabledSightTypes = allSightTypes;
+  Set<String> _activeOverlays = {};
+  bool _routeInspectMode = false;
+  bool _loadingRouteInfo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SightPrefs.load().then((v) {
+      if (mounted) setState(() => _enabledSightTypes = v);
+    });
+    SharedPreferences.getInstance().then((prefs) {
+      final list = prefs.getStringList('active_route_overlays_v1');
+      if (list != null && mounted) setState(() => _activeOverlays = list.toSet());
+    });
+  }
+
+  Future<void> _saveOverlayPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('active_route_overlays_v1', _activeOverlays.toList());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +131,12 @@ class _MapScreenState extends State<MapScreen> {
                       TileLayer(
                         urlTemplate: _mapStyle.labelsOverlay!,
                         maxZoom: _mapStyle.maxZoom.toDouble(),
+                        userAgentPackageName: 'app.wegwiesel',
+                      ),
+                    for (final ov in routeOverlays.where((o) => _activeOverlays.contains(o.id)))
+                      TileLayer(
+                        urlTemplate: ov.urlTemplate,
+                        maxZoom: 18,
                         userAgentPackageName: 'app.wegwiesel',
                       ),
                     if (_routePoints.isNotEmpty) ...[
@@ -185,6 +220,8 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ],
                       ),
+                    if (_sights.isNotEmpty)
+                      MarkerLayer(markers: _buildSightMarkers()),
                     if (_waypoints.isNotEmpty)
                       MarkerLayer(markers: _buildMarkers()),
                     if (_pois.isNotEmpty)
@@ -335,7 +372,38 @@ class _MapScreenState extends State<MapScreen> {
                   _locateUser,
                 ),
                 const SizedBox(height: 8),
+                if (_activeOverlays.isNotEmpty) ...[
+                  _fab(
+                    _loadingRouteInfo
+                        ? Icons.hourglass_top
+                        : (_routeInspectMode ? Icons.close : Icons.info_outline),
+                    () {
+                      setState(() => _routeInspectMode = !_routeInspectMode);
+                      if (_routeInspectMode) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Tippe auf eine Route, um Info zu sehen'),
+                          duration: Duration(seconds: 3),
+                        ));
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 if (_route != null) ...[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _fabSmall(Icons.tune, () => _showSightFilterSheet(context)),
+                      const SizedBox(width: 6),
+                      _fab(
+                        _loadingSights
+                            ? Icons.hourglass_top
+                            : (_sights.isEmpty ? Icons.explore_outlined : Icons.explore_off_outlined),
+                        _toggleSights,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   _fab(Icons.file_download, _exportGpx),
                   const SizedBox(height: 8),
                   _fab(
@@ -350,15 +418,10 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // Menu button (bottom left, aligned with search at top of right stack)
+          // Menu button (bottom left, fixed offset from bottom)
           Positioned(
             left: 12,
-            bottom: (_route != null ? (_showElevation ? 210 : 50) : 0) +
-                bottomPadding +
-                12 +
-                56 + // SizedBox(8) + GPS(40) + SizedBox(8)
-                (_route != null ? 96 : 0) + // Export(40) + SB(8) + Elev(40) + SB(8)
-                (_waypoints.isNotEmpty ? 40 : 0), // Clear(40)
+            bottom: bottomPadding + 12,
             child: SizedBox(
               width: 40,
               height: 40,
@@ -581,13 +644,7 @@ class _MapScreenState extends State<MapScreen> {
   // -- Helpers --
 
   String _profileLabel() {
-    const labels = {
-      'fastbike': 'Rennrad',
-      'fastbike-lowtraffic': 'Gravel',
-      'trekking': 'Trekking',
-      'mtb-zossebart': 'MTB',
-    };
-    return labels[_profile] ?? _profile;
+    return BikeProfile.byId(_profile)?.name ?? _profile;
   }
 
   void _showProfileSheet(BuildContext context) {
@@ -604,30 +661,63 @@ class _MapScreenState extends State<MapScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Center(
-            child: Text(
-              'Kartenstil',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(16),
+          children: [
+            const Center(
+              child: Text(
+                'Kartenstil',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          ...mapStyles.map((style) => ListTile(
-            dense: true,
-            leading: Text(style.icon, style: const TextStyle(fontSize: 18)),
-            title: Text(style.name, style: const TextStyle(color: Colors.white)),
-            selected: style.id == _mapStyle.id,
-            selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            onTap: () {
-              setState(() => _mapStyle = style);
-              Navigator.pop(ctx);
-            },
-          )),
-        ],
+            const SizedBox(height: 12),
+            ...mapStyles.map((style) => ListTile(
+              dense: true,
+              leading: Text(style.icon, style: const TextStyle(fontSize: 18)),
+              title: Text(style.name, style: const TextStyle(color: Colors.white)),
+              selected: style.id == _mapStyle.id,
+              selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              onTap: () {
+                setState(() => _mapStyle = style);
+                Navigator.pop(ctx);
+              },
+            )),
+            const Divider(color: Colors.white24, height: 24),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 4),
+              child: Text(
+                'Overlay-Routen',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            ...routeOverlays.map((ov) => SwitchListTile(
+              dense: true,
+              secondary: Text(ov.icon, style: const TextStyle(fontSize: 18)),
+              title: Text(ov.name, style: const TextStyle(color: Colors.white)),
+              value: _activeOverlays.contains(ov.id),
+              activeThumbColor: const Color(0xFF4fc3f7),
+              onChanged: (v) {
+                setSheetState(() {
+                  if (v) {
+                    _activeOverlays.add(ov.id);
+                  } else {
+                    _activeOverlays.remove(ov.id);
+                  }
+                });
+                setState(() {});
+                _saveOverlayPrefs();
+              },
+            )),
+          ],
+        ),
       ),
     );
   }
@@ -650,6 +740,10 @@ class _MapScreenState extends State<MapScreen> {
       final isHovered = _hoveredWaypointIndex == i;
       final isSelected = _selectedWaypointIndex == i;
       final canDelete = !isStart && _waypoints.length > 2;
+
+      // Hide anchor drag-handles unless actively interacted with — the route hover
+      // point already acts as a drag handle, so permanent anchors clutter the map.
+      if (isAnchor && !isDragging && !isHovered && !isSelected) continue;
 
       final Color color;
       if (isStart) {
@@ -781,6 +875,22 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Widget _fabSmall(IconData icon, VoidCallback onTap) {
+    return SizedBox(
+      width: 32, height: 32,
+      child: Material(
+        color: const Color(0xFF222244),
+        shape: const CircleBorder(),
+        elevation: 4,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Icon(icon, color: const Color(0xFF4fc3f7), size: 16),
+        ),
+      ),
+    );
+  }
+
   double get _hoverThreshold =>
       360.0 / (pow(2, _mapController.camera.zoom) * 256) * 25;
 
@@ -832,6 +942,11 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onMapTap(LatLng latLng) {
     if (_draggingWaypointIndex != null) return; // Drag handled by Listener
+
+    if (_routeInspectMode) {
+      _inspectRoutesAt(latLng);
+      return;
+    }
 
     // Check if tapping near a waypoint → select/deselect
     final nearWp = _findNearestWaypoint(latLng);
@@ -1124,6 +1239,723 @@ class _MapScreenState extends State<MapScreen> {
     }).toList();
   }
 
+  List<Marker> _buildSightMarkers() {
+    return _sights.map((s) {
+      return Marker(
+        point: LatLng(s.lat, s.lon),
+        width: 32,
+        height: 32,
+        child: Tooltip(
+          message: s.name != null ? '${s.name}\n${s.subtypeLabel}' : s.subtypeLabel,
+          waitDuration: const Duration(milliseconds: 200),
+          preferBelow: false,
+          child: GestureDetector(
+            onTap: () => _showSightInfo(s),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _sightColor(s.category),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+                ),
+                child: Icon(_sightIcon(s), color: Colors.white, size: 16),
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  Color _sightColor(String category) {
+    switch (category) {
+      case 'tourism':
+        return const Color(0xFFFF9800); // orange
+      case 'historic':
+        return const Color(0xFF8D6E63); // brown
+      case 'natural':
+        return const Color(0xFF43A047); // green
+      case 'shop':
+        return const Color(0xFFAB47BC); // purple
+      case 'amenity':
+        return const Color(0xFF26A69A); // teal
+      case 'railway':
+        return const Color(0xFF5C6BC0); // indigo
+      default:
+        return const Color(0xFF757575);
+    }
+  }
+
+  IconData _sightIcon(OsmSight s) {
+    switch (s.subtype) {
+      case 'viewpoint':
+        return Icons.visibility;
+      case 'museum':
+        return Icons.museum;
+      case 'artwork':
+        return Icons.palette;
+      case 'picnic_site':
+        return Icons.deck;
+      case 'information':
+        return Icons.info_outline;
+      case 'hotel':
+      case 'guest_house':
+      case 'hostel':
+        return Icons.hotel;
+      case 'camp_site':
+        return Icons.holiday_village;
+      case 'castle':
+        return Icons.castle;
+      case 'monument':
+      case 'memorial':
+        return Icons.account_balance;
+      case 'ruins':
+      case 'archaeological_site':
+        return Icons.history_edu;
+      case 'peak':
+        return Icons.terrain;
+      case 'waterfall':
+        return Icons.water_drop;
+      case 'cave_entrance':
+        return Icons.landscape;
+      case 'supermarket':
+        return Icons.shopping_cart;
+      case 'bakery':
+        return Icons.bakery_dining;
+      case 'convenience':
+        return Icons.local_convenience_store;
+      case 'bicycle':
+        return Icons.pedal_bike;
+      case 'restaurant':
+        return Icons.restaurant;
+      case 'cafe':
+        return Icons.local_cafe;
+      case 'fast_food':
+        return Icons.fastfood;
+      case 'biergarten':
+      case 'pub':
+        return Icons.sports_bar;
+      case 'drinking_water':
+        return Icons.water_drop;
+      case 'toilets':
+        return Icons.wc;
+      case 'pharmacy':
+        return Icons.local_pharmacy;
+      case 'atm':
+        return Icons.atm;
+      case 'bicycle_repair_station':
+        return Icons.build;
+      case 'bicycle_rental':
+        return Icons.pedal_bike;
+      case 'charging_station':
+        return Icons.ev_station;
+      case 'station':
+      case 'halt':
+        return Icons.train;
+      case 'tram_stop':
+        return Icons.tram;
+      default:
+        return Icons.place;
+    }
+  }
+
+  void _showSightFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          void toggle(String key, bool? v) {
+            setSheetState(() {
+              if (v == true) {
+                _enabledSightTypes.add(key);
+              } else {
+                _enabledSightTypes.remove(key);
+              }
+            });
+            setState(() {});
+            SightPrefs.save(_enabledSightTypes);
+          }
+
+          void toggleCategory(String cat, bool enable) {
+            setSheetState(() {
+              for (final sub in sightTypes[cat]!.keys) {
+                final key = '$cat:$sub';
+                if (enable) {
+                  _enabledSightTypes.add(key);
+                } else {
+                  _enabledSightTypes.remove(key);
+                }
+              }
+            });
+            setState(() {});
+            SightPrefs.save(_enabledSightTypes);
+          }
+
+          return DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (ctx, scrollCtrl) => ListView(
+              controller: scrollCtrl,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Center(
+                  child: Text('POI-Typen',
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(height: 12),
+                for (final cat in sightTypes.keys) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10, height: 10,
+                          decoration: BoxDecoration(color: _sightColor(cat), shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            sightCategoryLabels[cat] ?? cat,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            final allOn = sightTypes[cat]!.keys.every((s) => _enabledSightTypes.contains('$cat:$s'));
+                            toggleCategory(cat, !allOn);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF4fc3f7),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: const Size(0, 28),
+                          ),
+                          child: Text(
+                            sightTypes[cat]!.keys.every((s) => _enabledSightTypes.contains('$cat:$s'))
+                                ? 'Keine' : 'Alle',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  for (final entry in sightTypes[cat]!.entries)
+                    CheckboxListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: _enabledSightTypes.contains('$cat:${entry.key}'),
+                      onChanged: (v) => toggle('$cat:${entry.key}', v),
+                      activeColor: const Color(0xFF4fc3f7),
+                      checkColor: Colors.black,
+                      title: Text(entry.value, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    ).then((_) {
+      if (_sights.isNotEmpty && _route != null) _refetchSights();
+    });
+  }
+
+  Future<void> _inspectRoutesAt(LatLng latLng) async {
+    if (_loadingRouteInfo) return;
+    setState(() => _loadingRouteInfo = true);
+    try {
+      final routes = await RouteInfoService.fetchAtPoint(
+        latLng.latitude,
+        latLng.longitude,
+      );
+      if (!mounted) return;
+      setState(() {
+        _routeInspectMode = false;
+        _loadingRouteInfo = false;
+      });
+      if (routes.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Keine Route an dieser Stelle gefunden'),
+          duration: Duration(seconds: 2),
+        ));
+        return;
+      }
+      if (routes.length == 1) {
+        _showRouteInfoSheet(routes.first);
+      } else {
+        _showRoutesListSheet(routes);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingRouteInfo = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Overpass-Fehler: $e'),
+          backgroundColor: Colors.red.shade700,
+        ));
+      }
+    }
+  }
+
+  void _showRoutesListSheet(List<OsmRouteInfo> routes) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: routes.length > 3 ? 0.5 : 0.35,
+        minChildSize: 0.25,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollCtrl) => ListView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '${routes.length} Route${routes.length == 1 ? '' : 'n'} hier',
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            for (final r in routes)
+              ListTile(
+                dense: true,
+                leading: Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(color: _routeColor(r), shape: BoxShape.circle),
+                  child: Icon(_routeIcon(r), color: Colors.white, size: 18),
+                ),
+                title: Text(r.displayName, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                subtitle: Text(
+                  [r.typeLabel, if (r.network != null) r.networkLabel].join(' · '),
+                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showRouteInfoSheet(r);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRouteInfoSheet(OsmRouteInfo r) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollCtrl) => ListView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: _buildRouteSheetChildren(ctx, r),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildRouteSheetChildren(BuildContext ctx, OsmRouteInfo r) {
+    Widget row(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 16, color: const Color(0xFF4fc3f7)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13))),
+            ],
+          ),
+        );
+
+    return [
+      Center(
+        child: Container(
+          width: 40, height: 4,
+          decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+        ),
+      ),
+      const SizedBox(height: 12),
+      Row(
+        children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(color: _routeColor(r), shape: BoxShape.circle),
+            child: Icon(_routeIcon(r), color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(r.displayName,
+                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
+                Text(
+                  [r.typeLabel, if (r.network != null) r.networkLabel].join(' · '),
+                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      if (r.description != null) ...[
+        const SizedBox(height: 12),
+        Text(r.description!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+      ],
+      const SizedBox(height: 12),
+      if (r.from != null || r.to != null)
+        row(Icons.swap_horiz, '${r.from ?? '?'} → ${r.to ?? '?'}'),
+      if (r.distance != null) row(Icons.straighten, '${r.distance} km'),
+      if (r.operator != null) row(Icons.business, r.operator!),
+      if (r.ref != null && r.name != null) row(Icons.tag, r.ref!),
+      if (r.symbol != null) row(Icons.label_outline, r.symbol!),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          if (r.wikipedia != null)
+            TextButton.icon(
+              icon: const Icon(Icons.public, size: 18),
+              label: const Text('Wikipedia'),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openWikipedia(r.wikipedia!);
+              },
+            ),
+          if (r.website != null)
+            TextButton.icon(
+              icon: const Icon(Icons.language, size: 18),
+              label: const Text('Website'),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openUrl(r.website!);
+              },
+            ),
+          TextButton.icon(
+            icon: const Icon(Icons.open_in_new, size: 18),
+            label: const Text('OSM-Relation'),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _openUrl('https://www.openstreetmap.org/relation/${r.id}');
+            },
+          ),
+        ],
+      ),
+    ];
+  }
+
+  Color _routeColor(OsmRouteInfo r) {
+    if (r.colour != null) {
+      final c = r.colour!.trim();
+      if (c.startsWith('#') && (c.length == 7 || c.length == 4)) {
+        try {
+          final hex = c.length == 4
+              ? '${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}'
+              : c.substring(1);
+          return Color(int.parse('FF$hex', radix: 16));
+        } catch (_) {}
+      }
+    }
+    switch (r.routeType) {
+      case 'bicycle':
+      case 'mtb':
+        return const Color(0xFF1E88E5);
+      case 'hiking':
+      case 'foot':
+        return const Color(0xFFE53935);
+      default:
+        return const Color(0xFF757575);
+    }
+  }
+
+  IconData _routeIcon(OsmRouteInfo r) {
+    switch (r.routeType) {
+      case 'bicycle':
+        return Icons.pedal_bike;
+      case 'mtb':
+        return Icons.terrain;
+      case 'hiking':
+      case 'foot':
+        return Icons.hiking;
+      default:
+        return Icons.route;
+    }
+  }
+
+  Future<void> _refetchSights() async {
+    if (_route == null || _loadingSights) return;
+    setState(() {
+      _sights = [];
+      _loadingSights = true;
+    });
+    try {
+      final sights = await SightsService.fetchAlongRoute(
+        _routePoints,
+        enabledTypes: _enabledSightTypes,
+      );
+      setState(() => _sights = sights);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Overpass-Fehler: $e'),
+          backgroundColor: Colors.red.shade700,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingSights = false);
+    }
+  }
+
+  Future<void> _toggleSights() async {
+    if (_sights.isNotEmpty) {
+      setState(() => _sights = []);
+      return;
+    }
+    if (_route == null || _loadingSights) return;
+    setState(() => _loadingSights = true);
+    try {
+      final sights = await SightsService.fetchAlongRoute(
+        _routePoints,
+        enabledTypes: _enabledSightTypes,
+      );
+      setState(() => _sights = sights);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${sights.length} Sehenswürdigkeiten gefunden'),
+          duration: const Duration(seconds: 2),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Overpass-Fehler: $e'),
+          backgroundColor: Colors.red.shade700,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingSights = false);
+    }
+  }
+
+  void _showSightInfo(OsmSight s) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollCtrl) => ListView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: _buildSightSheetChildren(ctx, s),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildSightSheetChildren(BuildContext ctx, OsmSight s) {
+    final imageUrl = s.imageUrl;
+    return [
+      Center(
+        child: Container(
+          width: 40, height: 4,
+          decoration: BoxDecoration(
+            color: Colors.white24,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      if (imageUrl != null) ...[
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(
+            imageUrl,
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            loadingBuilder: (c, child, p) => p == null
+                ? child
+                : Container(
+                    height: 180,
+                    color: Colors.white10,
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(color: Color(0xFF4fc3f7)),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+      Row(
+        children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(color: _sightColor(s.category), shape: BoxShape.circle),
+            child: Icon(_sightIcon(s), color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(s.displayName,
+                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
+                Text(s.subtypeLabel,
+                  style: const TextStyle(color: Colors.white60, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+      if (s.description != null) ...[
+        const SizedBox(height: 12),
+        Text(s.description!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+      ],
+      const SizedBox(height: 12),
+      ..._sightInfoRows(s),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          if (s.wikipedia != null)
+            TextButton.icon(
+              icon: const Icon(Icons.public, size: 18),
+              label: const Text('Wikipedia'),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openWikipedia(s.wikipedia!);
+              },
+            ),
+          if (s.website != null)
+            TextButton.icon(
+              icon: const Icon(Icons.language, size: 18),
+              label: const Text('Website'),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openUrl(s.website!);
+              },
+            ),
+          TextButton.icon(
+            icon: const Icon(Icons.add_location_alt_outlined, size: 18),
+            label: const Text('Als Waypoint'),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _addWaypointFromSight(s);
+            },
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _sightInfoRows(OsmSight s) {
+    final rows = <Widget>[];
+    Widget row(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 16, color: const Color(0xFF4fc3f7)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              ),
+            ],
+          ),
+        );
+
+    if (s.openingHours != null) rows.add(row(Icons.schedule, s.openingHours!));
+    if (s.fee != null || s.charge != null) {
+      final parts = <String>[];
+      if (s.fee == 'yes') parts.add('Eintritt');
+      if (s.fee == 'no') parts.add('Kostenlos');
+      if (s.charge != null) parts.add(s.charge!);
+      rows.add(row(Icons.euro, parts.join(' · ')));
+    }
+    if (s.wheelchair != null) {
+      const wcLabels = {'yes': 'Barrierefrei', 'limited': 'Teilweise barrierefrei', 'no': 'Nicht barrierefrei'};
+      rows.add(row(Icons.accessible, wcLabels[s.wheelchair!] ?? s.wheelchair!));
+    }
+    if (s.address != null) rows.add(row(Icons.place, s.address!));
+    if (s.phone != null) rows.add(row(Icons.phone, s.phone!));
+    if (s.ele != null) rows.add(row(Icons.terrain, '${s.ele} m Höhe'));
+    if (s.startDate != null) rows.add(row(Icons.history, 'Erbaut ${s.startDate}'));
+    if (s.heritage != null) rows.add(row(Icons.museum, 'Denkmalschutz'));
+    if (s.artist != null) rows.add(row(Icons.brush, 'Künstler: ${s.artist}'));
+    if (s.artworkType != null) rows.add(row(Icons.palette, s.artworkType!));
+    if (s.castleType != null) rows.add(row(Icons.castle, s.castleType!));
+    if (s.material != null) rows.add(row(Icons.texture, s.material!));
+    if (s.operator != null) rows.add(row(Icons.business, s.operator!));
+    return rows;
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openWikipedia(String wikiTag) async {
+    // wikiTag format: "de:Article Name" or "en:Article Name"
+    final parts = wikiTag.split(':');
+    if (parts.length < 2) return;
+    final lang = parts[0];
+    final article = parts.sublist(1).join(':');
+    final url = Uri.parse('https://$lang.wikipedia.org/wiki/${Uri.encodeComponent(article)}');
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+
+  void _addWaypointFromSight(OsmSight s) {
+    setState(() => _waypoints.add(LatLng(s.lat, s.lon)));
+    _recalculate();
+  }
+
   void _finishDrag() {
     final idx = _draggingWaypointIndex;
     setState(() => _draggingWaypointIndex = null);
@@ -1254,6 +2086,7 @@ class _MapScreenState extends State<MapScreen> {
       _routePoints = points;
       _showElevation = true;
       _highlightIndex = null;
+      _sights = [];
     });
 
     // In roundtrip mode with only start point, auto-generate anchor points
@@ -1450,6 +2283,7 @@ class _MapScreenState extends State<MapScreen> {
     _waypoints.clear();
     _anchorIndices.clear();
     _pois.clear();
+    _sights = [];
     setState(() {
       _route = null;
       _routePoints = [];
