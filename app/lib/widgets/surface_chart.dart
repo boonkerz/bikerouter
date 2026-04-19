@@ -123,8 +123,13 @@ class _SurfaceBarState extends State<_SurfaceBar> {
       _hovered = found;
       _hoverX = pos.dx;
     });
-    final mid = (found.startCoordIdx + found.endCoordIdx) ~/ 2;
-    widget.onHover?.call(mid);
+    final span = found.endDistanceKm - found.startDistanceKm;
+    final local = span > 0
+        ? ((distKm - found.startDistanceKm) / span).clamp(0.0, 1.0)
+        : 0.0;
+    final coordSpan = found.endCoordIdx - found.startCoordIdx;
+    final idx = found.startCoordIdx + (local * coordSpan).round();
+    widget.onHover?.call(idx);
   }
 
   void _clear() {
