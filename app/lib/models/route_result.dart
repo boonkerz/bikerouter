@@ -73,57 +73,86 @@ class RouteResult {
     );
   }
 
-  /// Parses BRouter `messages` into segments. Each message row corresponds to a
-  /// route edge; messages share consecutive WayTags runs are merged.
+  /// Parses BRouter `messages` into segments. Each row is one OSM way
+  /// segment (length in meters, not one-per-coordinate). We build cumulative
+  /// distance along messages and independently along coordinates, then snap
+  /// segment boundaries to the nearest coord index.
   ///
   /// BRouter message columns:
   ///   0 Longitude, 1 Latitude, 2 Elevation, 3 Distance (m, edge length),
   ///   9 WayTags (space-separated k=v), rest ignored.
-  /// The coordinate at row i is the *end* of edge i; the very first coordinate
-  /// in the geometry is the start point before any message.
   static List<RouteSegment> _parseSegments(
     Map<String, dynamic> props,
     List<List<double>> coords,
   ) {
     final messages = props['messages'];
-    if (messages is! List || messages.length < 2 || coords.isEmpty) {
+    if (messages is! List || messages.length < 2 || coords.length < 2) {
       return const [];
     }
 
-    final rows = messages.skip(1).toList();
-    final segs = <RouteSegment>[];
+    final coordCumKm = List<double>.filled(coords.length, 0);
+    for (int i = 1; i < coords.length; i++) {
+      coordCumKm[i] = coordCumKm[i - 1] + _haversine(coords[i - 1], coords[i]);
+    }
+    final totalKm = coordCumKm.last;
+    if (totalKm <= 0) return const [];
 
+    final rows = messages.skip(1).toList();
+    double msgTotalM = 0;
+    for (final row in rows) {
+      if (row is List && row.length > 3) {
+        msgTotalM += double.tryParse(row[3].toString()) ?? 0;
+      }
+    }
+    final scale = msgTotalM > 0 ? (totalKm * 1000) / msgTotalM : 1.0;
+
+    int coordIdxForDistance(double distKm) {
+      if (distKm <= 0) return 0;
+      if (distKm >= totalKm) return coords.length - 1;
+      int lo = 0, hi = coords.length - 1;
+      while (lo < hi) {
+        final mid = (lo + hi) ~/ 2;
+        if (coordCumKm[mid] < distKm) {
+          lo = mid + 1;
+        } else {
+          hi = mid;
+        }
+      }
+      return lo;
+    }
+
+    final segs = <RouteSegment>[];
     double cumDistKm = 0;
-    int coordIdx = 0; // last coord index consumed (0 = start point)
-    int runStartCoord = 0;
     double runStartDistKm = 0;
+    int runStartCoord = 0;
     String? runTags;
 
     for (final row in rows) {
-      if (row is! List) continue;
-      final edgeMeters = double.tryParse(row[3].toString()) ?? 0;
+      if (row is! List || row.length < 4) continue;
+      final edgeKm = (double.tryParse(row[3].toString()) ?? 0) / 1000 * scale;
       final tags = row.length > 9 ? (row[9]?.toString() ?? '') : '';
-
-      cumDistKm += edgeMeters / 1000;
-      coordIdx += 1;
-      if (coordIdx >= coords.length) break;
+      final edgeEndKm = cumDistKm + edgeKm;
 
       if (runTags == null) {
         runTags = tags;
         runStartCoord = 0;
         runStartDistKm = 0;
       } else if (tags != runTags) {
-        segs.add(RouteSegment(
-          startCoordIdx: runStartCoord,
-          endCoordIdx: coordIdx - 1,
-          startDistanceKm: runStartDistKm,
-          endDistanceKm: cumDistKm - (edgeMeters / 1000),
-          wayTagsRaw: runTags,
-        ));
+        final endIdx = coordIdxForDistance(cumDistKm);
+        if (endIdx > runStartCoord) {
+          segs.add(RouteSegment(
+            startCoordIdx: runStartCoord,
+            endCoordIdx: endIdx,
+            startDistanceKm: runStartDistKm,
+            endDistanceKm: cumDistKm,
+            wayTagsRaw: runTags,
+          ));
+        }
         runTags = tags;
-        runStartCoord = coordIdx - 1;
-        runStartDistKm = cumDistKm - (edgeMeters / 1000);
+        runStartCoord = endIdx;
+        runStartDistKm = cumDistKm;
       }
+      cumDistKm = edgeEndKm;
     }
 
     if (runTags != null && runStartCoord < coords.length - 1) {
@@ -131,7 +160,7 @@ class RouteResult {
         startCoordIdx: runStartCoord,
         endCoordIdx: coords.length - 1,
         startDistanceKm: runStartDistKm,
-        endDistanceKm: cumDistKm,
+        endDistanceKm: totalKm,
         wayTagsRaw: runTags,
       ));
     }
