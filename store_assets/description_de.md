@@ -7,10 +7,10 @@ Wegwiesel
 Fahrrad-Routenplaner
 
 ## Keywords (100 Zeichen max, komma-getrennt, keine Leerzeichen nach Kommas)
-fahrrad,rad,routing,route,tour,gpx,mtb,gravel,rennrad,brouter,höhenprofil,komoot
+fahrrad,rad,routing,route,tour,gpx,mtb,gravel,rennrad,höhenprofil,etappen,radtour
 
 ## Werbetext / Promotional Text (170 Zeichen max)
-Plane Fahrradtouren mit präzisem BRouter-Routing, Höhenprofil und Oberflächen-Analyse. Offline-fähiger GPX-Export für dein Navi.
+Plane Fahrradtouren mit präzisem Routing, Höhenprofil und Oberflächen-Analyse. Offline-fähiger GPX-Export für dein Navi.
 
 ## Beschreibung (4000 Zeichen max)
 Wegwiesel ist ein schlanker Fahrrad-Routenplaner für Tourenfahrer, Rennradler, Gravel- und MTB-Biker. Keine Werbung, keine Accounts, keine Datenspur.
@@ -18,7 +18,6 @@ Wegwiesel ist ein schlanker Fahrrad-Routenplaner für Tourenfahrer, Rennradler, 
 ROUTING, DAS ZU DIR PASST
 • Vier Profile: Rennrad, Gravel, Trekking, MTB
 • Tippe Wegpunkte, ziehe sie zum Feintuning, füge Via-Punkte per Routen-Klick hinzu
-• Routing über BRouter – die gleiche Engine wie viele Outdoor-Profi-Tools
 
 UNTERGRUND AUF EINEN BLICK
 • Farbige Route nach Belag (Asphalt, Pflaster, Schotter, Unbefestigt, Offroad)
@@ -45,6 +44,8 @@ WAS WEGWIESEL NICHT MACHT
 • Keine Cloud-Zwangssynchronisation
 
 Wegwiesel ist ein freies Projekt eines Radfahrers für Radfahrer. Feedback willkommen.
+
+Basiert auf BRouter und OpenStreetMap.
 
 Datenschutz: https://wegwiesel.app/legal/datenschutz.html
 Impressum: https://wegwiesel.app/legal/impressum.html

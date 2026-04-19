@@ -7,10 +7,10 @@ Wegwiesel
 Bike Route Planner
 
 ## Keywords (100 chars max, comma-separated, no spaces)
-bike,bicycle,cycling,route,routing,tour,gpx,mtb,gravel,road,brouter,elevation,komoot
+bike,bicycle,cycling,route,routing,tour,gpx,mtb,gravel,road,elevation,stages,trip
 
 ## Promotional Text (170 chars max)
-Plan bike tours with precise BRouter routing, elevation profiles and surface analysis. Offline-ready GPX export for any bike computer.
+Plan bike tours with precise routing, elevation profiles and surface analysis. Offline-ready GPX export for any bike computer.
 
 ## Description (4000 chars max)
 Wegwiesel is a lean bicycle route planner for tourers, road cyclists, gravel and MTB riders. No ads, no accounts, no tracking.
@@ -18,7 +18,6 @@ Wegwiesel is a lean bicycle route planner for tourers, road cyclists, gravel and
 ROUTING THAT FITS YOU
 • Four profiles: road, gravel, trekking, MTB
 • Tap waypoints, drag to fine-tune, add via-points by tapping the route
-• Powered by BRouter – the same engine many outdoor pros rely on
 
 SURFACE AT A GLANCE
 • Route colored by surface type (asphalt, paving, gravel, unpaved, offroad)
@@ -45,6 +44,8 @@ WHAT WEGWIESEL DOESN'T DO
 • No forced cloud sync
 
 Wegwiesel is a free project by a cyclist for cyclists. Feedback welcome.
+
+Based on BRouter and OpenStreetMap.
 
 Privacy: https://wegwiesel.app/legal/datenschutz.html
 Imprint: https://wegwiesel.app/legal/impressum.html
