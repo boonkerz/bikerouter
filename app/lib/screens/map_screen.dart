@@ -476,54 +476,90 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // Menu button (bottom left, fixed offset from bottom)
+          // Left action column — mirrors the right column's bottom offset so
+          // the menu sits at the same height as the trash button (above the
+          // stats bar) and route actions sit visibly stacked above it.
           Positioned(
             left: 12,
-            bottom: bottomPadding + 12,
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Material(
-                color: const Color(0xFF222244),
-                shape: const CircleBorder(),
-                elevation: 6,
-                child: PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Color(0xFF4fc3f7), size: 20),
-                  iconSize: 20,
-                  color: const Color(0xFF1a1a2e),
-                  padding: EdgeInsets.zero,
-                  tooltip: '',
-                  onSelected: _onMenuSelected,
-                  itemBuilder: (ctx) => [
-                    PopupMenuItem(
-                      value: 'save',
-                      enabled: _route != null,
-                      child: const Row(children: [
-                        Icon(Icons.bookmark_add_outlined, color: Color(0xFF4fc3f7), size: 20),
-                        SizedBox(width: 12),
-                        Text('Route speichern', style: TextStyle(color: Colors.white)),
-                      ]),
+            bottom: (_route != null
+                    ? (_showElevation
+                        ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
+                        : 94)
+                    : 0) +
+                bottomPadding +
+                12,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_route != null) ...[
+                  _fab(Icons.share, _shareRoute),
+                  const SizedBox(height: 8),
+                  _fab(Icons.file_download, _exportGpx),
+                  const SizedBox(height: 8),
+                  if (_activeOverlays.isNotEmpty) ...[
+                    _fab(
+                      _loadingRouteInfo
+                          ? Icons.hourglass_top
+                          : (_routeInspectMode ? Icons.close : Icons.info_outline),
+                      () {
+                        setState(() => _routeInspectMode = !_routeInspectMode);
+                        if (_routeInspectMode) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('Tippe auf eine Route, um Info zu sehen'),
+                            duration: Duration(seconds: 3),
+                          ));
+                        }
+                      },
                     ),
-                    const PopupMenuItem(
-                      value: 'load',
-                      child: Row(children: [
-                        Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
-                        SizedBox(width: 12),
-                        Text('Gespeicherte Routen', style: TextStyle(color: Colors.white)),
-                      ]),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem(
-                      value: 'settings',
-                      child: Row(children: [
-                        Icon(Icons.settings_outlined, color: Color(0xFF4fc3f7), size: 20),
-                        SizedBox(width: 12),
-                        Text('Einstellungen', style: TextStyle(color: Colors.white)),
-                      ]),
-                    ),
+                    const SizedBox(height: 8),
                   ],
+                ],
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Material(
+                    color: const Color(0xFF222244),
+                    shape: const CircleBorder(),
+                    elevation: 6,
+                    child: PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: Color(0xFF4fc3f7), size: 20),
+                      iconSize: 20,
+                      color: const Color(0xFF1a1a2e),
+                      padding: EdgeInsets.zero,
+                      tooltip: '',
+                      onSelected: _onMenuSelected,
+                      itemBuilder: (ctx) => [
+                        PopupMenuItem(
+                          value: 'save',
+                          enabled: _route != null,
+                          child: const Row(children: [
+                            Icon(Icons.bookmark_add_outlined, color: Color(0xFF4fc3f7), size: 20),
+                            SizedBox(width: 12),
+                            Text('Route speichern', style: TextStyle(color: Colors.white)),
+                          ]),
+                        ),
+                        const PopupMenuItem(
+                          value: 'load',
+                          child: Row(children: [
+                            Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
+                            SizedBox(width: 12),
+                            Text('Gespeicherte Routen', style: TextStyle(color: Colors.white)),
+                          ]),
+                        ),
+                        const PopupMenuDivider(),
+                        const PopupMenuItem(
+                          value: 'settings',
+                          child: Row(children: [
+                            Icon(Icons.settings_outlined, color: Color(0xFF4fc3f7), size: 20),
+                            SizedBox(width: 12),
+                            Text('Einstellungen', style: TextStyle(color: Colors.white)),
+                          ]),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -1030,34 +1066,7 @@ class _MapScreenState extends State<MapScreen> {
         active: _stages.isNotEmpty,
         onTap: _showStagesPlanner,
       ),
-      StatsAction(
-        icon: Icons.share,
-        label: 'Teilen',
-        onTap: _shareRoute,
-      ),
-      StatsAction(
-        icon: Icons.file_download,
-        label: 'GPX',
-        onTap: _exportGpx,
-      ),
     ];
-    if (_activeOverlays.isNotEmpty) {
-      actions.add(StatsAction(
-        icon: _routeInspectMode ? Icons.close : Icons.info_outline,
-        label: 'Info',
-        loading: _loadingRouteInfo,
-        active: _routeInspectMode,
-        onTap: () {
-          setState(() => _routeInspectMode = !_routeInspectMode);
-          if (_routeInspectMode) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Tippe auf eine Route, um Info zu sehen'),
-              duration: Duration(seconds: 3),
-            ));
-          }
-        },
-      ));
-    }
     return actions;
   }
 
