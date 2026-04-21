@@ -9,6 +9,15 @@ wegwiesel.app {
 		reverse_proxy overpass:80
 	}
 
+	# Feedback Service
+	redir /feedback /feedback/ 301
+	handle /api/feedback* {
+		reverse_proxy feedback:8080
+	}
+	handle_path /feedback/* {
+		reverse_proxy feedback:8080
+	}
+
 	# Flutter Web App
 	handle {
 		root * /srv/web

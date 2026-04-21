@@ -28,6 +28,20 @@ services:
     expose:
       - "80"
 
+  feedback:
+    build:
+      context: ./feedback
+    environment:
+      DB_PATH: /data/feedback.db
+      IP_SALT: ${FEEDBACK_IP_SALT:-change-me}
+      ADMIN_TOKEN: ${FEEDBACK_ADMIN_TOKEN:-}
+      LISTEN_ADDR: ":8080"
+    volumes:
+      - /opt/wegwiesel/feedback-data:/data
+    restart: unless-stopped
+    expose:
+      - "8080"
+
   caddy:
     image: caddy:2-alpine
     ports:
@@ -42,6 +56,7 @@ services:
     depends_on:
       - brouter
       - overpass
+      - feedback
 
 volumes:
   caddy_data:
