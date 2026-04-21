@@ -8,6 +8,7 @@ class SettingsScreen extends StatelessWidget {
   static const _baseUrl = 'https://wegwiesel.app';
   static const _impressumUrl = '$_baseUrl/legal/impressum.html';
   static const _datenschutzUrl = '$_baseUrl/legal/datenschutz.html';
+  static const _feedbackUrl = '$_baseUrl/feedback/';
   static const _supportEmail = 'support@thomas-peterson.de';
 
   Future<void> _openUrl(String url) async {
@@ -48,10 +49,16 @@ class SettingsScreen extends StatelessWidget {
             title: 'Datenschutz',
             onTap: () => _openUrl(_datenschutzUrl),
           ),
-          _sectionHeader('Support'),
+          _sectionHeader('Feedback'),
+          _tile(
+            icon: Icons.lightbulb_outline,
+            title: 'Feedback & Feature-Wünsche',
+            subtitle: 'Vorschläge posten und upvoten',
+            onTap: () => _openUrl(_feedbackUrl),
+          ),
           _tile(
             icon: Icons.mail_outline,
-            title: 'Kontakt / Feedback',
+            title: 'Kontakt per E-Mail',
             subtitle: _supportEmail,
             onTap: _openMail,
           ),
