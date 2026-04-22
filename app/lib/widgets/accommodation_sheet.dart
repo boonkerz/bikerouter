@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/accommodation_service.dart';
 
 Future<Accommodation?> showAccommodationSheet(
@@ -62,7 +63,7 @@ class _SheetState extends State<_Sheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Suche fehlgeschlagen';
+        _error = AppLocalizations.of(context).commonError;
         _loading = false;
       });
     }
@@ -75,6 +76,7 @@ class _SheetState extends State<_Sheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.4,
@@ -98,17 +100,19 @@ class _SheetState extends State<_Sheet> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Unterkünfte',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(l.accommodationTitle,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                 const SizedBox(width: 8),
-                Text('bei ${widget.anchorLabel}',
-                    style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                Expanded(
+                  child: Text(widget.anchorLabel,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text('Umkreis', style: TextStyle(color: Colors.white70, fontSize: 12)),
                 Expanded(
                   child: Slider(
                     value: _radiusKm,
@@ -129,14 +133,14 @@ class _SheetState extends State<_Sheet> {
               ],
             ),
             const Divider(color: Colors.white24, height: 16),
-            Expanded(child: _buildList(sc)),
+            Expanded(child: _buildList(sc, l)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildList(ScrollController sc) {
+  Widget _buildList(ScrollController sc, AppLocalizations l) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFF4fc3f7)));
     }
@@ -145,9 +149,9 @@ class _SheetState extends State<_Sheet> {
     }
     final items = _items;
     if (items == null || items.isEmpty) {
-      return const Center(
-        child: Text('Keine Unterkünfte gefunden',
-            style: TextStyle(color: Colors.white54)),
+      return Center(
+        child: Text(l.accommodationNoResults,
+            style: const TextStyle(color: Colors.white54)),
       );
     }
     return ListView.separated(
@@ -156,17 +160,18 @@ class _SheetState extends State<_Sheet> {
       separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
       itemBuilder: (ctx, i) {
         final a = items[i];
+        final typeLabel = a.localizedType(l);
         return ListTile(
           dense: true,
           leading: Text(a.emoji, style: const TextStyle(fontSize: 20)),
           title: Text(
-            a.name ?? a.typeLabel,
+            a.name ?? typeLabel,
             style: const TextStyle(color: Colors.white, fontSize: 14),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
-            '${a.typeLabel} · ${a.distanceKm.toStringAsFixed(1)} km'
+            '$typeLabel · ${a.distanceKm.toStringAsFixed(1)} km'
             '${a.stars != null ? ' · ${a.stars}★' : ''}',
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),

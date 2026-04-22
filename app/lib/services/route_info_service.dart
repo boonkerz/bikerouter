@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../l10n/app_localizations.dart';
+
 class OsmRouteInfo {
   final int id;
   final String routeType; // bicycle, hiking, mtb, foot
@@ -36,45 +38,45 @@ class OsmRouteInfo {
     this.osmcSymbol,
   });
 
-  String get displayName {
+  String localizedDisplayName(AppLocalizations l) {
     if (name != null && ref != null) return '$ref · $name';
     if (name != null) return name!;
     if (ref != null) return ref!;
-    return typeLabel;
+    return localizedType(l);
   }
 
-  String get typeLabel {
+  String localizedType(AppLocalizations l) {
     switch (routeType) {
       case 'bicycle':
-        return 'Radroute';
+        return l.osmRouteTypeBicycle;
       case 'hiking':
       case 'foot':
-        return 'Wanderweg';
+        return l.osmRouteTypeHiking;
       case 'mtb':
-        return 'MTB-Route';
+        return l.osmRouteTypeMtb;
       default:
         return routeType;
     }
   }
 
-  String get networkLabel {
+  String localizedNetwork(AppLocalizations l) {
     switch (network) {
       case 'icn':
-        return 'International';
+        return l.osmNetworkIcn;
       case 'ncn':
-        return 'National';
+        return l.osmNetworkNcn;
       case 'rcn':
-        return 'Regional';
+        return l.osmNetworkRcn;
       case 'lcn':
-        return 'Lokal';
+        return l.osmNetworkLcn;
       case 'iwn':
-        return 'International (Wandern)';
+        return l.osmNetworkIwn;
       case 'nwn':
-        return 'National (Wandern)';
+        return l.osmNetworkNwn;
       case 'rwn':
-        return 'Regional (Wandern)';
+        return l.osmNetworkRwn;
       case 'lwn':
-        return 'Lokal (Wandern)';
+        return l.osmNetworkLwn;
       default:
         return network ?? '';
     }

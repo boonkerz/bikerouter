@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../services/geocoding_service.dart';
 
 class AddressSearchResult {
@@ -69,6 +70,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -93,7 +95,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                 autofocus: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'Adresse oder Ort suchen...',
+                  hintText: l.searchHint,
                   hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
                   prefixIcon: const Icon(Icons.search, color: Color(0xFF4fc3f7)),
                   suffixIcon: _searching
@@ -133,8 +135,8 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                   ? Center(
                       child: Text(
                         _controller.text.isEmpty
-                            ? 'Tippe eine Adresse ein'
-                            : 'Keine Ergebnisse',
+                            ? l.searchPrompt
+                            : l.searchNoResults,
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
                       ),
                     )

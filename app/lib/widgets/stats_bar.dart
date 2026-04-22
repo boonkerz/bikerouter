@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/route_result.dart';
 
 class StatsAction {
@@ -25,6 +26,7 @@ class StatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final hours = (route.time / 3600).floor();
     final minutes = ((route.time % 3600) / 60).round();
     final timeStr = hours > 0 ? '${hours}h ${minutes}min' : '$minutes min';
@@ -45,10 +47,10 @@ class StatsBar extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _Stat(label: 'Distanz', value: distStr),
-                _Stat(label: 'Anstieg', value: '${route.ascent.round()} m'),
-                _Stat(label: 'Abstieg', value: '${route.descent.round()} m'),
-                _Stat(label: 'Zeit', value: timeStr),
+                _Stat(label: l.statsDistance, value: distStr),
+                _Stat(label: l.statsAscent, value: '${route.ascent.round()} m'),
+                _Stat(label: l.statsDescent, value: '${route.descent.round()} m'),
+                _Stat(label: l.statsTime, value: timeStr),
               ],
             ),
           ),

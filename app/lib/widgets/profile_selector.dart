@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/profile.dart';
 
 class ProfileSelector extends StatelessWidget {
@@ -13,11 +14,11 @@ class ProfileSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Not used directly as widget anymore, only via showSheet()
     return const SizedBox.shrink();
   }
 
   void showSheet(BuildContext context) {
+    final l = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1a1a2e),
@@ -25,7 +26,7 @@ class ProfileSelector extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
-        final grouped = <String, List<BikeProfile>>{};
+        final grouped = <ProfileCategory, List<BikeProfile>>{};
         for (final p in profiles) {
           grouped.putIfAbsent(p.category, () => []).add(p);
         }
@@ -34,10 +35,10 @@ class ProfileSelector extends StatelessWidget {
           shrinkWrap: true,
           padding: const EdgeInsets.all(16),
           children: [
-            const Center(
+            Center(
               child: Text(
-                'Routing-Profil',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                l.profileTitle,
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(height: 12),
@@ -45,7 +46,7 @@ class ProfileSelector extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
                 child: Text(
-                  entry.key,
+                  entry.value.first.localizedCategory(l),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 11,
@@ -57,7 +58,7 @@ class ProfileSelector extends StatelessWidget {
               ...entry.value.map((p) => ListTile(
                 dense: true,
                 leading: Text(p.icon, style: const TextStyle(fontSize: 18)),
-                title: Text(p.name, style: const TextStyle(color: Colors.white)),
+                title: Text(p.localizedName(l), style: const TextStyle(color: Colors.white)),
                 selected: p.id == selectedProfile,
                 selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

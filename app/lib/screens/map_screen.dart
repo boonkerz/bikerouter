@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localizations.dart';
 import '../services/gpx_export.dart';
 
 import '../models/map_style.dart';
@@ -310,7 +311,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),),
               if (_route != null)
-                StatsBar(route: _route!, actions: _buildStatsActions()),
+                StatsBar(route: _route!, actions: _buildStatsActions(context)),
               if (_route != null && _showElevation && _route!.segments.isNotEmpty)
                 SurfaceChart(
                   segments: _route!.segments,
@@ -341,8 +342,8 @@ class _MapScreenState extends State<MapScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _modeChip('A\u2009\u2192\u2009B', false),
-                      _modeChip('Runde', true),
+                      _modeChip(AppLocalizations.of(context).modeAtoB, false),
+                      _modeChip(AppLocalizations.of(context).modeRoundtrip, true),
                     ],
                   ),
                 ),
@@ -360,7 +361,7 @@ class _MapScreenState extends State<MapScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              _profileLabel(),
+                              _profileLabel(context),
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(color: Color(0xFF4fc3f7), fontSize: 13, fontWeight: FontWeight.w600),
                             ),
@@ -504,9 +505,9 @@ class _MapScreenState extends State<MapScreen> {
                       () {
                         setState(() => _routeInspectMode = !_routeInspectMode);
                         if (_routeInspectMode) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                            content: Text('Tippe auf eine Route, um Info zu sehen'),
-                            duration: Duration(seconds: 3),
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(AppLocalizations.of(context).tapRouteForInfo),
+                            duration: const Duration(seconds: 3),
                           ));
                         }
                       },
@@ -528,34 +529,37 @@ class _MapScreenState extends State<MapScreen> {
                       padding: EdgeInsets.zero,
                       tooltip: '',
                       onSelected: _onMenuSelected,
-                      itemBuilder: (ctx) => [
-                        PopupMenuItem(
-                          value: 'save',
-                          enabled: _route != null,
-                          child: const Row(children: [
-                            Icon(Icons.bookmark_add_outlined, color: Color(0xFF4fc3f7), size: 20),
-                            SizedBox(width: 12),
-                            Text('Route speichern', style: TextStyle(color: Colors.white)),
-                          ]),
-                        ),
-                        const PopupMenuItem(
-                          value: 'load',
-                          child: Row(children: [
-                            Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
-                            SizedBox(width: 12),
-                            Text('Gespeicherte Routen', style: TextStyle(color: Colors.white)),
-                          ]),
-                        ),
-                        const PopupMenuDivider(),
-                        const PopupMenuItem(
-                          value: 'settings',
-                          child: Row(children: [
-                            Icon(Icons.settings_outlined, color: Color(0xFF4fc3f7), size: 20),
-                            SizedBox(width: 12),
-                            Text('Einstellungen', style: TextStyle(color: Colors.white)),
-                          ]),
-                        ),
-                      ],
+                      itemBuilder: (ctx) {
+                        final l = AppLocalizations.of(ctx);
+                        return [
+                          PopupMenuItem(
+                            value: 'save',
+                            enabled: _route != null,
+                            child: Row(children: [
+                              const Icon(Icons.bookmark_add_outlined, color: Color(0xFF4fc3f7), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuSaveRoute, style: const TextStyle(color: Colors.white)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'load',
+                            child: Row(children: [
+                              const Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuSavedRoutes, style: const TextStyle(color: Colors.white)),
+                            ]),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
+                            value: 'settings',
+                            child: Row(children: [
+                              const Icon(Icons.settings_outlined, color: Color(0xFF4fc3f7), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuSettings, style: const TextStyle(color: Colors.white)),
+                            ]),
+                          ),
+                        ];
+                      },
                     ),
                   ),
                 ),
@@ -716,16 +720,17 @@ class _MapScreenState extends State<MapScreen> {
     setState(() => _locatingUser = true);
 
     try {
+      final l = AppLocalizations.of(context);
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          _showError('Standort-Berechtigung verweigert');
+          _showError(l.gpsPermissionDenied);
           return;
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        _showError('Standort-Berechtigung dauerhaft verweigert. Bitte in den Einstellungen aktivieren.');
+        _showError(l.gpsPermanentlyDenied);
         return;
       }
 
@@ -737,7 +742,7 @@ class _MapScreenState extends State<MapScreen> {
       setState(() => _currentPosition = latLng);
       _mapController.move(latLng, 14);
     } catch (e) {
-      _showError('Standort konnte nicht ermittelt werden: $e');
+      if (mounted) _showError(AppLocalizations.of(context).gpsFetchFailed(e.toString()));
     } finally {
       if (mounted) setState(() => _locatingUser = false);
     }
@@ -767,8 +772,10 @@ class _MapScreenState extends State<MapScreen> {
 
   // -- Helpers --
 
-  String _profileLabel() {
-    return BikeProfile.byId(_profile)?.name ?? _profile;
+  String _profileLabel(BuildContext context) {
+    final p = BikeProfile.byId(_profile);
+    if (p == null) return _profile;
+    return p.localizedName(AppLocalizations.of(context));
   }
 
   void _showProfileSheet(BuildContext context) {
@@ -786,93 +793,97 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(16),
-          children: [
-            const Center(
-              child: Text(
-                'Kartenstil',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...mapStyles.map((style) => ListTile(
-              dense: true,
-              leading: Text(style.icon, style: const TextStyle(fontSize: 18)),
-              title: Text(style.name, style: const TextStyle(color: Colors.white)),
-              selected: style.id == _mapStyle.id,
-              selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              onTap: () {
-                setState(() => _mapStyle = style);
-                Navigator.pop(ctx);
-              },
-            )),
-            const Divider(color: Colors.white24, height: 24),
-            Padding(
-              padding: const EdgeInsets.only(left: 16, bottom: 4),
-              child: Text(
-                'Overlay-Routen',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+        builder: (ctx, setSheetState) {
+          final l = AppLocalizations.of(ctx);
+          final vizEntries = [
+            ['surface', l.surfaceTitle, '🛣️'],
+            ['gradient', l.mapVizGradient, '📈'],
+          ];
+          return ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(16),
+            children: [
+              Center(
+                child: Text(
+                  l.mapStyleTitle,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
-            ),
-            ...routeOverlays.map((ov) => SwitchListTile(
-              dense: true,
-              secondary: Text(ov.icon, style: const TextStyle(fontSize: 18)),
-              title: Text(ov.name, style: const TextStyle(color: Colors.white)),
-              value: _activeOverlays.contains(ov.id),
-              activeThumbColor: const Color(0xFF4fc3f7),
-              onChanged: (v) {
-                setSheetState(() {
-                  if (v) {
-                    _activeOverlays.add(ov.id);
-                  } else {
-                    _activeOverlays.remove(ov.id);
-                  }
-                });
-                setState(() {});
-                _saveOverlayPrefs();
-              },
-            )),
-            const Divider(color: Colors.white24, height: 24),
-            Padding(
-              padding: const EdgeInsets.only(left: 16, bottom: 4),
-              child: Text(
-                'Routen-Färbung',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            for (final entry in const [
-              ['surface', 'Beschaffenheit', '🛣️'],
-              ['gradient', 'Steigung', '📈'],
-            ])
-              ListTile(
+              const SizedBox(height: 12),
+              ...mapStyles.map((style) => ListTile(
                 dense: true,
-                leading: Text(entry[2], style: const TextStyle(fontSize: 18)),
-                title: Text(entry[1], style: const TextStyle(color: Colors.white)),
-                selected: _routeVizMode == entry[0],
+                leading: Text(style.icon, style: const TextStyle(fontSize: 18)),
+                title: Text(style.localizedName(l), style: const TextStyle(color: Colors.white)),
+                selected: style.id == _mapStyle.id,
                 selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () {
-                  setSheetState(() => _routeVizMode = entry[0]);
-                  setState(() {});
-                  SharedPreferences.getInstance()
-                      .then((p) => p.setString('route_viz_mode_v1', entry[0]));
+                  setState(() => _mapStyle = style);
+                  Navigator.pop(ctx);
                 },
+              )),
+              const Divider(color: Colors.white24, height: 24),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, bottom: 4),
+                child: Text(
+                  l.mapOverlayRoutes,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
-          ],
-        ),
+              ...routeOverlays.map((ov) => SwitchListTile(
+                dense: true,
+                secondary: Text(ov.icon, style: const TextStyle(fontSize: 18)),
+                title: Text(ov.localizedName(l), style: const TextStyle(color: Colors.white)),
+                value: _activeOverlays.contains(ov.id),
+                activeThumbColor: const Color(0xFF4fc3f7),
+                onChanged: (v) {
+                  setSheetState(() {
+                    if (v) {
+                      _activeOverlays.add(ov.id);
+                    } else {
+                      _activeOverlays.remove(ov.id);
+                    }
+                  });
+                  setState(() {});
+                  _saveOverlayPrefs();
+                },
+              )),
+              const Divider(color: Colors.white24, height: 24),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, bottom: 4),
+                child: Text(
+                  l.mapRouteVizTitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              for (final entry in vizEntries)
+                ListTile(
+                  dense: true,
+                  leading: Text(entry[2], style: const TextStyle(fontSize: 18)),
+                  title: Text(entry[1], style: const TextStyle(color: Colors.white)),
+                  selected: _routeVizMode == entry[0],
+                  selectedTileColor: const Color(0xFF4fc3f7).withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  onTap: () {
+                    setSheetState(() => _routeVizMode = entry[0]);
+                    setState(() {});
+                    SharedPreferences.getInstance()
+                        .then((p) => p.setString('route_viz_mode_v1', entry[0]));
+                  },
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1036,33 +1047,34 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  List<StatsAction> _buildStatsActions() {
+  List<StatsAction> _buildStatsActions(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final actions = <StatsAction>[
       StatsAction(
         icon: _sights.isEmpty ? Icons.explore_outlined : Icons.explore_off_outlined,
-        label: _sights.isEmpty ? 'Sights' : 'Sights aus',
+        label: l.actionSights,
         loading: _loadingSights,
         active: _sights.isNotEmpty,
         onTap: _toggleSights,
       ),
       StatsAction(
         icon: Icons.tune,
-        label: 'Filter',
+        label: l.actionFilter,
         onTap: () => _showSightFilterSheet(context),
       ),
       StatsAction(
         icon: Icons.cloud_outlined,
-        label: 'Wetter',
+        label: l.actionWeather,
         onTap: _showWeather,
       ),
       StatsAction(
         icon: Icons.bed_outlined,
-        label: 'Unterkunft',
+        label: l.actionAccommodation,
         onTap: _showAccommodation,
       ),
       StatsAction(
         icon: _stages.isEmpty ? Icons.date_range : Icons.event_available,
-        label: 'Etappen',
+        label: l.actionStages,
         active: _stages.isNotEmpty,
         onTap: _showStagesPlanner,
       ),
@@ -1215,56 +1227,59 @@ class _MapScreenState extends State<MapScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('POI hinzufügen',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: PoiCategory.values.map((cat) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _addPoi(latLng, cat);
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: cat.color,
-                            shape: BoxShape.circle,
-                            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
+      builder: (ctx) {
+        final l = AppLocalizations.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l.poiAddTitle,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: PoiCategory.values.map((cat) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _addPoi(latLng, cat);
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: cat.color,
+                              shape: BoxShape.circle,
+                              boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
+                            ),
+                            child: Icon(cat.icon, color: Colors.white, size: 28),
                           ),
-                          child: Icon(cat.icon, color: Colors.white, size: 28),
-                        ),
-                        const SizedBox(height: 4),
-                        SizedBox(
-                          width: 72,
-                          child: Text(cat.label,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
+                          const SizedBox(height: 4),
+                          SizedBox(
+                            width: 72,
+                            child: Text(cat.localizedLabel(l),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1287,99 +1302,102 @@ class _MapScreenState extends State<MapScreen> {
 
     final result = await showDialog<_PoiEditResult>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1a1a2e),
-          title: Row(children: [
-            Icon(selectedCat.icon, color: selectedCat.color),
-            const SizedBox(width: 8),
-            const Text('POI bearbeiten', style: TextStyle(color: Colors.white)),
-          ]),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Kategorie',
-                    style: TextStyle(color: Colors.white54, fontSize: 12)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: PoiCategory.values.map((cat) {
-                    final selected = cat == selectedCat;
-                    return GestureDetector(
-                      onTap: () => setDialogState(() => selectedCat = cat),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: selected ? cat.color : Colors.transparent,
-                          border: Border.all(color: cat.color, width: selected ? 0 : 1),
-                          borderRadius: BorderRadius.circular(16),
+      builder: (ctx) {
+        final l = AppLocalizations.of(ctx);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: const Color(0xFF1a1a2e),
+            title: Row(children: [
+              Icon(selectedCat.icon, color: selectedCat.color),
+              const SizedBox(width: 8),
+              Text(l.poiEditTitle, style: const TextStyle(color: Colors.white)),
+            ]),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l.poiCategoryLabel,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: PoiCategory.values.map((cat) {
+                      final selected = cat == selectedCat;
+                      return GestureDetector(
+                        onTap: () => setDialogState(() => selectedCat = cat),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: selected ? cat.color : Colors.transparent,
+                            border: Border.all(color: cat.color, width: selected ? 0 : 1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(cat.icon, color: selected ? Colors.white : cat.color, size: 14),
+                            const SizedBox(width: 4),
+                            Text(cat.localizedLabel(l),
+                                style: TextStyle(
+                                    color: selected ? Colors.white : cat.color, fontSize: 11)),
+                          ]),
                         ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(cat.icon, color: selected ? Colors.white : cat.color, size: 14),
-                          const SizedBox(width: 4),
-                          Text(cat.label,
-                              style: TextStyle(
-                                  color: selected ? Colors.white : cat.color, fontSize: 11)),
-                        ]),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: nameCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    labelStyle: TextStyle(color: Colors.white54),
-                    enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF4fc3f7))),
-                    focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2)),
+                      );
+                    }).toList(),
                   ),
-                ),
-                TextField(
-                  controller: noteCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Notiz (optional)',
-                    labelStyle: TextStyle(color: Colors.white54),
-                    enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF4fc3f7))),
-                    focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2)),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nameCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: l.poiNameLabel,
+                      labelStyle: const TextStyle(color: Colors.white54),
+                      enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4fc3f7))),
+                      focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2)),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, const _PoiEditResult.delete()),
-              child: const Text('Löschen', style: TextStyle(color: Colors.redAccent)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Abbrechen'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(
-                ctx,
-                _PoiEditResult.save(
-                  category: selectedCat,
-                  name: nameCtrl.text.trim(),
-                  note: noteCtrl.text.trim(),
-                ),
+                  TextField(
+                    controller: noteCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      labelText: l.poiNoteLabel,
+                      labelStyle: const TextStyle(color: Colors.white54),
+                      enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4fc3f7))),
+                      focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2)),
+                    ),
+                  ),
+                ],
               ),
-              child: const Text('Speichern', style: TextStyle(color: Color(0xFF4fc3f7))),
             ),
-          ],
-        ),
-      ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, const _PoiEditResult.delete()),
+                child: Text(l.commonDelete, style: const TextStyle(color: Colors.redAccent)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l.commonCancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(
+                  ctx,
+                  _PoiEditResult.save(
+                    category: selectedCat,
+                    name: nameCtrl.text.trim(),
+                    note: noteCtrl.text.trim(),
+                  ),
+                ),
+                child: Text(l.commonSave, style: const TextStyle(color: Color(0xFF4fc3f7))),
+              ),
+            ],
+          ),
+        );
+      },
     );
 
     if (result == null) return;
@@ -1422,13 +1440,15 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   List<Marker> _buildSightMarkers() {
+    final l = AppLocalizations.of(context);
     return _sights.map((s) {
+      final subLabel = s.localizedSubtype(l);
       return Marker(
         point: LatLng(s.lat, s.lon),
         width: 32,
         height: 32,
         child: Tooltip(
-          message: s.name != null ? '${s.name}\n${s.subtypeLabel}' : s.subtypeLabel,
+          message: s.name != null ? '${s.name}\n$subLabel' : subLabel,
           waitDuration: const Duration(milliseconds: 200),
           preferBelow: false,
           child: GestureDetector(
@@ -1553,6 +1573,7 @@ class _MapScreenState extends State<MapScreen> {
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
+          final l = AppLocalizations.of(ctx);
           void toggle(String key, bool? v) {
             setSheetState(() {
               if (v == true) {
@@ -1567,7 +1588,7 @@ class _MapScreenState extends State<MapScreen> {
 
           void toggleCategory(String cat, bool enable) {
             setSheetState(() {
-              for (final sub in sightTypes[cat]!.keys) {
+              for (final sub in sightTypes[cat]!) {
                 final key = '$cat:$sub';
                 if (enable) {
                   _enabledSightTypes.add(key);
@@ -1596,9 +1617,9 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Center(
-                  child: Text('POI-Typen',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                Center(
+                  child: Text(l.poiTypesTitle,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(height: 12),
                 for (final cat in sightTypes.keys) ...[
@@ -1613,7 +1634,7 @@ class _MapScreenState extends State<MapScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            sightCategoryLabels[cat] ?? cat,
+                            sightCategoryLabel(l, cat),
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 12,
@@ -1624,7 +1645,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            final allOn = sightTypes[cat]!.keys.every((s) => _enabledSightTypes.contains('$cat:$s'));
+                            final allOn = sightTypes[cat]!.every((s) => _enabledSightTypes.contains('$cat:$s'));
                             toggleCategory(cat, !allOn);
                           },
                           style: TextButton.styleFrom(
@@ -1633,24 +1654,24 @@ class _MapScreenState extends State<MapScreen> {
                             minimumSize: const Size(0, 28),
                           ),
                           child: Text(
-                            sightTypes[cat]!.keys.every((s) => _enabledSightTypes.contains('$cat:$s'))
-                                ? 'Keine' : 'Alle',
+                            sightTypes[cat]!.every((s) => _enabledSightTypes.contains('$cat:$s'))
+                                ? l.filterSelectNone : l.filterSelectAll,
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  for (final entry in sightTypes[cat]!.entries)
+                  for (final sub in sightTypes[cat]!)
                     CheckboxListTile(
                       dense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                       controlAffinity: ListTileControlAffinity.leading,
-                      value: _enabledSightTypes.contains('$cat:${entry.key}'),
-                      onChanged: (v) => toggle('$cat:${entry.key}', v),
+                      value: _enabledSightTypes.contains('$cat:$sub'),
+                      onChanged: (v) => toggle('$cat:$sub', v),
                       activeColor: const Color(0xFF4fc3f7),
                       checkColor: Colors.black,
-                      title: Text(entry.value, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                      title: Text(sightSubtypeLabel(l, sub), style: const TextStyle(color: Colors.white, fontSize: 13)),
                     ),
                 ],
               ],
@@ -1676,10 +1697,12 @@ class _MapScreenState extends State<MapScreen> {
         _routeInspectMode = false;
         _loadingRouteInfo = false;
       });
+      if (!mounted) return;
+      final l = AppLocalizations.of(context);
       if (routes.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Keine Route an dieser Stelle gefunden'),
-          duration: Duration(seconds: 2),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l.noRouteHere),
+          duration: const Duration(seconds: 2),
         ));
         return;
       }
@@ -1692,7 +1715,7 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) {
         setState(() => _loadingRouteInfo = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Overpass-Fehler: $e'),
+          content: Text(AppLocalizations.of(context).overpassError(e.toString())),
           backgroundColor: Colors.red.shade700,
         ));
       }
@@ -1707,48 +1730,51 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: routes.length > 3 ? 0.5 : 0.35,
-        minChildSize: 0.25,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (ctx, scrollCtrl) => ListView(
-          controller: scrollCtrl,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '${routes.length} Route${routes.length == 1 ? '' : 'n'} hier',
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            for (final r in routes)
-              ListTile(
-                dense: true,
-                leading: Container(
-                  width: 32, height: 32,
-                  decoration: BoxDecoration(color: _routeColor(r), shape: BoxShape.circle),
-                  child: Icon(_routeIcon(r), color: Colors.white, size: 18),
+      builder: (ctx) {
+        final l = AppLocalizations.of(ctx);
+        return DraggableScrollableSheet(
+          initialChildSize: routes.length > 3 ? 0.5 : 0.35,
+          minChildSize: 0.25,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (ctx, scrollCtrl) => ListView(
+            controller: scrollCtrl,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
                 ),
-                title: Text(r.displayName, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                subtitle: Text(
-                  [r.typeLabel, if (r.network != null) r.networkLabel].join(' · '),
-                  style: const TextStyle(color: Colors.white60, fontSize: 12),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showRouteInfoSheet(r);
-                },
               ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 12),
+              Text(
+                '${routes.length} × ${l.actionInfo}',
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              for (final r in routes)
+                ListTile(
+                  dense: true,
+                  leading: Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(color: _routeColor(r), shape: BoxShape.circle),
+                    child: Icon(_routeIcon(r), color: Colors.white, size: 18),
+                  ),
+                  title: Text(r.localizedDisplayName(l), style: const TextStyle(color: Colors.white, fontSize: 14)),
+                  subtitle: Text(
+                    [r.localizedType(l), if (r.network != null) r.localizedNetwork(l)].join(' · '),
+                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showRouteInfoSheet(r);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1775,6 +1801,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   List<Widget> _buildRouteSheetChildren(BuildContext ctx, OsmRouteInfo r) {
+    final l = AppLocalizations.of(ctx);
     Widget row(IconData icon, String text) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
@@ -1807,10 +1834,10 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(r.displayName,
+                Text(r.localizedDisplayName(l),
                   style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
                 Text(
-                  [r.typeLabel, if (r.network != null) r.networkLabel].join(' · '),
+                  [r.localizedType(l), if (r.network != null) r.localizedNetwork(l)].join(' · '),
                   style: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
               ],
@@ -1837,7 +1864,7 @@ class _MapScreenState extends State<MapScreen> {
           if (r.wikipedia != null)
             TextButton.icon(
               icon: const Icon(Icons.public, size: 18),
-              label: const Text('Wikipedia'),
+              label: Text(l.sightWikipedia),
               onPressed: () {
                 Navigator.pop(ctx);
                 _openWikipedia(r.wikipedia!);
@@ -1846,7 +1873,7 @@ class _MapScreenState extends State<MapScreen> {
           if (r.website != null)
             TextButton.icon(
               icon: const Icon(Icons.language, size: 18),
-              label: const Text('Website'),
+              label: Text(l.sightWebsite),
               onPressed: () {
                 Navigator.pop(ctx);
                 _openUrl(r.website!);
@@ -1854,7 +1881,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           TextButton.icon(
             icon: const Icon(Icons.open_in_new, size: 18),
-            label: const Text('OSM-Relation'),
+            label: Text(l.sightOsmRelation),
             onPressed: () {
               Navigator.pop(ctx);
               _openUrl('https://www.openstreetmap.org/relation/${r.id}');
@@ -1918,7 +1945,7 @@ class _MapScreenState extends State<MapScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Overpass-Fehler: $e'),
+          content: Text(AppLocalizations.of(context).overpassError(e.toString())),
           backgroundColor: Colors.red.shade700,
         ));
       }
@@ -1942,14 +1969,14 @@ class _MapScreenState extends State<MapScreen> {
       setState(() => _sights = sights);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${sights.length} Sehenswürdigkeiten gefunden'),
+          content: Text(AppLocalizations.of(context).infoPoiCount(sights.length)),
           duration: const Duration(seconds: 2),
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Overpass-Fehler: $e'),
+          content: Text(AppLocalizations.of(context).overpassError(e.toString())),
           backgroundColor: Colors.red.shade700,
         ));
       }
@@ -1981,6 +2008,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   List<Widget> _buildSightSheetChildren(BuildContext ctx, OsmSight s) {
+    final l = AppLocalizations.of(ctx);
     final imageUrl = s.imageUrl;
     return [
       Center(
@@ -2026,9 +2054,9 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s.displayName,
+                Text(s.displayName(l),
                   style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
-                Text(s.subtypeLabel,
+                Text(s.localizedSubtype(l),
                   style: const TextStyle(color: Colors.white60, fontSize: 12)),
               ],
             ),
@@ -2040,7 +2068,7 @@ class _MapScreenState extends State<MapScreen> {
         Text(s.description!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
       ],
       const SizedBox(height: 12),
-      ..._sightInfoRows(s),
+      ..._sightInfoRows(l, s),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
@@ -2049,7 +2077,7 @@ class _MapScreenState extends State<MapScreen> {
           if (s.wikipedia != null)
             TextButton.icon(
               icon: const Icon(Icons.public, size: 18),
-              label: const Text('Wikipedia'),
+              label: Text(l.sightWikipedia),
               onPressed: () {
                 Navigator.pop(ctx);
                 _openWikipedia(s.wikipedia!);
@@ -2058,7 +2086,7 @@ class _MapScreenState extends State<MapScreen> {
           if (s.website != null)
             TextButton.icon(
               icon: const Icon(Icons.language, size: 18),
-              label: const Text('Website'),
+              label: Text(l.sightWebsite),
               onPressed: () {
                 Navigator.pop(ctx);
                 _openUrl(s.website!);
@@ -2066,7 +2094,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           TextButton.icon(
             icon: const Icon(Icons.add_location_alt_outlined, size: 18),
-            label: const Text('Als Waypoint'),
+            label: Text(l.sightAsWaypoint),
             onPressed: () {
               Navigator.pop(ctx);
               _addWaypointFromSight(s);
@@ -2077,7 +2105,7 @@ class _MapScreenState extends State<MapScreen> {
     ];
   }
 
-  List<Widget> _sightInfoRows(OsmSight s) {
+  List<Widget> _sightInfoRows(AppLocalizations l, OsmSight s) {
     final rows = <Widget>[];
     Widget row(IconData icon, String text) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2096,21 +2124,32 @@ class _MapScreenState extends State<MapScreen> {
     if (s.openingHours != null) rows.add(row(Icons.schedule, s.openingHours!));
     if (s.fee != null || s.charge != null) {
       final parts = <String>[];
-      if (s.fee == 'yes') parts.add('Eintritt');
-      if (s.fee == 'no') parts.add('Kostenlos');
+      if (s.fee == 'yes') parts.add(l.sightFeeYes);
+      if (s.fee == 'no') parts.add(l.sightFeeNo);
       if (s.charge != null) parts.add(s.charge!);
       rows.add(row(Icons.euro, parts.join(' · ')));
     }
     if (s.wheelchair != null) {
-      const wcLabels = {'yes': 'Barrierefrei', 'limited': 'Teilweise barrierefrei', 'no': 'Nicht barrierefrei'};
-      rows.add(row(Icons.accessible, wcLabels[s.wheelchair!] ?? s.wheelchair!));
+      String wcLabel(String v) {
+        switch (v) {
+          case 'yes':
+            return l.sightAccessibleYes;
+          case 'limited':
+            return l.sightAccessibleLimited;
+          case 'no':
+            return l.sightAccessibleNo;
+          default:
+            return v;
+        }
+      }
+      rows.add(row(Icons.accessible, wcLabel(s.wheelchair!)));
     }
     if (s.address != null) rows.add(row(Icons.place, s.address!));
     if (s.phone != null) rows.add(row(Icons.phone, s.phone!));
-    if (s.ele != null) rows.add(row(Icons.terrain, '${s.ele} m Höhe'));
-    if (s.startDate != null) rows.add(row(Icons.history, 'Erbaut ${s.startDate}'));
-    if (s.heritage != null) rows.add(row(Icons.museum, 'Denkmalschutz'));
-    if (s.artist != null) rows.add(row(Icons.brush, 'Künstler: ${s.artist}'));
+    if (s.ele != null) rows.add(row(Icons.terrain, '${s.ele} ${l.commonM}'));
+    if (s.startDate != null) rows.add(row(Icons.history, l.sightBuilt(s.startDate!)));
+    if (s.heritage != null) rows.add(row(Icons.museum, l.sightHeritage));
+    if (s.artist != null) rows.add(row(Icons.brush, l.sightArtist(s.artist!)));
     if (s.artworkType != null) rows.add(row(Icons.palette, s.artworkType!));
     if (s.castleType != null) rows.add(row(Icons.castle, s.castleType!));
     if (s.material != null) rows.add(row(Icons.texture, s.material!));
@@ -2136,7 +2175,7 @@ class _MapScreenState extends State<MapScreen> {
   void _addWaypointFromSight(OsmSight s) {
     final p = LatLng(s.lat, s.lon);
     setState(() => _waypoints.add(p));
-    _waypointNames[_wpKey(p)] = s.name ?? s.subtypeLabel;
+    _waypointNames[_wpKey(p)] = s.name ?? s.localizedSubtype(AppLocalizations.of(context));
     _recalculate();
   }
 
@@ -2216,7 +2255,7 @@ class _MapScreenState extends State<MapScreen> {
       );
       _displayRoute(result);
     } catch (e) {
-      _showError('Routing fehlgeschlagen: $e');
+      if (mounted) _showError(AppLocalizations.of(context).routingFailed(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -2249,7 +2288,7 @@ class _MapScreenState extends State<MapScreen> {
       }
       _displayRoute(result);
     } catch (e) {
-      _showError('Rundtour fehlgeschlagen: $e');
+      if (mounted) _showError(AppLocalizations.of(context).roundtripFailed(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -2332,23 +2371,25 @@ class _MapScreenState extends State<MapScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) {
+        final l = AppLocalizations.of(ctx);
+        final now = DateTime.now();
         final controller = TextEditingController(
-          text: 'Route ${DateTime.now().day}.${DateTime.now().month}.',
+          text: l.savedRouteDefaultName(now.day, now.month),
         );
         return AlertDialog(
           backgroundColor: const Color(0xFF1a1a2e),
-          title: const Text('Route speichern', style: TextStyle(color: Colors.white)),
+          title: Text(l.savedRouteSaveDialogTitle, style: const TextStyle(color: Colors.white)),
           content: TextField(
             controller: controller,
             autofocus: true,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              hintText: 'Name der Route',
-              hintStyle: TextStyle(color: Colors.white38),
-              enabledBorder: UnderlineInputBorder(
+            decoration: InputDecoration(
+              hintText: l.savedRouteSavePrompt,
+              hintStyle: const TextStyle(color: Colors.white38),
+              enabledBorder: const UnderlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF4fc3f7)),
               ),
-              focusedBorder: UnderlineInputBorder(
+              focusedBorder: const UnderlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF4fc3f7), width: 2),
               ),
             ),
@@ -2356,11 +2397,11 @@ class _MapScreenState extends State<MapScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Abbrechen'),
+              child: Text(l.commonCancel),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text('Speichern', style: TextStyle(color: Color(0xFF4fc3f7))),
+              child: Text(l.commonSave, style: const TextStyle(color: Color(0xFF4fc3f7))),
             ),
           ],
         );
@@ -2385,7 +2426,7 @@ class _MapScreenState extends State<MapScreen> {
     await RouteStorage.save(saved);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('„$name" gespeichert')),
+      SnackBar(content: Text(AppLocalizations.of(context).savedRouteSaved)),
     );
   }
 
@@ -2437,13 +2478,14 @@ class _MapScreenState extends State<MapScreen> {
     for (final s in _stages) {
       // Don't mark the final arrival (same as end waypoint)
       if (s.index == _stages.length && _stages.length > 1) continue;
+      final l = AppLocalizations.of(context);
       markers.add(Marker(
         point: LatLng(s.lat, s.lon),
         width: 30,
         height: 30,
         alignment: Alignment.center,
         child: Tooltip(
-          message: s.townName ?? 'Etappe ${s.index}: ${s.lengthKm.toStringAsFixed(0)} km',
+          message: s.townName ?? l.stageTooltip(s.index, s.lengthKm.toStringAsFixed(0)),
           triggerMode: TooltipTriggerMode.tap,
           child: Container(
             decoration: BoxDecoration(
@@ -2473,7 +2515,7 @@ class _MapScreenState extends State<MapScreen> {
     if (_waypoints.isEmpty) return;
     final last = _roundtripMode ? _waypoints.first : _waypoints.last;
     final key = _wpKey(last);
-    final label = _waypointNames[key] ?? 'Zielpunkt';
+    final label = _waypointNames[key] ?? AppLocalizations.of(context).defaultWaypoint;
     final a = await showAccommodationSheet(
       context,
       lat: last.latitude,
@@ -2485,7 +2527,7 @@ class _MapScreenState extends State<MapScreen> {
     _mapController.move(p, 15);
     setState(() {
       _waypoints.add(p);
-      _waypointNames[_wpKey(p)] = a.name ?? a.typeLabel;
+      _waypointNames[_wpKey(p)] = a.name ?? a.localizedType(AppLocalizations.of(context));
     });
     if (_roundtripMode) _exitRoundtripMode();
     _recalculate();
@@ -2505,7 +2547,7 @@ class _MapScreenState extends State<MapScreen> {
     await Clipboard.setData(ClipboardData(text: url));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Link in die Zwischenablage kopiert')),
+      SnackBar(content: Text(AppLocalizations.of(context).routeLinkCopied)),
     );
   }
 
@@ -2513,13 +2555,15 @@ class _MapScreenState extends State<MapScreen> {
     if (_route == null) return;
 
     try {
+      final l = AppLocalizations.of(context);
       final trackName = _roundtripMode
-          ? 'Rundtour ${_rtDistanceKm}km'
-          : 'Wegwiesel-Tour';
+          ? l.roundtripTourName(_rtDistanceKm)
+          : l.defaultTourName;
       final gpx = GpxBuilder.build(
         route: _route!,
         trackName: trackName,
         pois: _pois,
+        poiFallbackName: (poi) => poi.category.localizedLabel(l),
       );
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -2527,7 +2571,7 @@ class _MapScreenState extends State<MapScreen> {
 
       await exportGpxFile(filename, gpx);
     } catch (e) {
-      _showError('Export fehlgeschlagen: $e');
+      if (mounted) _showError(AppLocalizations.of(context).exportFailed(e.toString()));
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -27,42 +28,43 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f1e),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1a1a2e),
         foregroundColor: Colors.white,
-        title: const Text('Einstellungen & Info'),
+        title: Text(l.settingsTitle),
         elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          _sectionHeader('Rechtliches'),
+          _sectionHeader(l.settingsSectionLegal),
           _tile(
             icon: Icons.info_outline,
-            title: 'Impressum',
+            title: l.settingsImpressum,
             onTap: () => _openUrl(_impressumUrl),
           ),
           _tile(
             icon: Icons.privacy_tip_outlined,
-            title: 'Datenschutz',
+            title: l.settingsPrivacy,
             onTap: () => _openUrl(_datenschutzUrl),
           ),
-          _sectionHeader('Feedback'),
+          _sectionHeader(l.settingsSectionFeedback),
           _tile(
             icon: Icons.lightbulb_outline,
-            title: 'Feedback & Feature-Wünsche',
-            subtitle: 'Vorschläge posten und upvoten',
+            title: l.settingsFeedbackForm,
+            subtitle: l.settingsFeedbackFormSub,
             onTap: () => _openUrl(_feedbackUrl),
           ),
           _tile(
             icon: Icons.mail_outline,
-            title: 'Kontakt per E-Mail',
+            title: l.settingsContactMail,
             subtitle: _supportEmail,
             onTap: _openMail,
           ),
-          _sectionHeader('Über'),
+          _sectionHeader(l.settingsSectionAbout),
           FutureBuilder<PackageInfo>(
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {
@@ -71,19 +73,18 @@ class SettingsScreen extends StatelessWidget {
                   : '…';
               return _tile(
                 icon: Icons.tag,
-                title: 'Version',
+                title: l.settingsVersion,
                 subtitle: version,
               );
             },
           ),
           _tile(
             icon: Icons.description_outlined,
-            title: 'Open-Source-Lizenzen',
+            title: l.settingsLicenses,
             onTap: () => showLicensePage(
               context: context,
               applicationName: 'Wegwiesel',
-              applicationLegalese:
-                  '© 2026 Thomas Peterson\nPrivates, nicht-kommerzielles Projekt',
+              applicationLegalese: l.settingsLegalese,
             ),
           ),
           const SizedBox(height: 16),
@@ -96,11 +97,9 @@ class SettingsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFF4fc3f7).withValues(alpha: 0.3)),
               ),
-              child: const Text(
-                'Wegwiesel ist ein privates, nicht-kommerzielles Projekt, '
-                'um bikerouter.de besser auf mobilen Plattformen nutzbar zu machen. '
-                'Routing basiert auf BRouter, Karten auf OpenStreetMap.',
-                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+              child: Text(
+                l.settingsAbout,
+                style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
               ),
             ),
           ),

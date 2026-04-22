@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/profile.dart';
 import '../models/saved_route.dart';
 import '../services/route_storage.dart';
@@ -47,27 +48,28 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f1e),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1a1a2e),
         foregroundColor: Colors.white,
-        title: const Text('Gespeicherte Routen'),
+        title: Text(l.savedRoutesTitle),
         elevation: 0,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF4fc3f7)))
           : _routes.isEmpty
-              ? _emptyState()
+              ? _emptyState(l)
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: _routes.length,
-                  itemBuilder: (ctx, i) => _routeTile(_routes[i]),
+                  itemBuilder: (ctx, i) => _routeTile(_routes[i], l),
                 ),
     );
   }
 
-  Widget _emptyState() {
+  Widget _emptyState(AppLocalizations l) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -76,15 +78,9 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
           children: [
             const Icon(Icons.bookmark_border, color: Colors.white30, size: 64),
             const SizedBox(height: 16),
-            const Text(
-              'Noch keine Routen gespeichert',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
             Text(
-              'Speichere eine Route über das Menü in der Karte.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 13),
+              l.savedRoutesEmpty,
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
             ),
           ],
         ),
@@ -92,8 +88,9 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
     );
   }
 
-  Widget _routeTile(SavedRoute r) {
-    final profileName = BikeProfile.byId(r.profile)?.name ?? r.profile;
+  Widget _routeTile(SavedRoute r, AppLocalizations l) {
+    final profile = BikeProfile.byId(r.profile);
+    final profileName = profile != null ? profile.localizedName(l) : r.profile;
     return Dismissible(
       key: ValueKey(r.id),
       direction: DismissDirection.endToStart,
@@ -108,17 +105,17 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: const Color(0xFF1a1a2e),
-            title: const Text('Route löschen?', style: TextStyle(color: Colors.white)),
-            content: Text('„${r.name}" wird dauerhaft entfernt.',
+            title: Text(l.savedRoutesDeleteConfirm, style: const TextStyle(color: Colors.white)),
+            content: Text('„${r.name}"',
                 style: const TextStyle(color: Colors.white70)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Abbrechen'),
+                child: Text(l.commonCancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Löschen', style: TextStyle(color: Colors.redAccent)),
+                child: Text(l.commonDelete, style: const TextStyle(color: Colors.redAccent)),
               ),
             ],
           ),

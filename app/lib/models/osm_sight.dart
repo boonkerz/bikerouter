@@ -1,68 +1,161 @@
-/// All OSM POI types we support, grouped by category. Each entry: subtype → German label.
-const Map<String, Map<String, String>> sightTypes = {
-  'tourism': {
-    'attraction': 'Sehenswürdigkeit',
-    'viewpoint': 'Aussichtspunkt',
-    'museum': 'Museum',
-    'artwork': 'Kunstwerk',
-    'picnic_site': 'Picknickplatz',
-    'information': 'Touristen-Info',
-    'hotel': 'Hotel',
-    'guest_house': 'Pension',
-    'hostel': 'Hostel',
-    'camp_site': 'Campingplatz',
-  },
-  'historic': {
-    'castle': 'Burg/Schloss',
-    'monument': 'Denkmal',
-    'memorial': 'Gedenkstätte',
-    'ruins': 'Ruine',
-    'archaeological_site': 'Archäologische Stätte',
-  },
-  'natural': {
-    'peak': 'Gipfel',
-    'waterfall': 'Wasserfall',
-    'cave_entrance': 'Höhle',
-  },
-  'shop': {
-    'supermarket': 'Supermarkt',
-    'bakery': 'Bäckerei',
-    'convenience': 'Kiosk/Späti',
-    'bicycle': 'Fahrradladen',
-  },
-  'amenity': {
-    'restaurant': 'Restaurant',
-    'cafe': 'Café',
-    'fast_food': 'Imbiss',
-    'biergarten': 'Biergarten',
-    'pub': 'Kneipe',
-    'drinking_water': 'Trinkwasser',
-    'toilets': 'Toilette',
-    'pharmacy': 'Apotheke',
-    'atm': 'Geldautomat',
-    'bicycle_repair_station': 'Fahrrad-Reparaturstation',
-    'bicycle_rental': 'Fahrradverleih',
-    'charging_station': 'Ladesäule',
-  },
-  'railway': {
-    'station': 'Bahnhof',
-    'halt': 'Haltepunkt',
-    'tram_stop': 'Straßenbahn-Halt',
-  },
+import '../l10n/app_localizations.dart';
+
+/// All OSM POI types we support, grouped by category.
+const Map<String, List<String>> sightTypes = {
+  'tourism': [
+    'attraction',
+    'viewpoint',
+    'museum',
+    'artwork',
+    'picnic_site',
+    'information',
+    'hotel',
+    'guest_house',
+    'hostel',
+    'camp_site',
+  ],
+  'historic': [
+    'castle',
+    'monument',
+    'memorial',
+    'ruins',
+    'archaeological_site',
+  ],
+  'natural': [
+    'peak',
+    'waterfall',
+    'cave_entrance',
+  ],
+  'shop': [
+    'supermarket',
+    'bakery',
+    'convenience',
+    'bicycle',
+  ],
+  'amenity': [
+    'restaurant',
+    'cafe',
+    'fast_food',
+    'biergarten',
+    'pub',
+    'drinking_water',
+    'toilets',
+    'pharmacy',
+    'atm',
+    'bicycle_repair_station',
+    'bicycle_rental',
+    'charging_station',
+  ],
+  'railway': [
+    'station',
+    'halt',
+    'tram_stop',
+  ],
 };
 
-const Map<String, String> sightCategoryLabels = {
-  'tourism': 'Tourismus',
-  'historic': 'Historisch',
-  'natural': 'Natur',
-  'shop': 'Einkauf',
-  'amenity': 'Versorgung',
-  'railway': 'Bahn',
-};
+String sightCategoryLabel(AppLocalizations l, String category) {
+  switch (category) {
+    case 'tourism':
+      return l.sightsGroupTourism;
+    case 'historic':
+      return l.sightsGroupHistoric;
+    case 'natural':
+      return l.sightsGroupNatural;
+    case 'shop':
+      return l.sightsGroupShop;
+    case 'amenity':
+      return l.sightsGroupAmenity;
+    case 'railway':
+      return l.sightsGroupRailway;
+    default:
+      return category;
+  }
+}
+
+String sightSubtypeLabel(AppLocalizations l, String subtype) {
+  switch (subtype) {
+    case 'attraction':
+      return l.sightSubAttraction;
+    case 'viewpoint':
+      return l.sightSubViewpoint;
+    case 'museum':
+      return l.sightSubMuseum;
+    case 'artwork':
+      return l.sightSubArtwork;
+    case 'picnic_site':
+      return l.sightSubPicnicSite;
+    case 'information':
+      return l.sightSubInformation;
+    case 'hotel':
+      return l.sightSubHotel;
+    case 'guest_house':
+      return l.sightSubGuestHouse;
+    case 'hostel':
+      return l.sightSubHostel;
+    case 'camp_site':
+      return l.sightSubCampSite;
+    case 'castle':
+      return l.sightSubCastle;
+    case 'monument':
+      return l.sightSubMonument;
+    case 'memorial':
+      return l.sightSubMemorial;
+    case 'ruins':
+      return l.sightSubRuins;
+    case 'archaeological_site':
+      return l.sightSubArchaeological;
+    case 'peak':
+      return l.sightSubPeak;
+    case 'waterfall':
+      return l.sightSubWaterfall;
+    case 'cave_entrance':
+      return l.sightSubCave;
+    case 'supermarket':
+      return l.sightSubSupermarket;
+    case 'bakery':
+      return l.sightSubBakery;
+    case 'convenience':
+      return l.sightSubConvenience;
+    case 'bicycle':
+      return l.sightSubBicycleShop;
+    case 'restaurant':
+      return l.sightSubRestaurant;
+    case 'cafe':
+      return l.sightSubCafe;
+    case 'fast_food':
+      return l.sightSubFastFood;
+    case 'biergarten':
+      return l.sightSubBiergarten;
+    case 'pub':
+      return l.sightSubPub;
+    case 'drinking_water':
+      return l.sightSubDrinkingWater;
+    case 'toilets':
+      return l.sightSubToilets;
+    case 'pharmacy':
+      return l.sightSubPharmacy;
+    case 'atm':
+      return l.sightSubAtm;
+    case 'bicycle_repair_station':
+      return l.sightSubBicycleRepair;
+    case 'bicycle_rental':
+      return l.sightSubBicycleRental;
+    case 'charging_station':
+      return l.sightSubChargingStation;
+    case 'station':
+      return l.sightSubStation;
+    case 'halt':
+      return l.sightSubHalt;
+    case 'tram_stop':
+      return l.sightSubTramStop;
+    default:
+      return subtype;
+  }
+}
 
 Set<String> get allSightTypes => {
       for (final entry in sightTypes.entries)
-        for (final sub in entry.value.keys) '${entry.key}:$sub',
+        for (final sub in entry.value) '${entry.key}:$sub',
     };
 
 class OsmSight {
@@ -124,10 +217,9 @@ class OsmSight {
     this.material,
   });
 
-  String get displayName => name ?? subtypeLabel;
+  String displayName(AppLocalizations l) => name ?? sightSubtypeLabel(l, subtype);
 
-  String get subtypeLabel =>
-      sightTypes[category]?[subtype] ?? subtype;
+  String localizedSubtype(AppLocalizations l) => sightSubtypeLabel(l, subtype);
 
   /// Direct image URL if available: prefers `image` tag, falls back to wikimedia_commons File:
   String? get imageUrl {

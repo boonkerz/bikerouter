@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// A run of consecutive route coordinates sharing the same OSM way tags.
 class RouteSegment {
   final int startCoordIdx;
@@ -103,20 +105,20 @@ extension SurfaceCategoryX on SurfaceCategory {
     }
   }
 
-  String get label {
+  String localizedLabel(AppLocalizations l) {
     switch (this) {
       case SurfaceCategory.asphalt:
-        return 'Asphalt';
+        return l.surfaceCategoryAsphalt;
       case SurfaceCategory.pavingStones:
-        return 'Pflaster';
+        return l.surfaceCategoryPavingStones;
       case SurfaceCategory.gravel:
-        return 'Schotter';
+        return l.surfaceCategoryGravel;
       case SurfaceCategory.unpaved:
-        return 'Naturweg';
+        return l.surfaceCategoryUnpaved;
       case SurfaceCategory.offroad:
-        return 'Waldweg';
+        return l.surfaceCategoryOffroad;
       case SurfaceCategory.unknown:
-        return 'Unbekannt';
+        return l.surfaceCategoryUnknown;
     }
   }
 }

@@ -77,7 +77,7 @@ out body;
     String? subtype;
     for (final cat in sightTypes.keys) {
       final v = tags[cat];
-      if (v is String && sightTypes[cat]!.containsKey(v)) {
+      if (v is String && sightTypes[cat]!.contains(v)) {
         category = cat;
         subtype = v;
         break;

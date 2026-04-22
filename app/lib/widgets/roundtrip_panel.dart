@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/profile.dart';
 
 class RoundtripRequest {
@@ -41,7 +42,7 @@ class RoundtripPanel extends StatefulWidget {
 
 class _RoundtripPanelState extends State<RoundtripPanel> {
   bool _useTime = false;
-  int _timeMinutes = 120; // 2h default
+  int _timeMinutes = 120;
 
   int get _speed => BikeProfile.byId(widget.profile)?.avgSpeedKmh ?? 20;
 
@@ -58,24 +59,24 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Toggle: Distance / Time
           Row(
             children: [
-              _toggleChip('Distanz', !_useTime),
+              _toggleChip(l.roundtripDistance, !_useTime, false),
               const SizedBox(width: 8),
-              _toggleChip('Zeit', _useTime),
+              _toggleChip(l.roundtripTime, _useTime, true),
             ],
           ),
           const SizedBox(height: 8),
           if (_useTime) ...[
             Text(
-              _formatTime(_timeMinutes),
+              _formatTime(l, _timeMinutes),
               style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             Slider(
@@ -91,12 +92,12 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               },
             ),
             Text(
-              '~$_computedDistanceKm km bei ~$_speed km/h',
+              l.roundtripApproxAt(_computedDistanceKm, _speed),
               style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
             ),
           ] else ...[
             Text(
-              'Distanz: ${widget.distanceKm} km',
+              l.roundtripDistanceLabel(widget.distanceKm),
               style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             Slider(
@@ -111,7 +112,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
           ],
           const SizedBox(height: 4),
           Text(
-            'Richtung: ${widget.direction}°',
+            l.roundtripDirectionLabel(widget.direction),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
           Slider(
@@ -126,7 +127,12 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              for (final d in [('N', 0), ('O', 90), ('S', 180), ('W', 270)])
+              for (final d in [
+                (l.roundtripCompassN, 0),
+                (l.roundtripCompassE, 90),
+                (l.roundtripCompassS, 180),
+                (l.roundtripCompassW, 270),
+              ])
                 TextButton(
                   style: TextButton.styleFrom(
                     minimumSize: Size.zero,
@@ -151,7 +157,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
             child: Text(
-              widget.hasStart ? 'Rundtour berechnen' : 'Startpunkt auf Karte tippen',
+              widget.hasStart ? l.roundtripGenerate : l.roundtripNeedStart,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -162,16 +168,16 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               foregroundColor: const Color(0xFF4fc3f7),
               side: const BorderSide(color: Color(0xFF4fc3f7)),
             ),
-            child: const Text('Andere Variante'),
+            child: Text(l.roundtripAlternative),
           ),
         ],
       ),
     );
   }
 
-  Widget _toggleChip(String label, bool active) {
+  Widget _toggleChip(String label, bool active, bool isTime) {
     return GestureDetector(
-      onTap: () => setState(() => _useTime = label == 'Zeit'),
+      onTap: () => setState(() => _useTime = isTime),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
@@ -193,11 +199,11 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
     );
   }
 
-  String _formatTime(int minutes) {
+  String _formatTime(AppLocalizations l, int minutes) {
     final h = minutes ~/ 60;
     final m = minutes % 60;
-    if (h == 0) return 'Zeit: $m min';
-    if (m == 0) return 'Zeit: ${h}h';
-    return 'Zeit: ${h}h ${m}min';
+    if (h == 0) return l.roundtripTimeMinutes(m);
+    if (m == 0) return l.roundtripTimeHours(h);
+    return l.roundtripTimeHoursMinutes(h, m);
   }
 }

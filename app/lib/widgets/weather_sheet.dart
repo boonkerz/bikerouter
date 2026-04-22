@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/weather_service.dart';
 
 Future<void> showWeatherSheet(
@@ -72,7 +73,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Wetter-Abruf fehlgeschlagen';
+        _error = AppLocalizations.of(context).weatherError;
         _loading = false;
       });
     }
@@ -110,6 +111,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return DraggableScrollableSheet(
       initialChildSize: 0.55,
       minChildSize: 0.35,
@@ -134,13 +136,15 @@ class _WeatherSheetState extends State<_WeatherSheet> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text('Wetter entlang der Route',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-                  const Spacer(),
+                  Expanded(
+                    child: Text(l.weatherTitle,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
                   TextButton.icon(
                     icon: const Icon(Icons.schedule, size: 16, color: Color(0xFF4fc3f7)),
                     label: Text(
-                      _formatDeparture(_departure),
+                      _formatDeparture(l, _departure),
                       style: const TextStyle(color: Color(0xFF4fc3f7)),
                     ),
                     onPressed: _pickDeparture,
@@ -148,7 +152,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
                 ],
               ),
               const Divider(color: Colors.white24, height: 16),
-              Expanded(child: _buildBody(scrollController)),
+              Expanded(child: _buildBody(scrollController, l)),
             ],
           ),
         );
@@ -156,7 +160,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
     );
   }
 
-  Widget _buildBody(ScrollController sc) {
+  Widget _buildBody(ScrollController sc, AppLocalizations l) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFF4fc3f7)));
     }
@@ -165,8 +169,8 @@ class _WeatherSheetState extends State<_WeatherSheet> {
     }
     final samples = _samples;
     if (samples == null || samples.isEmpty) {
-      return const Center(
-        child: Text('Keine Wetterdaten', style: TextStyle(color: Colors.white54)),
+      return Center(
+        child: Text(l.weatherEmpty, style: const TextStyle(color: Colors.white54)),
       );
     }
     return ListView.separated(
@@ -222,14 +226,14 @@ class _WeatherSheetState extends State<_WeatherSheet> {
     );
   }
 
-  String _formatDeparture(DateTime d) {
+  String _formatDeparture(AppLocalizations l, DateTime d) {
     final today = DateTime.now();
     final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
     final tomorrow = today.add(const Duration(days: 1));
     final isTomorrow = d.year == tomorrow.year && d.month == tomorrow.month && d.day == tomorrow.day;
     final hm = '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-    if (isToday) return 'Heute $hm';
-    if (isTomorrow) return 'Morgen $hm';
+    if (isToday) return l.weatherToday(hm);
+    if (isTomorrow) return l.weatherTomorrow(hm);
     return '${d.day}.${d.month}. $hm';
   }
 }

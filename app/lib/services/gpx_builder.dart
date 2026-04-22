@@ -6,6 +6,7 @@ class GpxBuilder {
     required RouteResult route,
     required String trackName,
     required List<RoutePoi> pois,
+    String Function(RoutePoi poi)? poiFallbackName,
     String creator = 'Wegwiesel (wegwiesel.app)',
   }) {
     final buf = StringBuffer();
@@ -25,7 +26,8 @@ class GpxBuilder {
       if (p.name != null && p.name!.isNotEmpty) {
         buf.writeln('    <name>${_esc(p.name!)}</name>');
       } else {
-        buf.writeln('    <name>${_esc(p.category.label)}</name>');
+        final fallback = poiFallbackName?.call(p) ?? p.category.label;
+        buf.writeln('    <name>${_esc(fallback)}</name>');
       }
       if (p.note != null && p.note!.isNotEmpty) {
         buf.writeln('    <desc>${_esc(p.note!)}</desc>');

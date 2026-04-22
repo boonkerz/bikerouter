@@ -1,3 +1,5 @@
+import '../l10n/app_localizations.dart';
+
 class MapStyle {
   final String id;
   final String name;
@@ -16,6 +18,21 @@ class MapStyle {
     this.maxZoom = 19,
     this.labelsOverlay,
   });
+
+  String localizedName(AppLocalizations l) {
+    switch (id) {
+      case 'osm':
+        return l.mapStyleStandard;
+      case 'cyclosm':
+        return l.mapStyleCycling;
+      case 'topo':
+        return l.mapStyleTopo;
+      case 'satellite':
+        return l.mapStyleSatellite;
+      default:
+        return name;
+    }
+  }
 }
 
 class RouteOverlay {
@@ -30,6 +47,19 @@ class RouteOverlay {
     required this.icon,
     required this.urlTemplate,
   });
+
+  String localizedName(AppLocalizations l) {
+    switch (id) {
+      case 'cycling':
+        return l.routeOverlayCycling;
+      case 'hiking':
+        return l.routeOverlayHiking;
+      case 'mtb':
+        return l.routeOverlayMtb;
+      default:
+        return name;
+    }
+  }
 }
 
 const routeOverlays = [

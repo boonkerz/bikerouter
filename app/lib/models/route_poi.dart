@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 enum PoiCategory {
   lodging(
     id: 'lodging',
@@ -86,6 +88,27 @@ enum PoiCategory {
         (c) => c.id == id,
         orElse: () => PoiCategory.other,
       );
+
+  String localizedLabel(AppLocalizations l) {
+    switch (this) {
+      case PoiCategory.lodging:
+        return l.poiCatLodging;
+      case PoiCategory.food:
+        return l.poiCatFood;
+      case PoiCategory.water:
+        return l.poiCatWater;
+      case PoiCategory.shop:
+        return l.poiCatShop;
+      case PoiCategory.scenic:
+        return l.poiCatScenic;
+      case PoiCategory.camping:
+        return l.poiCatCamping;
+      case PoiCategory.info:
+        return l.poiCatInfo;
+      case PoiCategory.other:
+        return l.poiCatOther;
+    }
+  }
 }
 
 class RoutePoi {

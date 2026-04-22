@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/route_segment.dart';
 
 class SurfaceChart extends StatelessWidget {
@@ -19,6 +20,7 @@ class SurfaceChart extends StatelessWidget {
     if (segments.isEmpty || totalDistanceKm <= 0) {
       return const SizedBox.shrink();
     }
+    final l = AppLocalizations.of(context);
 
     final tally = <SurfaceCategory, double>{};
     for (final s in segments) {
@@ -40,7 +42,7 @@ class SurfaceChart extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Beschaffenheit',
+                l.surfaceTitle,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 11,
@@ -76,7 +78,7 @@ class SurfaceChart extends StatelessWidget {
               for (final e in entries)
                 _Legend(
                   color: e.key.color,
-                  label: e.key.label,
+                  label: e.key.localizedLabel(l),
                   km: e.value,
                   totalKm: totalDistanceKm,
                 ),
@@ -186,7 +188,7 @@ class _SurfaceBarState extends State<_SurfaceBar> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '${_hovered!.category.label} · ${(_hovered!.lengthKm).toStringAsFixed(2)} km',
+                        '${_hovered!.category.localizedLabel(AppLocalizations.of(context))} · ${(_hovered!.lengthKm).toStringAsFixed(2)} km',
                         style: const TextStyle(color: Colors.white, fontSize: 11),
                       ),
                     ),

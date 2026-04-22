@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'l10n/app_localizations.dart';
 import 'screens/map_screen.dart';
 
 void main() {
@@ -13,6 +14,8 @@ class WegwieselApp extends StatelessWidget {
     return MaterialApp(
       title: 'Wegwiesel',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF1a1a2e),

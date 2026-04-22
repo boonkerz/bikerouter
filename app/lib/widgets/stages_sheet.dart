@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/stage_planner.dart';
 
 class StagesResult {
@@ -71,6 +72,7 @@ class _SheetState extends State<_Sheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.4,
@@ -94,17 +96,17 @@ class _SheetState extends State<_Sheet> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Etappenplaner',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(l.stagesTitle,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                 const Spacer(),
-                Text('${widget.totalKm.toStringAsFixed(0)} km gesamt',
+                Text(l.stagesTotalKm(widget.totalKm.toStringAsFixed(0)),
                     style: const TextStyle(color: Colors.white54, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text('Tagesziel', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(l.stagesTargetLabel, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 Expanded(
                   child: Slider(
                     value: _targetKm,
@@ -125,13 +127,13 @@ class _SheetState extends State<_Sheet> {
               ],
             ),
             const Divider(color: Colors.white24, height: 16),
-            Expanded(child: _buildList(sc)),
+            Expanded(child: _buildList(sc, l)),
             if (_stages != null && _stages!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: FilledButton.icon(
                   icon: const Icon(Icons.check, size: 18),
-                  label: const Text('Etappen auf Karte zeigen'),
+                  label: Text(l.stagesShowOnMap),
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4fc3f7)),
                   onPressed: () => Navigator.pop(context, StagesResult(_stages!, _targetKm)),
                 ),
@@ -142,26 +144,26 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  Widget _buildList(ScrollController sc) {
+  Widget _buildList(ScrollController sc, AppLocalizations l) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFF4fc3f7)));
     }
     final stages = _stages;
     if (stages == null || stages.isEmpty) {
-      return const Center(
-        child: Text('Keine Etappen', style: TextStyle(color: Colors.white54)),
+      return Center(
+        child: Text(l.stagesEmpty, style: const TextStyle(color: Colors.white54)),
       );
     }
     return ListView.separated(
       controller: sc,
       itemCount: stages.length,
       separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
-      itemBuilder: (ctx, i) => _row(stages[i]),
+      itemBuilder: (ctx, i) => _row(stages[i], l),
     );
   }
 
-  Widget _row(Stage s) {
-    final title = s.townName ?? 'Etappe ${s.index}';
+  Widget _row(Stage s, AppLocalizations l) {
+    final title = s.townName ?? l.stagesDefault(s.index);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -188,7 +190,11 @@ class _SheetState extends State<_Sheet> {
                     style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(
-                  '${s.lengthKm.toStringAsFixed(1)} km · ${s.ascentM.round()} hm · bis ${s.endKm.toStringAsFixed(0)} km',
+                  l.stagesRowSummary(
+                    s.lengthKm.toStringAsFixed(1),
+                    s.ascentM.round(),
+                    s.endKm.toStringAsFixed(0),
+                  ),
                   style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],

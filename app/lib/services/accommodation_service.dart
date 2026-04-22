@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
+import '../l10n/app_localizations.dart';
+
 class Accommodation {
   final int id;
   final String type; // hotel, guest_house, hostel, camp_site, etc.
@@ -53,21 +55,32 @@ class Accommodation {
     }
   }
 
-  String get typeLabel {
-    const labels = {
-      'hotel': 'Hotel',
-      'motel': 'Motel',
-      'hostel': 'Hostel',
-      'guest_house': 'Pension',
-      'bed_and_breakfast': 'B&B',
-      'apartment': 'Ferienwohnung',
-      'chalet': 'Chalet',
-      'alpine_hut': 'Berghütte',
-      'wilderness_hut': 'Schutzhütte',
-      'camp_site': 'Campingplatz',
-      'caravan_site': 'Wohnmobilplatz',
-    };
-    return labels[type] ?? type;
+  String localizedType(AppLocalizations l) {
+    switch (type) {
+      case 'hotel':
+        return l.accommodationHotel;
+      case 'motel':
+        return l.accommodationMotel;
+      case 'hostel':
+        return l.accommodationHostel;
+      case 'guest_house':
+        return l.accommodationGuesthouse;
+      case 'bed_and_breakfast':
+        return l.accommodationBnb;
+      case 'apartment':
+        return l.accommodationApartment;
+      case 'chalet':
+        return l.accommodationChalet;
+      case 'alpine_hut':
+        return l.accommodationAlpineHut;
+      case 'wilderness_hut':
+        return l.accommodationWildernessHut;
+      case 'camp_site':
+        return l.accommodationCampsite;
+      case 'caravan_site':
+        return l.accommodationCaravanSite;
+    }
+    return type;
   }
 }
 
