@@ -992,6 +992,8 @@ class _ProfilePainter extends CustomPainter {
     if (bx + boxW > size.width - 4) bx = anchor.dx - boxW - 12;
     if (bx < 4) bx = 4;
     if (by < 4) by = anchor.dy + 12;
+    if (by + boxH > size.height - 4) by = size.height - boxH - 4;
+    if (by < 4) by = 4;
 
     final box = RRect.fromRectAndRadius(
       Rect.fromLTWH(bx, by, boxW, boxH),
