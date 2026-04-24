@@ -2193,7 +2193,11 @@ class _MapScreenState extends State<MapScreen> {
     final idx = _draggingWaypointIndex;
     setState(() => _draggingWaypointIndex = null);
     if (idx != null) {
-      if (_roundtripMode) _exitRoundtripMode();
+      // Dragging an A/B/C/D anchor keeps roundtrip mode alive so the user can
+      // keep tweaking the quadrilateral. Dragging any other waypoint
+      // (start-only scenarios) falls back to the previous behaviour.
+      final wasAnchor = _anchorIndices.contains(idx) || idx == 0;
+      if (_roundtripMode && !wasAnchor) _exitRoundtripMode();
       _recalculate();
     }
   }
