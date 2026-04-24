@@ -215,6 +215,17 @@ class _MapScreenState extends State<MapScreen> {
                         maxZoom: 18,
                         userAgentPackageName: 'app.wegwiesel',
                       ),
+                    if (_roundtripMode && _anchorIndices.isNotEmpty && _waypoints.length >= 3)
+                      PolygonLayer(
+                        polygons: [
+                          Polygon(
+                            points: [..._waypoints],
+                            color: const Color(0xFF4fc3f7).withValues(alpha: 0.08),
+                            borderColor: const Color(0xFF4fc3f7).withValues(alpha: 0.6),
+                            borderStrokeWidth: 1.5,
+                          ),
+                        ],
+                      ),
                     if (_routePoints.isNotEmpty) ...[
                       if (_route != null && _routeVizMode == 'surface' && _route!.segments.isNotEmpty)
                         PolylineLayer(polylines: _buildSurfacePolylines())
@@ -904,10 +915,6 @@ class _MapScreenState extends State<MapScreen> {
       final isSelected = _selectedWaypointIndex == i;
       final canDelete = !isStart && _waypoints.length > 2;
 
-      // Hide anchor drag-handles unless actively interacted with — the route hover
-      // point already acts as a drag handle, so permanent anchors clutter the map.
-      if (isAnchor && !isDragging && !isHovered && !isSelected) continue;
-
       final Color color;
       if (isStart) {
         color = const Color(0xFF66bb6a);
@@ -919,14 +926,20 @@ class _MapScreenState extends State<MapScreen> {
 
       double size;
       if (isAnchor) {
-        size = isDragging ? 22.0 : (isHovered ? 20.0 : 14.0);
+        size = isDragging ? 32.0 : (isHovered ? 28.0 : 24.0);
       } else if (isStart || (isEnd && !_roundtripMode)) {
         size = isDragging ? 36.0 : (isHovered ? 32.0 : 28.0);
       } else {
         size = isDragging ? 28.0 : (isHovered ? 24.0 : 20.0);
       }
 
-      final label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
+      String label;
+      if (_roundtripMode && _anchorIndices.isNotEmpty) {
+        // A/B/C/D style labels for the four corners of the roundtrip shape.
+        label = i < 26 ? String.fromCharCode('A'.codeUnitAt(0) + i) : '';
+      } else {
+        label = isStart ? 'A' : (isEnd && !_roundtripMode ? 'B' : '');
+      }
       final wpName = _waypointNames[_wpKey(wp)];
 
       markers.add(Marker(
@@ -2325,15 +2338,37 @@ class _MapScreenState extends State<MapScreen> {
     final start = _waypoints.first;
     _anchorIndices.clear();
 
-    final anchors = <LatLng>[];
-    double dist = 0;
-    for (int i = 1; i < _routePoints.length - 1; i++) {
-      dist += _latLngDist(_routePoints[i - 1], _routePoints[i]) * 111;
-      if (dist >= 2.0) {
-        anchors.add(_routePoints[i]);
-        dist = 0;
-      }
+    // Place anchors at 25%, 50%, 75% of the cumulative route distance so the
+    // four corners (start + three vias) form a readable A/B/C/D quadrilateral.
+    if (_routePoints.length < 4) {
+      setState(() {});
+      return;
     }
+    final cum = List<double>.filled(_routePoints.length, 0);
+    for (int i = 1; i < _routePoints.length; i++) {
+      cum[i] = cum[i - 1] + _latLngDist(_routePoints[i - 1], _routePoints[i]);
+    }
+    final total = cum.last;
+    if (total <= 0) {
+      setState(() {});
+      return;
+    }
+
+    LatLng atFraction(double f) {
+      final target = total * f;
+      int lo = 0, hi = cum.length - 1;
+      while (lo < hi) {
+        final mid = (lo + hi) ~/ 2;
+        if (cum[mid] < target) {
+          lo = mid + 1;
+        } else {
+          hi = mid;
+        }
+      }
+      return _routePoints[lo];
+    }
+
+    final anchors = [atFraction(0.25), atFraction(0.5), atFraction(0.75)];
 
     _waypoints.clear();
     _waypoints.add(start);
