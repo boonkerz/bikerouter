@@ -220,9 +220,9 @@ class _MapScreenState extends State<MapScreen> {
                         polygons: [
                           Polygon(
                             points: [..._waypoints],
-                            color: const Color(0xFF4fc3f7).withValues(alpha: 0.08),
-                            borderColor: const Color(0xFF4fc3f7).withValues(alpha: 0.6),
-                            borderStrokeWidth: 1.5,
+                            color: const Color(0xFFffc107).withValues(alpha: 0.18),
+                            borderColor: const Color(0xFFffc107).withValues(alpha: 0.85),
+                            borderStrokeWidth: 2.5,
                           ),
                         ],
                       ),
@@ -2342,8 +2342,6 @@ class _MapScreenState extends State<MapScreen> {
     final start = _waypoints.first;
     _anchorIndices.clear();
 
-    // Place anchors at 25%, 50%, 75% of the cumulative route distance so the
-    // four corners (start + three vias) form a readable A/B/C/D quadrilateral.
     if (_routePoints.length < 4) {
       setState(() {});
       return;
@@ -2357,6 +2355,12 @@ class _MapScreenState extends State<MapScreen> {
       setState(() {});
       return;
     }
+
+    // Distance comes from _latLngDist in "degrees × 111" units. Approximate
+    // ~111 km per degree latitude is fine at this granularity.
+    final distanceKm = total * 111;
+    // Minimum three anchors, plus one additional for every whole 10 km.
+    final nVias = max(3, 3 + (distanceKm / 10).floor());
 
     LatLng atFraction(double f) {
       final target = total * f;
@@ -2372,7 +2376,10 @@ class _MapScreenState extends State<MapScreen> {
       return _routePoints[lo];
     }
 
-    final anchors = [atFraction(0.25), atFraction(0.5), atFraction(0.75)];
+    final anchors = <LatLng>[];
+    for (int k = 1; k <= nVias; k++) {
+      anchors.add(atFraction(k / (nVias + 1)));
+    }
 
     _waypoints.clear();
     _waypoints.add(start);
