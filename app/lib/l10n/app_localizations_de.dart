@@ -634,25 +634,25 @@ class AppLocalizationsDe extends AppLocalizations {
   String get highwayUnclassified => 'Nebenstraße';
 
   @override
-  String get highwayTertiary => 'Straße (klein)';
+  String get highwayTertiary => 'Nebenstraße';
 
   @override
   String get highwaySecondary => 'Straße (mittel)';
 
   @override
-  String get highwayPrimary => 'Hauptstraße';
+  String get highwayPrimary => 'Haupt-/Bundesstraße';
 
   @override
   String get highwayTrunk => 'Kraftfahrstraße';
 
   @override
-  String get highwayMotorway => 'Autobahn';
+  String get highwayMotorway => 'Autobahn/Schnellstraße';
 
   @override
   String get highwaySteps => 'Treppen';
 
   @override
-  String get highwayUnknown => 'Weg';
+  String get highwayUnknown => 'Unbekannt';
 
   @override
   String get shareDialogTitle => 'Route teilen';
@@ -1022,6 +1022,79 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get osmNetworkLwn => 'Lokal (Wandern)';
+
+  @override
+  String get profileModeGradient => 'Steigung';
+
+  @override
+  String get profileModeSurface => 'Oberfläche';
+
+  @override
+  String get profileModeHighway => 'Straßentyp';
+
+  @override
+  String get profileModeSmoothness => 'Rauheit';
+
+  @override
+  String get profileModeMaxSpeed => 'Tempolimit';
+
+  @override
+  String get profileModeCost => 'Routingkosten';
+
+  @override
+  String get profileZoomLocked => 'Zoom gesperrt';
+
+  @override
+  String get profileZoomUnlocked => 'Zoom frei';
+
+  @override
+  String get profileZoomReset => 'Zoom zurücksetzen';
+
+  @override
+  String get profileSimplifiedWarning =>
+      'Vereinfachte Darstellung — hineinzoomen für Details';
+
+  @override
+  String get profileTooltipDistance => 'Distanz';
+
+  @override
+  String get profileTooltipElevation => 'Höhe';
+
+  @override
+  String get profileTooltipGradient => 'Steigung';
+
+  @override
+  String get profileTooltipAscent => 'Anstieg';
+
+  @override
+  String get profileTooltipHighway => 'Straße';
+
+  @override
+  String get profileTooltipSurface => 'Oberfläche';
+
+  @override
+  String get profileTooltipSmoothness => 'Rauheit';
+
+  @override
+  String get profileTooltipMaxSpeed => 'Tempo';
+
+  @override
+  String get profileTooltipCost => 'Kosten';
+
+  @override
+  String get smoothnessExcellent => 'Sehr gut';
+
+  @override
+  String get smoothnessGood => 'Gut';
+
+  @override
+  String get smoothnessIntermediate => 'Mittel';
+
+  @override
+  String get smoothnessBad => 'Schlecht';
+
+  @override
+  String get smoothnessUnknown => 'Unbekannt';
 
   @override
   String get mapStyleStandard => 'Standard';

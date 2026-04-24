@@ -126,17 +126,24 @@ class RouteResult {
     double runStartDistKm = 0;
     int runStartCoord = 0;
     String? runTags;
+    double runCostWeightedSum = 0; // sum of (costPerKm * edgeKm) in run
+    double runEdgeKmSum = 0;
 
     for (final row in rows) {
       if (row is! List || row.length < 4) continue;
       final edgeKm = (double.tryParse(row[3].toString()) ?? 0) / 1000 * scale;
       final tags = row.length > 9 ? (row[9]?.toString() ?? '') : '';
+      final edgeCost = row.length > 4
+          ? (double.tryParse(row[4].toString()) ?? 0)
+          : 0.0;
       final edgeEndKm = cumDistKm + edgeKm;
 
       if (runTags == null) {
         runTags = tags;
         runStartCoord = 0;
         runStartDistKm = 0;
+        runCostWeightedSum = edgeCost * edgeKm;
+        runEdgeKmSum = edgeKm;
       } else if (tags != runTags) {
         final endIdx = coordIdxForDistance(cumDistKm);
         if (endIdx > runStartCoord) {
@@ -146,11 +153,17 @@ class RouteResult {
             startDistanceKm: runStartDistKm,
             endDistanceKm: cumDistKm,
             wayTagsRaw: runTags,
+            costPerKm: runEdgeKmSum > 0 ? runCostWeightedSum / runEdgeKmSum : 0,
           ));
         }
         runTags = tags;
         runStartCoord = endIdx;
         runStartDistKm = cumDistKm;
+        runCostWeightedSum = edgeCost * edgeKm;
+        runEdgeKmSum = edgeKm;
+      } else {
+        runCostWeightedSum += edgeCost * edgeKm;
+        runEdgeKmSum += edgeKm;
       }
       cumDistKm = edgeEndKm;
     }
@@ -162,6 +175,7 @@ class RouteResult {
         startDistanceKm: runStartDistKm,
         endDistanceKm: totalKm,
         wayTagsRaw: runTags,
+        costPerKm: runEdgeKmSum > 0 ? runCostWeightedSum / runEdgeKmSum : 0,
       ));
     }
 

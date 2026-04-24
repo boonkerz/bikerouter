@@ -9,6 +9,7 @@ class RouteSegment {
   final double startDistanceKm;
   final double endDistanceKm;
   final String wayTagsRaw;
+  final double costPerKm;
 
   const RouteSegment({
     required this.startCoordIdx,
@@ -16,6 +17,7 @@ class RouteSegment {
     required this.startDistanceKm,
     required this.endDistanceKm,
     required this.wayTagsRaw,
+    this.costPerKm = 0,
   });
 
   Map<String, String> get tags {
@@ -31,10 +33,29 @@ class RouteSegment {
   String? get highway => tags['highway'];
   String? get trackType => tags['tracktype'];
   String? get smoothness => tags['smoothness'];
+  String? get maxSpeedRaw => tags['maxspeed'];
+
+  /// Parses maxspeed tag. Supports plain numbers (km/h assumed) and "X mph".
+  /// Returns null for tags like "walk", "signals", "none".
+  double? get maxSpeedKmh {
+    final raw = maxSpeedRaw;
+    if (raw == null) return null;
+    final s = raw.toLowerCase().trim();
+    if (s == 'none') return 200;
+    if (s == 'walk') return 7;
+    if (s == 'signals' || s == 'variable') return null;
+    final mph = RegExp(r'^(\d+(?:\.\d+)?)\s*mph$').firstMatch(s);
+    if (mph != null) {
+      return double.parse(mph.group(1)!) * 1.60934;
+    }
+    final num = RegExp(r'^(\d+(?:\.\d+)?)').firstMatch(s);
+    if (num != null) return double.parse(num.group(1)!);
+    return null;
+  }
 
   double get lengthKm => endDistanceKm - startDistanceKm;
 
-  /// Broad category used for color coding.
+  /// Broad surface category used for color coding.
   SurfaceCategory get category {
     final s = surface;
     final h = highway;
@@ -45,7 +66,6 @@ class RouteSegment {
       if (_unpaved.contains(s)) return SurfaceCategory.unpaved;
       if (_offroad.contains(s)) return SurfaceCategory.offroad;
     }
-    // Fall back to highway class
     if (h != null) {
       if (_pavedHighways.contains(h)) return SurfaceCategory.asphalt;
       if (h == 'track') {
@@ -64,6 +84,50 @@ class RouteSegment {
       }
     }
     return SurfaceCategory.unknown;
+  }
+
+  HighwayCategory get highwayCategory {
+    final h = highway;
+    if (h == null) return HighwayCategory.unknown;
+    if (h == 'motorway' || h == 'motorway_link' || h == 'trunk' || h == 'trunk_link') {
+      return HighwayCategory.motorway;
+    }
+    if (h == 'primary' || h == 'primary_link' || h == 'secondary' || h == 'secondary_link') {
+      return HighwayCategory.primary;
+    }
+    if (h == 'tertiary' || h == 'tertiary_link' || h == 'unclassified') {
+      return HighwayCategory.tertiary;
+    }
+    if (h == 'residential' || h == 'living_street' || h == 'service') {
+      return HighwayCategory.residential;
+    }
+    if (h == 'cycleway') return HighwayCategory.cycleway;
+    if (h == 'track') return HighwayCategory.track;
+    if (h == 'path' || h == 'footway' || h == 'bridleway' || h == 'pedestrian' || h == 'steps') {
+      return HighwayCategory.path;
+    }
+    return HighwayCategory.unknown;
+  }
+
+  SmoothnessCategory get smoothnessCategory {
+    final s = smoothness;
+    if (s == null) return SmoothnessCategory.unknown;
+    switch (s) {
+      case 'excellent':
+        return SmoothnessCategory.excellent;
+      case 'good':
+        return SmoothnessCategory.good;
+      case 'intermediate':
+        return SmoothnessCategory.intermediate;
+      case 'bad':
+        return SmoothnessCategory.bad;
+      case 'very_bad':
+      case 'horrible':
+      case 'very_horrible':
+      case 'impassable':
+        return SmoothnessCategory.bad;
+    }
+    return SmoothnessCategory.unknown;
   }
 
   static const _paved = {'asphalt', 'paved', 'concrete', 'concrete:lanes', 'concrete:plates', 'chipseal', 'metal'};
@@ -119,6 +183,101 @@ extension SurfaceCategoryX on SurfaceCategory {
         return l.surfaceCategoryOffroad;
       case SurfaceCategory.unknown:
         return l.surfaceCategoryUnknown;
+    }
+  }
+}
+
+enum HighwayCategory {
+  motorway,
+  primary,
+  tertiary,
+  residential,
+  cycleway,
+  track,
+  path,
+  unknown,
+}
+
+extension HighwayCategoryX on HighwayCategory {
+  Color get color {
+    switch (this) {
+      case HighwayCategory.motorway:
+        return const Color(0xFFD32F2F);
+      case HighwayCategory.primary:
+        return const Color(0xFFF57C00);
+      case HighwayCategory.tertiary:
+        return const Color(0xFFFBC02D);
+      case HighwayCategory.residential:
+        return const Color(0xFF9E9E9E);
+      case HighwayCategory.cycleway:
+        return const Color(0xFF43A047);
+      case HighwayCategory.track:
+        return const Color(0xFF8D6E63);
+      case HighwayCategory.path:
+        return const Color(0xFF7CB342);
+      case HighwayCategory.unknown:
+        return const Color(0xFF616161);
+    }
+  }
+
+  String localizedLabel(AppLocalizations l) {
+    switch (this) {
+      case HighwayCategory.motorway:
+        return l.highwayMotorway;
+      case HighwayCategory.primary:
+        return l.highwayPrimary;
+      case HighwayCategory.tertiary:
+        return l.highwayTertiary;
+      case HighwayCategory.residential:
+        return l.highwayResidential;
+      case HighwayCategory.cycleway:
+        return l.highwayCycleway;
+      case HighwayCategory.track:
+        return l.highwayTrack;
+      case HighwayCategory.path:
+        return l.highwayPath;
+      case HighwayCategory.unknown:
+        return l.highwayUnknown;
+    }
+  }
+}
+
+enum SmoothnessCategory {
+  excellent,
+  good,
+  intermediate,
+  bad,
+  unknown,
+}
+
+extension SmoothnessCategoryX on SmoothnessCategory {
+  Color get color {
+    switch (this) {
+      case SmoothnessCategory.excellent:
+        return const Color(0xFF2E7D32);
+      case SmoothnessCategory.good:
+        return const Color(0xFF7CB342);
+      case SmoothnessCategory.intermediate:
+        return const Color(0xFFFBC02D);
+      case SmoothnessCategory.bad:
+        return const Color(0xFFD32F2F);
+      case SmoothnessCategory.unknown:
+        return const Color(0xFF9E9E9E);
+    }
+  }
+
+  String localizedLabel(AppLocalizations l) {
+    switch (this) {
+      case SmoothnessCategory.excellent:
+        return l.smoothnessExcellent;
+      case SmoothnessCategory.good:
+        return l.smoothnessGood;
+      case SmoothnessCategory.intermediate:
+        return l.smoothnessIntermediate;
+      case SmoothnessCategory.bad:
+        return l.smoothnessBad;
+      case SmoothnessCategory.unknown:
+        return l.smoothnessUnknown;
     }
   }
 }

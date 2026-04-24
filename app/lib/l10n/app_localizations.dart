@@ -1295,7 +1295,7 @@ abstract class AppLocalizations {
   /// No description provided for @highwayTertiary.
   ///
   /// In de, this message translates to:
-  /// **'Straße (klein)'**
+  /// **'Nebenstraße'**
   String get highwayTertiary;
 
   /// No description provided for @highwaySecondary.
@@ -1307,7 +1307,7 @@ abstract class AppLocalizations {
   /// No description provided for @highwayPrimary.
   ///
   /// In de, this message translates to:
-  /// **'Hauptstraße'**
+  /// **'Haupt-/Bundesstraße'**
   String get highwayPrimary;
 
   /// No description provided for @highwayTrunk.
@@ -1319,7 +1319,7 @@ abstract class AppLocalizations {
   /// No description provided for @highwayMotorway.
   ///
   /// In de, this message translates to:
-  /// **'Autobahn'**
+  /// **'Autobahn/Schnellstraße'**
   String get highwayMotorway;
 
   /// No description provided for @highwaySteps.
@@ -1331,7 +1331,7 @@ abstract class AppLocalizations {
   /// No description provided for @highwayUnknown.
   ///
   /// In de, this message translates to:
-  /// **'Weg'**
+  /// **'Unbekannt'**
   String get highwayUnknown;
 
   /// No description provided for @shareDialogTitle.
@@ -2029,6 +2029,150 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Lokal (Wandern)'**
   String get osmNetworkLwn;
+
+  /// No description provided for @profileModeGradient.
+  ///
+  /// In de, this message translates to:
+  /// **'Steigung'**
+  String get profileModeGradient;
+
+  /// No description provided for @profileModeSurface.
+  ///
+  /// In de, this message translates to:
+  /// **'Oberfläche'**
+  String get profileModeSurface;
+
+  /// No description provided for @profileModeHighway.
+  ///
+  /// In de, this message translates to:
+  /// **'Straßentyp'**
+  String get profileModeHighway;
+
+  /// No description provided for @profileModeSmoothness.
+  ///
+  /// In de, this message translates to:
+  /// **'Rauheit'**
+  String get profileModeSmoothness;
+
+  /// No description provided for @profileModeMaxSpeed.
+  ///
+  /// In de, this message translates to:
+  /// **'Tempolimit'**
+  String get profileModeMaxSpeed;
+
+  /// No description provided for @profileModeCost.
+  ///
+  /// In de, this message translates to:
+  /// **'Routingkosten'**
+  String get profileModeCost;
+
+  /// No description provided for @profileZoomLocked.
+  ///
+  /// In de, this message translates to:
+  /// **'Zoom gesperrt'**
+  String get profileZoomLocked;
+
+  /// No description provided for @profileZoomUnlocked.
+  ///
+  /// In de, this message translates to:
+  /// **'Zoom frei'**
+  String get profileZoomUnlocked;
+
+  /// No description provided for @profileZoomReset.
+  ///
+  /// In de, this message translates to:
+  /// **'Zoom zurücksetzen'**
+  String get profileZoomReset;
+
+  /// No description provided for @profileSimplifiedWarning.
+  ///
+  /// In de, this message translates to:
+  /// **'Vereinfachte Darstellung — hineinzoomen für Details'**
+  String get profileSimplifiedWarning;
+
+  /// No description provided for @profileTooltipDistance.
+  ///
+  /// In de, this message translates to:
+  /// **'Distanz'**
+  String get profileTooltipDistance;
+
+  /// No description provided for @profileTooltipElevation.
+  ///
+  /// In de, this message translates to:
+  /// **'Höhe'**
+  String get profileTooltipElevation;
+
+  /// No description provided for @profileTooltipGradient.
+  ///
+  /// In de, this message translates to:
+  /// **'Steigung'**
+  String get profileTooltipGradient;
+
+  /// No description provided for @profileTooltipAscent.
+  ///
+  /// In de, this message translates to:
+  /// **'Anstieg'**
+  String get profileTooltipAscent;
+
+  /// No description provided for @profileTooltipHighway.
+  ///
+  /// In de, this message translates to:
+  /// **'Straße'**
+  String get profileTooltipHighway;
+
+  /// No description provided for @profileTooltipSurface.
+  ///
+  /// In de, this message translates to:
+  /// **'Oberfläche'**
+  String get profileTooltipSurface;
+
+  /// No description provided for @profileTooltipSmoothness.
+  ///
+  /// In de, this message translates to:
+  /// **'Rauheit'**
+  String get profileTooltipSmoothness;
+
+  /// No description provided for @profileTooltipMaxSpeed.
+  ///
+  /// In de, this message translates to:
+  /// **'Tempo'**
+  String get profileTooltipMaxSpeed;
+
+  /// No description provided for @profileTooltipCost.
+  ///
+  /// In de, this message translates to:
+  /// **'Kosten'**
+  String get profileTooltipCost;
+
+  /// No description provided for @smoothnessExcellent.
+  ///
+  /// In de, this message translates to:
+  /// **'Sehr gut'**
+  String get smoothnessExcellent;
+
+  /// No description provided for @smoothnessGood.
+  ///
+  /// In de, this message translates to:
+  /// **'Gut'**
+  String get smoothnessGood;
+
+  /// No description provided for @smoothnessIntermediate.
+  ///
+  /// In de, this message translates to:
+  /// **'Mittel'**
+  String get smoothnessIntermediate;
+
+  /// No description provided for @smoothnessBad.
+  ///
+  /// In de, this message translates to:
+  /// **'Schlecht'**
+  String get smoothnessBad;
+
+  /// No description provided for @smoothnessUnknown.
+  ///
+  /// In de, this message translates to:
+  /// **'Unbekannt'**
+  String get smoothnessUnknown;
 
   /// No description provided for @mapStyleStandard.
   ///

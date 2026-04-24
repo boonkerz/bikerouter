@@ -29,7 +29,6 @@ import '../widgets/elevation_chart.dart';
 import '../services/stage_planner.dart';
 import '../widgets/accommodation_sheet.dart';
 import '../widgets/stages_sheet.dart';
-import '../widgets/surface_chart.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/weather_sheet.dart';
 import '../widgets/profile_selector.dart';
@@ -312,15 +311,13 @@ class _MapScreenState extends State<MapScreen> {
               ),),
               if (_route != null)
                 StatsBar(route: _route!, actions: _buildStatsActions(context)),
-              if (_route != null && _showElevation && _route!.segments.isNotEmpty)
-                SurfaceChart(
-                  segments: _route!.segments,
-                  totalDistanceKm: _route!.distance,
-                  onHover: (index) => setState(() => _highlightIndex = index),
-                ),
               if (_route != null && _showElevation)
                 ElevationChart(
                   coordinates: _route!.coordinates,
+                  segments: _route!.segments,
+                  waypoints: [
+                    for (final wp in _waypoints) [wp.latitude, wp.longitude],
+                  ],
                   onHover: (index) => setState(() => _highlightIndex = index),
                 ),
             ],
