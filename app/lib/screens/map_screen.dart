@@ -215,12 +215,14 @@ class _MapScreenState extends State<MapScreen> {
                         maxZoom: 18,
                         userAgentPackageName: 'app.wegwiesel',
                       ),
-                    if (_roundtripMode && _anchorIndices.isNotEmpty && _waypoints.length >= 3)
+                    if (_roundtripMode &&
+                        _anchorIndices.isNotEmpty &&
+                        _waypoints.length >= 3 &&
+                        _draggingWaypointIndex != null)
                       PolygonLayer(
                         polygons: [
                           Polygon(
                             points: [..._waypoints],
-                            color: const Color(0xFFffc107).withValues(alpha: 0.18),
                             borderColor: const Color(0xFFffc107).withValues(alpha: 0.85),
                             borderStrokeWidth: 2.5,
                           ),
