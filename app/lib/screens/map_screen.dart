@@ -75,6 +75,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _loadingSights = false;
   Set<String> _enabledSightTypes = allSightTypes;
   Set<String> _activeOverlays = {};
+  double _overlayOpacity = 0.5;
   bool _routeInspectMode = false;
   bool _loadingRouteInfo = false;
   RoundtripRequest? _lastRoundtripRequest;
@@ -111,6 +112,8 @@ class _MapScreenState extends State<MapScreen> {
       if (list != null && mounted) setState(() => _activeOverlays = list.toSet());
       final mode = prefs.getString('route_viz_mode_v1');
       if (mode != null && mounted) setState(() => _routeVizMode = mode);
+      final op = prefs.getDouble('overlay_opacity_v1');
+      if (op != null && mounted) setState(() => _overlayOpacity = op.clamp(0.0, 1.0));
     });
     NogoStorage.load().then((v) {
       if (mounted) setState(() => _nogos = v);
@@ -218,10 +221,13 @@ class _MapScreenState extends State<MapScreen> {
                         userAgentPackageName: 'app.wegwiesel',
                       ),
                     for (final ov in routeOverlays.where((o) => _activeOverlays.contains(o.id)))
-                      TileLayer(
-                        urlTemplate: ov.urlTemplate,
-                        maxZoom: 18,
-                        userAgentPackageName: 'app.wegwiesel',
+                      Opacity(
+                        opacity: _overlayOpacity,
+                        child: TileLayer(
+                          urlTemplate: ov.urlTemplate,
+                          maxZoom: 18,
+                          userAgentPackageName: 'app.wegwiesel',
+                        ),
                       ),
                     if (_nogos.isNotEmpty)
                       CircleLayer(
@@ -901,6 +907,42 @@ class _MapScreenState extends State<MapScreen> {
                   _saveOverlayPrefs();
                 },
               )),
+              if (_activeOverlays.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.opacity, color: Colors.white54, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${(_overlayOpacity * 100).round()}%',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      Expanded(
+                        child: Slider(
+                          value: _overlayOpacity,
+                          min: 0.1,
+                          max: 1.0,
+                          divisions: 18,
+                          activeColor: const Color(0xFF4fc3f7),
+                          inactiveColor: Colors.white24,
+                          onChanged: (v) {
+                            setSheetState(() => _overlayOpacity = v);
+                            setState(() {});
+                          },
+                          onChangeEnd: (v) async {
+                            final p = await SharedPreferences.getInstance();
+                            await p.setDouble('overlay_opacity_v1', v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const Divider(color: Colors.white24, height: 24),
               Padding(
                 padding: const EdgeInsets.only(left: 16, bottom: 4),
