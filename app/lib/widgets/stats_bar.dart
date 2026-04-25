@@ -21,14 +21,25 @@ class StatsAction {
 class StatsBar extends StatelessWidget {
   final RouteResult route;
   final List<StatsAction> actions;
+  /// User-set average speed override in km/h. When provided, the time stat
+  /// displays distance / speed instead of BRouter's profile-based estimate.
+  final int? userSpeedKmh;
 
-  const StatsBar({super.key, required this.route, this.actions = const []});
+  const StatsBar({
+    super.key,
+    required this.route,
+    this.actions = const [],
+    this.userSpeedKmh,
+  });
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final hours = (route.time / 3600).floor();
-    final minutes = ((route.time % 3600) / 60).round();
+    final effectiveSeconds = userSpeedKmh != null && userSpeedKmh! > 0
+        ? (route.distance / userSpeedKmh!) * 3600
+        : route.time;
+    final hours = (effectiveSeconds / 3600).floor();
+    final minutes = ((effectiveSeconds % 3600) / 60).round();
     final timeStr = hours > 0 ? '${hours}h ${minutes}min' : '$minutes min';
     final distStr = route.distance < 10
         ? '${route.distance.toStringAsFixed(1)} km'

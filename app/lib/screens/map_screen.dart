@@ -353,7 +353,11 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),),
               if (_route != null)
-                StatsBar(route: _route!, actions: _buildStatsActions(context)),
+                StatsBar(
+                  route: _route!,
+                  actions: _buildStatsActions(context),
+                  userSpeedKmh: ProfileSpeedPrefs.speedFor(_profile),
+                ),
               if (_route != null && _showElevation)
                 ElevationChart(
                   coordinates: _route!.coordinates,
