@@ -1116,4 +1116,58 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get routeOverlayMtb => 'MTB-Routen';
+
+  @override
+  String get routeOverlayHillshade => 'Höhenschummerung';
+
+  @override
+  String get gpxImportTitle => 'GPX-Track importieren';
+
+  @override
+  String get gpxImportButton => 'GPX-Datei wählen';
+
+  @override
+  String gpxImportFailed(String error) {
+    return 'Import fehlgeschlagen: $error';
+  }
+
+  @override
+  String gpxImportSuccess(int points, String km) {
+    return 'Track geladen: $points Punkte, $km km';
+  }
+
+  @override
+  String get gpxImportEmpty => 'Keine Trackpunkte in der Datei gefunden';
+
+  @override
+  String get nogoTitle => 'Sperrzonen';
+
+  @override
+  String get nogoEmpty => 'Keine Sperrzonen definiert';
+
+  @override
+  String get nogoAdd => 'Sperrzone hinzufügen';
+
+  @override
+  String get nogoAddHint => 'Tippe auf die Karte, um eine Sperrzone zu setzen';
+
+  @override
+  String nogoRadius(int meters) {
+    return 'Radius: $meters m';
+  }
+
+  @override
+  String get nogoDelete => 'Entfernen';
+
+  @override
+  String get nogoConfirmCancel => 'Abbrechen';
+
+  @override
+  String get nogoConfirmAdd => 'Hinzufügen';
+
+  @override
+  String get menuImportGpx => 'GPX importieren';
+
+  @override
+  String get menuNogos => 'Sperrzonen';
 }

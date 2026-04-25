@@ -56,6 +56,8 @@ class RouteOverlay {
         return l.routeOverlayHiking;
       case 'mtb':
         return l.routeOverlayMtb;
+      case 'hillshade':
+        return l.routeOverlayHillshade;
       default:
         return name;
     }
@@ -80,6 +82,12 @@ const routeOverlays = [
     name: 'MTB-Routen',
     icon: '⛰️',
     urlTemplate: 'https://tile.waymarkedtrails.org/mtb/{z}/{x}/{y}.png',
+  ),
+  RouteOverlay(
+    id: 'hillshade',
+    name: 'Höhenschummerung',
+    icon: '🏔️',
+    urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',
   ),
 ];
 

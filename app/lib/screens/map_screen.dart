@@ -8,8 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../services/gpx_export.dart';
+import '../services/gpx_import.dart';
 
 import '../models/map_style.dart';
+import '../models/nogo_area.dart';
 import '../models/osm_sight.dart';
 import '../models/profile.dart';
 import '../models/route_result.dart';
@@ -18,6 +20,7 @@ import '../models/route_poi.dart';
 import '../models/saved_route.dart';
 import '../services/brouter_service.dart';
 import '../services/gpx_builder.dart';
+import '../services/nogo_storage.dart';
 import '../services/route_storage.dart';
 import '../services/geocoding_service.dart';
 import '../services/route_share.dart';
@@ -76,6 +79,8 @@ class _MapScreenState extends State<MapScreen> {
   bool _loadingRouteInfo = false;
   RoundtripRequest? _lastRoundtripRequest;
   List<Stage> _stages = [];
+  List<NogoArea> _nogos = const [];
+  bool _placingNogo = false;
   final Map<String, String> _waypointNames = {}; // key: "lat,lon" at 5 dp
   final Set<String> _waypointNamesInflight = {};
 
@@ -106,6 +111,9 @@ class _MapScreenState extends State<MapScreen> {
       if (list != null && mounted) setState(() => _activeOverlays = list.toSet());
       final mode = prefs.getString('route_viz_mode_v1');
       if (mode != null && mounted) setState(() => _routeVizMode = mode);
+    });
+    NogoStorage.load().then((v) {
+      if (mounted) setState(() => _nogos = v);
     });
     _tryLoadSharedRoute();
   }
@@ -214,6 +222,20 @@ class _MapScreenState extends State<MapScreen> {
                         urlTemplate: ov.urlTemplate,
                         maxZoom: 18,
                         userAgentPackageName: 'app.wegwiesel',
+                      ),
+                    if (_nogos.isNotEmpty)
+                      CircleLayer(
+                        circles: [
+                          for (final n in _nogos)
+                            CircleMarker(
+                              point: LatLng(n.lat, n.lon),
+                              radius: n.radiusMeters.toDouble(),
+                              useRadiusInMeter: true,
+                              color: const Color(0xFFef5350).withValues(alpha: 0.18),
+                              borderColor: const Color(0xFFef5350).withValues(alpha: 0.85),
+                              borderStrokeWidth: 2,
+                            ),
+                        ],
                       ),
                     if (_roundtripMode &&
                         _anchorIndices.isNotEmpty &&
@@ -557,6 +579,22 @@ class _MapScreenState extends State<MapScreen> {
                               const Icon(Icons.bookmarks_outlined, color: Color(0xFF4fc3f7), size: 20),
                               const SizedBox(width: 12),
                               Text(l.menuSavedRoutes, style: const TextStyle(color: Colors.white)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'import_gpx',
+                            child: Row(children: [
+                              const Icon(Icons.upload_file_outlined, color: Color(0xFF4fc3f7), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuImportGpx, style: const TextStyle(color: Colors.white)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'nogos',
+                            child: Row(children: [
+                              const Icon(Icons.block, color: Color(0xFF4fc3f7), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuNogos, style: const TextStyle(color: Colors.white)),
                             ]),
                           ),
                           const PopupMenuDivider(),
@@ -1145,6 +1183,11 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onMapTap(LatLng latLng) {
     if (_draggingWaypointIndex != null) return; // Drag handled by Listener
+
+    if (_placingNogo) {
+      _addNogoAt(latLng);
+      return;
+    }
 
     if (_routeInspectMode) {
       _inspectRoutesAt(latLng);
@@ -2268,6 +2311,7 @@ class _MapScreenState extends State<MapScreen> {
       final result = await BRouterService.calculateRoute(
         waypoints: pts,
         profile: _profile,
+        nogos: _nogos,
       );
       _displayRoute(result);
     } catch (e) {
@@ -2293,6 +2337,7 @@ class _MapScreenState extends State<MapScreen> {
           timeMinutes: req.timeMinutes,
           avgSpeedKmh: speed,
           direction: _rtDirection,
+          nogos: _nogos,
         );
       } else {
         result = await BRouterService.calculateRoundtrip(
@@ -2300,6 +2345,7 @@ class _MapScreenState extends State<MapScreen> {
           profile: _profile,
           distanceKm: req.distanceKm,
           direction: _rtDirection,
+          nogos: _nogos,
         );
       }
       _displayRoute(result);
@@ -2403,11 +2449,202 @@ class _MapScreenState extends State<MapScreen> {
         );
         if (loaded != null) await _loadSavedRoute(loaded);
         break;
+      case 'import_gpx':
+        await _importGpx();
+        break;
+      case 'nogos':
+        await _showNogosSheet();
+        break;
       case 'settings':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const SettingsScreen()),
         );
         break;
+    }
+  }
+
+  Future<void> _showNogosSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final l = AppLocalizations.of(ctx);
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.block, color: Color(0xFFef5350)),
+                      const SizedBox(width: 8),
+                      Text(l.nogoTitle,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (_nogos.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(l.nogoEmpty,
+                          style: const TextStyle(color: Colors.white60, fontSize: 13)),
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 240),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _nogos.length,
+                        itemBuilder: (_, i) {
+                          final n = _nogos[i];
+                          return ListTile(
+                            dense: true,
+                            leading: const Icon(Icons.adjust, color: Color(0xFFef5350)),
+                            title: Text(
+                              '${n.lat.toStringAsFixed(4)}, ${n.lon.toStringAsFixed(4)}',
+                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                            ),
+                            subtitle: Text(l.nogoRadius(n.radiusMeters),
+                                style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.white54),
+                              onPressed: () async {
+                                final updated = [..._nogos]..removeAt(i);
+                                await NogoStorage.save(updated);
+                                if (!mounted) return;
+                                setState(() => _nogos = updated);
+                                setSheetState(() {});
+                                _maybeRecalculate();
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add_location_alt_outlined),
+                    label: Text(l.nogoAdd),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFef5350),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      setState(() => _placingNogo = true);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l.nogoAddHint)),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _addNogoAt(LatLng latLng) async {
+    int radius = 200;
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) {
+        final l = AppLocalizations.of(ctx);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: const Color(0xFF1a1a2e),
+            title: Text(l.nogoAdd, style: const TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l.nogoRadius(radius),
+                    style: const TextStyle(color: Colors.white70)),
+                Slider(
+                  value: radius.toDouble(),
+                  min: 50,
+                  max: 5000,
+                  divisions: 99,
+                  activeColor: const Color(0xFFef5350),
+                  onChanged: (v) => setDialogState(() => radius = v.round()),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: Text(l.nogoConfirmCancel,
+                    style: const TextStyle(color: Colors.white60)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFef5350),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(radius),
+                child: Text(l.nogoConfirmAdd),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    setState(() => _placingNogo = false);
+    if (result == null) return;
+    final nogo = NogoArea(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      lat: latLng.latitude,
+      lon: latLng.longitude,
+      radiusMeters: result,
+    );
+    final updated = [..._nogos, nogo];
+    await NogoStorage.save(updated);
+    if (!mounted) return;
+    setState(() => _nogos = updated);
+    _maybeRecalculate();
+  }
+
+  void _maybeRecalculate() {
+    if (_route == null) return;
+    if (_roundtripMode) {
+      if (_lastRoundtripRequest != null && _waypoints.isNotEmpty) {
+        _calculateRoundtrip(_lastRoundtripRequest!);
+      }
+    } else if (_waypoints.length >= 2) {
+      _calculateRoute();
+    }
+  }
+
+  Future<void> _importGpx() async {
+    try {
+      final picked = await GpxImport.pick();
+      if (picked == null) return;
+      final result = GpxImport.parse(picked.bytes);
+      _displayRoute(result);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).gpxImportSuccess(
+              result.coordinates.length,
+              result.distance.toStringAsFixed(1),
+            )),
+          ),
+        );
+      }
+    } on GpxImportException catch (e) {
+      if (!mounted) return;
+      final l = AppLocalizations.of(context);
+      _showError(e.code == 'empty' ? l.gpxImportEmpty : l.gpxImportFailed(e.toString()));
+    } catch (e) {
+      if (mounted) _showError(AppLocalizations.of(context).gpxImportFailed(e.toString()));
     }
   }
 

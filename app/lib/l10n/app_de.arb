@@ -425,5 +425,26 @@
   "mapStyleSatellite": "Satellit",
   "routeOverlayCycling": "Radrouten",
   "routeOverlayHiking": "Wanderwege",
-  "routeOverlayMtb": "MTB-Routen"
+  "routeOverlayMtb": "MTB-Routen",
+  "routeOverlayHillshade": "Höhenschummerung",
+
+  "gpxImportTitle": "GPX-Track importieren",
+  "gpxImportButton": "GPX-Datei wählen",
+  "gpxImportFailed": "Import fehlgeschlagen: {error}",
+  "@gpxImportFailed": { "placeholders": { "error": { "type": "String" } } },
+  "gpxImportSuccess": "Track geladen: {points} Punkte, {km} km",
+  "@gpxImportSuccess": { "placeholders": { "points": { "type": "int" }, "km": { "type": "String" } } },
+  "gpxImportEmpty": "Keine Trackpunkte in der Datei gefunden",
+
+  "nogoTitle": "Sperrzonen",
+  "nogoEmpty": "Keine Sperrzonen definiert",
+  "nogoAdd": "Sperrzone hinzufügen",
+  "nogoAddHint": "Tippe auf die Karte, um eine Sperrzone zu setzen",
+  "nogoRadius": "Radius: {meters} m",
+  "@nogoRadius": { "placeholders": { "meters": { "type": "int" } } },
+  "nogoDelete": "Entfernen",
+  "nogoConfirmCancel": "Abbrechen",
+  "nogoConfirmAdd": "Hinzufügen",
+  "menuImportGpx": "GPX importieren",
+  "menuNogos": "Sperrzonen"
 }

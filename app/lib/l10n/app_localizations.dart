@@ -2215,6 +2215,102 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'MTB-Routen'**
   String get routeOverlayMtb;
+
+  /// No description provided for @routeOverlayHillshade.
+  ///
+  /// In de, this message translates to:
+  /// **'Höhenschummerung'**
+  String get routeOverlayHillshade;
+
+  /// No description provided for @gpxImportTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'GPX-Track importieren'**
+  String get gpxImportTitle;
+
+  /// No description provided for @gpxImportButton.
+  ///
+  /// In de, this message translates to:
+  /// **'GPX-Datei wählen'**
+  String get gpxImportButton;
+
+  /// No description provided for @gpxImportFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Import fehlgeschlagen: {error}'**
+  String gpxImportFailed(String error);
+
+  /// No description provided for @gpxImportSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Track geladen: {points} Punkte, {km} km'**
+  String gpxImportSuccess(int points, String km);
+
+  /// No description provided for @gpxImportEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Trackpunkte in der Datei gefunden'**
+  String get gpxImportEmpty;
+
+  /// No description provided for @nogoTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Sperrzonen'**
+  String get nogoTitle;
+
+  /// No description provided for @nogoEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Sperrzonen definiert'**
+  String get nogoEmpty;
+
+  /// No description provided for @nogoAdd.
+  ///
+  /// In de, this message translates to:
+  /// **'Sperrzone hinzufügen'**
+  String get nogoAdd;
+
+  /// No description provided for @nogoAddHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf die Karte, um eine Sperrzone zu setzen'**
+  String get nogoAddHint;
+
+  /// No description provided for @nogoRadius.
+  ///
+  /// In de, this message translates to:
+  /// **'Radius: {meters} m'**
+  String nogoRadius(int meters);
+
+  /// No description provided for @nogoDelete.
+  ///
+  /// In de, this message translates to:
+  /// **'Entfernen'**
+  String get nogoDelete;
+
+  /// No description provided for @nogoConfirmCancel.
+  ///
+  /// In de, this message translates to:
+  /// **'Abbrechen'**
+  String get nogoConfirmCancel;
+
+  /// No description provided for @nogoConfirmAdd.
+  ///
+  /// In de, this message translates to:
+  /// **'Hinzufügen'**
+  String get nogoConfirmAdd;
+
+  /// No description provided for @menuImportGpx.
+  ///
+  /// In de, this message translates to:
+  /// **'GPX importieren'**
+  String get menuImportGpx;
+
+  /// No description provided for @menuNogos.
+  ///
+  /// In de, this message translates to:
+  /// **'Sperrzonen'**
+  String get menuNogos;
 }
 
 class _AppLocalizationsDelegate

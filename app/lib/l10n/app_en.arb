@@ -425,5 +425,26 @@
   "mapStyleSatellite": "Satellite",
   "routeOverlayCycling": "Cycling routes",
   "routeOverlayHiking": "Hiking trails",
-  "routeOverlayMtb": "MTB routes"
+  "routeOverlayMtb": "MTB routes",
+  "routeOverlayHillshade": "Hillshade",
+
+  "gpxImportTitle": "Import GPX track",
+  "gpxImportButton": "Choose GPX file",
+  "gpxImportFailed": "Import failed: {error}",
+  "@gpxImportFailed": { "placeholders": { "error": { "type": "String" } } },
+  "gpxImportSuccess": "Track loaded: {points} points, {km} km",
+  "@gpxImportSuccess": { "placeholders": { "points": { "type": "int" }, "km": { "type": "String" } } },
+  "gpxImportEmpty": "No track points found in the file",
+
+  "nogoTitle": "No-go areas",
+  "nogoEmpty": "No no-go areas defined",
+  "nogoAdd": "Add no-go area",
+  "nogoAddHint": "Tap the map to place a no-go area",
+  "nogoRadius": "Radius: {meters} m",
+  "@nogoRadius": { "placeholders": { "meters": { "type": "int" } } },
+  "nogoDelete": "Remove",
+  "nogoConfirmCancel": "Cancel",
+  "nogoConfirmAdd": "Add",
+  "menuImportGpx": "Import GPX",
+  "menuNogos": "No-go areas"
 }

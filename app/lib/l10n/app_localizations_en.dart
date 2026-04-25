@@ -1116,4 +1116,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get routeOverlayMtb => 'MTB routes';
+
+  @override
+  String get routeOverlayHillshade => 'Hillshade';
+
+  @override
+  String get gpxImportTitle => 'Import GPX track';
+
+  @override
+  String get gpxImportButton => 'Choose GPX file';
+
+  @override
+  String gpxImportFailed(String error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String gpxImportSuccess(int points, String km) {
+    return 'Track loaded: $points points, $km km';
+  }
+
+  @override
+  String get gpxImportEmpty => 'No track points found in the file';
+
+  @override
+  String get nogoTitle => 'No-go areas';
+
+  @override
+  String get nogoEmpty => 'No no-go areas defined';
+
+  @override
+  String get nogoAdd => 'Add no-go area';
+
+  @override
+  String get nogoAddHint => 'Tap the map to place a no-go area';
+
+  @override
+  String nogoRadius(int meters) {
+    return 'Radius: $meters m';
+  }
+
+  @override
+  String get nogoDelete => 'Remove';
+
+  @override
+  String get nogoConfirmCancel => 'Cancel';
+
+  @override
+  String get nogoConfirmAdd => 'Add';
+
+  @override
+  String get menuImportGpx => 'Import GPX';
+
+  @override
+  String get menuNogos => 'No-go areas';
 }

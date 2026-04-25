@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import '../models/nogo_area.dart';
 import '../models/route_result.dart';
 
 class BRouterService {
@@ -9,17 +10,24 @@ class BRouterService {
       ? '/brouter'
       : 'https://wegwiesel.app/brouter';
 
+  static String _nogosParam(List<NogoArea> nogos) {
+    if (nogos.isEmpty) return '';
+    return '&nogos=${nogos.map((n) => n.toBRouterParam()).join('|')}';
+  }
+
   static Future<RouteResult> calculateRoute({
     required List<List<double>> waypoints,
     required String profile,
     int alternativeIdx = 0,
+    List<NogoArea> nogos = const [],
   }) async {
     final lonlats = waypoints.map((w) => '${w[0]},${w[1]}').join('|');
     final uri = Uri.parse('$baseUrl?lonlats=$lonlats'
         '&profile=$profile'
         '&alternativeidx=$alternativeIdx'
         '&format=geojson'
-        '&timode=3');
+        '&timode=3'
+        '${_nogosParam(nogos)}');
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {
@@ -35,6 +43,7 @@ class BRouterService {
     required String profile,
     required int radius,
     required int direction,
+    List<NogoArea> nogos = const [],
   }) async {
     final uri = Uri.parse('$baseUrl?lonlats=${start[0]},${start[1]}'
         '&profile=$profile'
@@ -42,7 +51,8 @@ class BRouterService {
         '&roundTripDistance=$radius'
         '&direction=$direction'
         '&format=geojson'
-        '&timode=3');
+        '&timode=3'
+        '${_nogosParam(nogos)}');
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {
@@ -58,6 +68,7 @@ class BRouterService {
     required String profile,
     required int distanceKm,
     required int direction,
+    List<NogoArea> nogos = const [],
   }) async {
     final targetDistance = distanceKm * 1000.0; // meters
     var radius = (targetDistance / pi).round();
@@ -66,6 +77,7 @@ class BRouterService {
     for (var i = 0; i < 3; i++) {
       result = await _fetchRoundtripOnce(
         start: start, profile: profile, radius: radius, direction: direction,
+        nogos: nogos,
       );
       final ratio = (result.distance * 1000) / targetDistance;
       if ((ratio - 1.0).abs() < 0.10) break;
@@ -80,8 +92,8 @@ class BRouterService {
     required int timeMinutes,
     required int avgSpeedKmh,
     required int direction,
+    List<NogoArea> nogos = const [],
   }) async {
-    // Initial estimate: distance from avg speed
     final targetSeconds = timeMinutes * 60.0;
     var estimatedKm = (timeMinutes / 60.0 * avgSpeedKmh);
     var radius = (estimatedKm * 1000 / pi).round();
@@ -90,11 +102,10 @@ class BRouterService {
     for (var i = 0; i < 3; i++) {
       result = await _fetchRoundtripOnce(
         start: start, profile: profile, radius: radius, direction: direction,
+        nogos: nogos,
       );
       final ratio = result.time / targetSeconds;
-      // Close enough (within 10%)
       if ((ratio - 1.0).abs() < 0.10) break;
-      // Adjust radius inversely proportional to time deviation
       radius = (radius / ratio).round();
     }
     return result!;
@@ -103,12 +114,14 @@ class BRouterService {
   static Future<String> fetchGpx({
     required List<List<double>> waypoints,
     required String profile,
+    List<NogoArea> nogos = const [],
   }) async {
     final lonlats = waypoints.map((w) => '${w[0]},${w[1]}').join('|');
     final uri = Uri.parse('$baseUrl?lonlats=$lonlats'
         '&profile=$profile'
         '&format=gpx'
-        '&timode=3');
+        '&timode=3'
+        '${_nogosParam(nogos)}');
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {
@@ -122,6 +135,7 @@ class BRouterService {
     required String profile,
     required int distanceKm,
     required int direction,
+    List<NogoArea> nogos = const [],
   }) async {
     final radius = (distanceKm * 1000 / pi).round();
     final uri = Uri.parse('$baseUrl?lonlats=${start[0]},${start[1]}'
@@ -130,7 +144,8 @@ class BRouterService {
         '&roundTripDistance=$radius'
         '&direction=$direction'
         '&format=gpx'
-        '&timode=3');
+        '&timode=3'
+        '${_nogosParam(nogos)}');
 
     final response = await http.get(uri);
     if (response.statusCode != 200) {
