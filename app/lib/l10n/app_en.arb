@@ -446,5 +446,10 @@
   "nogoConfirmCancel": "Cancel",
   "nogoConfirmAdd": "Add",
   "menuImportGpx": "Import GPX",
-  "menuNogos": "No-go areas"
+  "menuNogos": "No-go areas",
+
+  "profileSpeedEdit": "Adjust speed",
+  "profileSpeedDefault": "Default: {kmh} km/h",
+  "@profileSpeedDefault": { "placeholders": { "kmh": { "type": "int" } } },
+  "profileSpeedReset": "Reset"
 }

@@ -1170,4 +1170,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuNogos => 'No-go areas';
+
+  @override
+  String get profileSpeedEdit => 'Adjust speed';
+
+  @override
+  String profileSpeedDefault(int kmh) {
+    return 'Default: $kmh km/h';
+  }
+
+  @override
+  String get profileSpeedReset => 'Reset';
 }

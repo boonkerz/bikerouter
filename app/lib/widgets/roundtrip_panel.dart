@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
-import '../models/profile.dart';
+import '../services/profile_speed_prefs.dart';
 
 class RoundtripRequest {
   final bool useTime;
@@ -44,7 +44,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
   bool _useTime = false;
   int _timeMinutes = 120;
 
-  int get _speed => BikeProfile.byId(widget.profile)?.avgSpeedKmh ?? 20;
+  int get _speed => ProfileSpeedPrefs.speedFor(widget.profile);
 
   int get _computedDistanceKm {
     if (!_useTime) return widget.distanceKm;

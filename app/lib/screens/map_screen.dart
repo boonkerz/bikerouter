@@ -21,6 +21,7 @@ import '../models/saved_route.dart';
 import '../services/brouter_service.dart';
 import '../services/gpx_builder.dart';
 import '../services/nogo_storage.dart';
+import '../services/profile_speed_prefs.dart';
 import '../services/route_storage.dart';
 import '../services/geocoding_service.dart';
 import '../services/route_share.dart';
@@ -118,6 +119,7 @@ class _MapScreenState extends State<MapScreen> {
     NogoStorage.load().then((v) {
       if (mounted) setState(() => _nogos = v);
     });
+    ProfileSpeedPrefs.load();
     _tryLoadSharedRoute();
   }
 
@@ -2372,7 +2374,7 @@ class _MapScreenState extends State<MapScreen> {
       final start = _waypoints.first;
       final RouteResult result;
       if (req.useTime) {
-        final speed = BikeProfile.byId(_profile)?.avgSpeedKmh ?? 20;
+        final speed = ProfileSpeedPrefs.speedFor(_profile);
         result = await BRouterService.calculateRoundtripByTime(
           start: [start.longitude, start.latitude],
           profile: _profile,
@@ -2778,7 +2780,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void _showWeather() {
     if (_route == null) return;
-    final speed = BikeProfile.byId(_profile)?.avgSpeedKmh ?? 20;
+    final speed = ProfileSpeedPrefs.speedFor(_profile);
     showWeatherSheet(
       context,
       coordinates: _route!.coordinates,

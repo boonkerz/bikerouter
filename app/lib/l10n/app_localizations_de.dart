@@ -1170,4 +1170,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get menuNogos => 'Sperrzonen';
+
+  @override
+  String get profileSpeedEdit => 'Geschwindigkeit anpassen';
+
+  @override
+  String profileSpeedDefault(int kmh) {
+    return 'Standard: $kmh km/h';
+  }
+
+  @override
+  String get profileSpeedReset => 'Zurücksetzen';
 }

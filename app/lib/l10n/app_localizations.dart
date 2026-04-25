@@ -2311,6 +2311,24 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Sperrzonen'**
   String get menuNogos;
+
+  /// No description provided for @profileSpeedEdit.
+  ///
+  /// In de, this message translates to:
+  /// **'Geschwindigkeit anpassen'**
+  String get profileSpeedEdit;
+
+  /// No description provided for @profileSpeedDefault.
+  ///
+  /// In de, this message translates to:
+  /// **'Standard: {kmh} km/h'**
+  String profileSpeedDefault(int kmh);
+
+  /// No description provided for @profileSpeedReset.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurücksetzen'**
+  String get profileSpeedReset;
 }
 
 class _AppLocalizationsDelegate

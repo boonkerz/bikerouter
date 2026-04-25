@@ -446,5 +446,10 @@
   "nogoConfirmCancel": "Abbrechen",
   "nogoConfirmAdd": "Hinzufügen",
   "menuImportGpx": "GPX importieren",
-  "menuNogos": "Sperrzonen"
+  "menuNogos": "Sperrzonen",
+
+  "profileSpeedEdit": "Geschwindigkeit anpassen",
+  "profileSpeedDefault": "Standard: {kmh} km/h",
+  "@profileSpeedDefault": { "placeholders": { "kmh": { "type": "int" } } },
+  "profileSpeedReset": "Zurücksetzen"
 }
