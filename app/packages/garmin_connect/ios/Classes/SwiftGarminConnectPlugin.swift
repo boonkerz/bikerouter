@@ -50,7 +50,7 @@ public class SwiftGarminConnectPlugin: NSObject, FlutterPlugin {
                 pendingSelection?(FlutterError(code: "BUSY", message: "device picker already open", details: nil))
             }
             pendingSelection = result
-            connectIQ?.showConnectIQDeviceSelection()
+            connectIQ?.showDeviceSelection()
 
         case "sendCode":
             handleSendCode(call: call, result: result)
@@ -74,7 +74,7 @@ public class SwiftGarminConnectPlugin: NSObject, FlutterPlugin {
         }
         guard let appUuid = UUID(uuidString: kIQAppUuid),
               let storeUuid = UUID(uuidString: kStoreUuid),
-              let app = IQApp(uuid: appUuid, storeUuid: storeUuid, device: device) else {
+              let app = IQApp(uuid: appUuid, store: storeUuid, device: device) else {
             result(FlutterError(code: "APP_INIT", message: "could not build IQApp", details: nil))
             return
         }
@@ -124,12 +124,19 @@ public class SwiftGarminConnectPlugin: NSObject, FlutterPlugin {
         return true
     }
 
-    // MARK: - Device persistence
+    // MARK: - Device persistence (plain JSON — keeps iOS 13 compat)
 
     private func saveDevices() {
+        let payload: [[String: String]] = devices.map { d in
+            [
+                "uuid": d.uuid.uuidString,
+                "modelName": d.modelName ?? "",
+                "friendlyName": d.friendlyName ?? "",
+                "partNumber": d.partNumber ?? "",
+            ]
+        }
         do {
-            let data = try NSKeyedArchiver.archivedData(withRootObject: devices,
-                                                        requiringSecureCoding: true)
+            let data = try JSONSerialization.data(withJSONObject: payload, options: [])
             UserDefaults.standard.set(data, forKey: kDevicesKey)
         } catch {
             NSLog("garmin_connect: failed to save devices: \(error)")
@@ -137,14 +144,19 @@ public class SwiftGarminConnectPlugin: NSObject, FlutterPlugin {
     }
 
     private func loadDevices() {
-        guard let data = UserDefaults.standard.data(forKey: kDevicesKey) else { return }
-        do {
-            if let arr = try NSKeyedUnarchiver.unarchivedArrayOfObjects(ofClass: IQDevice.self,
-                                                                       from: data) {
-                devices = arr
+        guard let data = UserDefaults.standard.data(forKey: kDevicesKey),
+              let arr = (try? JSONSerialization.jsonObject(with: data)) as? [[String: String]] else {
+            return
+        }
+        devices = arr.compactMap { dict in
+            guard let uuidStr = dict["uuid"], let uuid = UUID(uuidString: uuidStr) else { return nil }
+            let model = dict["modelName"] ?? ""
+            let name = dict["friendlyName"] ?? ""
+            let part = dict["partNumber"] ?? ""
+            if part.isEmpty {
+                return IQDevice(id: uuid, modelName: model, friendlyName: name)
             }
-        } catch {
-            NSLog("garmin_connect: failed to load devices: \(error)")
+            return IQDevice(id: uuid, modelName: model, friendlyName: name, partNumber: part)
         }
     }
 
