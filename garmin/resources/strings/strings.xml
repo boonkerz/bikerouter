@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<strings>
+    <string id="AppName">Wegwiesel</string>
+    <string id="Title">Wegwiesel Sync</string>
+    <string id="EnterCode">Code eingeben</string>
+    <string id="LastCode">Letzter Code</string>
+    <string id="Fetching">Lade Strecke…</string>
+    <string id="Saved">Strecke gespeichert</string>
+    <string id="Tip">Strecken → Wegwiesel-{code}</string>
+    <string id="ErrorNetwork">Kein Netz</string>
+    <string id="ErrorNotFound">Code unbekannt</string>
+    <string id="ErrorGeneric">Fehler {error}</string>
+    <string id="InvalidCode">Code muss 6 Zeichen haben</string>
+</strings>

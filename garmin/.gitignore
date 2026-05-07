@@ -1,0 +1,7 @@
+*.prg
+*.iq
+*.debug.xml
+bin/
+gen/
+internal-mir/
+external-mir/

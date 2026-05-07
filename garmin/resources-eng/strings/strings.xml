@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<strings>
+    <string id="AppName">Wegwiesel</string>
+    <string id="Title">Wegwiesel Sync</string>
+    <string id="EnterCode">Enter code</string>
+    <string id="LastCode">Last code</string>
+    <string id="Fetching">Fetching course…</string>
+    <string id="Saved">Course saved</string>
+    <string id="Tip">Courses → Wegwiesel-{code}</string>
+    <string id="ErrorNetwork">No network</string>
+    <string id="ErrorNotFound">Code not found</string>
+    <string id="ErrorGeneric">Error {error}</string>
+    <string id="InvalidCode">Code must be 6 chars</string>
+</strings>

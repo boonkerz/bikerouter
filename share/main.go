@@ -52,6 +52,7 @@ func main() {
 	mux.HandleFunc("POST /api/share", createShare)
 	mux.HandleFunc("GET /api/share/{code}", getShareMeta)
 	mux.HandleFunc("GET /api/share/{code}/course.gpx", getShareGpx)
+	mux.HandleFunc("GET /api/share/{code}/course.fit", getShareFit)
 
 	log.Printf("share service on %s", addr)
 	if err := http.ListenAndServe(addr, withCORS(mux)); err != nil {
@@ -191,6 +192,43 @@ func getShareGpx(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 	w.Header().Set("Cache-Control", "private, max-age=60")
 	_, _ = io.Copy(w, strings.NewReader(string(gpx)))
+}
+
+func getShareFit(w http.ResponseWriter, r *http.Request) {
+	if !gpxLimiter.allow(clientIP(r)) {
+		httpErr(w, http.StatusTooManyRequests, errors.New("rate limit"))
+		return
+	}
+	code := normaliseCode(r.PathValue("code"))
+	if !validCode(code) {
+		httpErr(w, http.StatusBadRequest, errors.New("invalid code"))
+		return
+	}
+	var gpx []byte
+	var name string
+	row := db.QueryRow(
+		`SELECT name, gpx FROM shares WHERE code = ? AND expires_at > ?`,
+		code, time.Now().UTC().Format(time.RFC3339),
+	)
+	if err := row.Scan(&name, &gpx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			httpErr(w, http.StatusNotFound, errors.New("not found or expired"))
+			return
+		}
+		httpErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	fitBytes, err := gpxToFitCourse(gpx, sanitizeName(name))
+	if err != nil {
+		log.Printf("gpx→fit conversion failed for %s: %v", code, err)
+		httpErr(w, http.StatusInternalServerError, errors.New("conversion failed"))
+		return
+	}
+	filename := "wegwiesel-" + code + ".fit"
+	w.Header().Set("Content-Type", "application/vnd.ant.fit")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	w.Header().Set("Cache-Control", "private, max-age=60")
+	_, _ = w.Write(fitBytes)
 }
 
 func newCode() string {
