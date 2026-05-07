@@ -1,0 +1,21 @@
+name: garmin_connect
+description: Local Flutter plugin wrapping Garmin's Connect IQ Mobile SDK for sending the 6-character share code straight to a paired Edge.
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: GarminConnectPlugin
+      android:
+        package: app.wegwiesel.garmin_connect
+        pluginClass: GarminConnectPlugin

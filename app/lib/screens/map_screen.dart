@@ -18,6 +18,7 @@ import '../models/route_result.dart';
 import '../models/route_segment.dart';
 import '../models/route_poi.dart';
 import '../models/saved_route.dart';
+import 'package:garmin_connect/garmin_connect.dart';
 import '../services/brouter_service.dart';
 import '../services/garmin_share_service.dart';
 import '../services/gpx_builder.dart';
@@ -86,6 +87,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _placingNogo = false;
   final Map<String, String> _waypointNames = {}; // key: "lat,lon" at 5 dp
   final Set<String> _waypointNamesInflight = {};
+  bool _garminAvailable = false;
 
   String _wpKey(LatLng p) =>
       '${p.latitude.toStringAsFixed(5)},${p.longitude.toStringAsFixed(5)}';
@@ -121,6 +123,9 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) setState(() => _nogos = v);
     });
     ProfileSpeedPrefs.load();
+    GarminConnect.isAvailable().then((v) {
+      if (mounted) setState(() => _garminAvailable = v);
+    });
     _tryLoadSharedRoute();
   }
 
@@ -2890,6 +2895,13 @@ class _MapScreenState extends State<MapScreen> {
               subtitle: Text(l.shareCopyLinkSubtitle),
               onTap: () => Navigator.pop(ctx, 'link'),
             ),
+            if (_route != null && _garminAvailable)
+              ListTile(
+                leading: const Icon(Icons.bluetooth_searching),
+                title: Text(l.shareDirectToEdge),
+                subtitle: Text(l.shareDirectToEdgeSubtitle),
+                onTap: () => Navigator.pop(ctx, 'edge'),
+              ),
             if (_route != null)
               ListTile(
                 leading: const Icon(Icons.directions_bike),
@@ -2907,6 +2919,8 @@ class _MapScreenState extends State<MapScreen> {
       await _copyShareLink();
     } else if (action == 'garmin') {
       await _sendToGarmin();
+    } else if (action == 'edge') {
+      await _sendDirectToEdge();
     }
   }
 
@@ -3016,6 +3030,121 @@ class _MapScreenState extends State<MapScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _sendDirectToEdge() async {
+    if (_route == null) return;
+    final l = AppLocalizations.of(context);
+
+    var devices = await GarminConnect.listDevices();
+    if (!mounted) return;
+    if (devices.isEmpty) {
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.garminPickDevicesTitle),
+          content: Text(l.garminPickDevicesPrompt),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.garminPickDevicesAction),
+            ),
+          ],
+        ),
+      );
+      if (go != true || !mounted) return;
+      devices = await GarminConnect.pickDevices();
+      if (!mounted) return;
+      if (devices.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.garminNoDevicesAfterPick)),
+        );
+        return;
+      }
+    }
+
+    GarminDevice? target;
+    if (devices.length == 1) {
+      target = devices.first;
+    } else {
+      target = await showModalBottomSheet<GarminDevice>(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(children: [
+                  Text(l.garminPickDevicesTitle,
+                      style: Theme.of(ctx).textTheme.titleMedium),
+                ]),
+              ),
+              for (final d in devices)
+                ListTile(
+                  leading: Icon(d.isConnected
+                      ? Icons.bluetooth_connected
+                      : Icons.bluetooth_disabled),
+                  title: Text(d.name.isEmpty ? d.modelName : d.name),
+                  subtitle: d.isConnected ? null : Text(l.garminDeviceOffline(d.name)),
+                  enabled: d.isConnected,
+                  onTap: () => Navigator.pop(ctx, d),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      );
+      if (target == null || !mounted) return;
+    }
+
+    final trackName = _roundtripMode
+        ? l.roundtripTourName(_rtDistanceKm)
+        : l.defaultTourName;
+    final gpx = GpxBuilder.build(
+      route: _route!,
+      trackName: trackName,
+      pois: _pois,
+      poiFallbackName: (poi) => poi.category.localizedLabel(l),
+    );
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Expanded(child: Text(l.garminSendingTo(target!.name))),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final upload = await GarminShareService.upload(
+        name: trackName,
+        gpx: gpx,
+        distanceMeters: (_route!.distance * 1000).round(),
+      );
+      await GarminConnect.sendCode(deviceId: target.id, code: upload.code);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.garminSendSuccess(target.name))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.garminSendFailed(e.toString()))),
+      );
+    }
   }
 
   Future<void> _exportGpx() async {

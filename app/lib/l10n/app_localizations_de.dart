@@ -755,6 +755,46 @@ class AppLocalizationsDe extends AppLocalizations {
   String get garminUploading => 'Wird hochgeladen…';
 
   @override
+  String get shareDirectToEdge => 'Direkt an Edge schicken';
+
+  @override
+  String get shareDirectToEdgeSubtitle =>
+      'Per Bluetooth über Garmin Connect Mobile';
+
+  @override
+  String get garminPickDevicesTitle => 'Edge auswählen';
+
+  @override
+  String get garminPickDevicesPrompt =>
+      'Bisher ist keine Edge mit Wegwiesel verknüpft. Du wirst gleich zu Garmin Connect Mobile geleitet, dort die Edge bestätigen und kommst dann zurück.';
+
+  @override
+  String get garminPickDevicesAction => 'Garmin Connect Mobile öffnen';
+
+  @override
+  String garminSendingTo(String device) {
+    return 'Sende an $device…';
+  }
+
+  @override
+  String garminSendSuccess(String device) {
+    return 'Strecke an $device geschickt';
+  }
+
+  @override
+  String garminSendFailed(String error) {
+    return 'Senden fehlgeschlagen: $error';
+  }
+
+  @override
+  String get garminNoDevicesAfterPick => 'Keine Edge ausgewählt';
+
+  @override
+  String garminDeviceOffline(String device) {
+    return '$device ist nicht erreichbar';
+  }
+
+  @override
   String get mapStyleTitle => 'Kartenstil';
 
   @override

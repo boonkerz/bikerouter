@@ -756,6 +756,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get garminUploading => 'Uploading…';
 
   @override
+  String get shareDirectToEdge => 'Send straight to Edge';
+
+  @override
+  String get shareDirectToEdgeSubtitle =>
+      'Via Bluetooth through Garmin Connect Mobile';
+
+  @override
+  String get garminPickDevicesTitle => 'Pick an Edge';
+
+  @override
+  String get garminPickDevicesPrompt =>
+      'No Edge is linked to Wegwiesel yet. You\'ll be sent to Garmin Connect Mobile to authorise one, then come back here.';
+
+  @override
+  String get garminPickDevicesAction => 'Open Garmin Connect Mobile';
+
+  @override
+  String garminSendingTo(String device) {
+    return 'Sending to $device…';
+  }
+
+  @override
+  String garminSendSuccess(String device) {
+    return 'Course sent to $device';
+  }
+
+  @override
+  String garminSendFailed(String error) {
+    return 'Send failed: $error';
+  }
+
+  @override
+  String get garminNoDevicesAfterPick => 'No Edge picked';
+
+  @override
+  String garminDeviceOffline(String device) {
+    return '$device is offline';
+  }
+
+  @override
   String get mapStyleTitle => 'Map style';
 
   @override

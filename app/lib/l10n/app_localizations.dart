@@ -1520,6 +1520,66 @@ abstract class AppLocalizations {
   /// **'Wird hochgeladen…'**
   String get garminUploading;
 
+  /// No description provided for @shareDirectToEdge.
+  ///
+  /// In de, this message translates to:
+  /// **'Direkt an Edge schicken'**
+  String get shareDirectToEdge;
+
+  /// No description provided for @shareDirectToEdgeSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Per Bluetooth über Garmin Connect Mobile'**
+  String get shareDirectToEdgeSubtitle;
+
+  /// No description provided for @garminPickDevicesTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Edge auswählen'**
+  String get garminPickDevicesTitle;
+
+  /// No description provided for @garminPickDevicesPrompt.
+  ///
+  /// In de, this message translates to:
+  /// **'Bisher ist keine Edge mit Wegwiesel verknüpft. Du wirst gleich zu Garmin Connect Mobile geleitet, dort die Edge bestätigen und kommst dann zurück.'**
+  String get garminPickDevicesPrompt;
+
+  /// No description provided for @garminPickDevicesAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Garmin Connect Mobile öffnen'**
+  String get garminPickDevicesAction;
+
+  /// No description provided for @garminSendingTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Sende an {device}…'**
+  String garminSendingTo(String device);
+
+  /// No description provided for @garminSendSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Strecke an {device} geschickt'**
+  String garminSendSuccess(String device);
+
+  /// No description provided for @garminSendFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Senden fehlgeschlagen: {error}'**
+  String garminSendFailed(String error);
+
+  /// No description provided for @garminNoDevicesAfterPick.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Edge ausgewählt'**
+  String get garminNoDevicesAfterPick;
+
+  /// No description provided for @garminDeviceOffline.
+  ///
+  /// In de, this message translates to:
+  /// **'{device} ist nicht erreichbar'**
+  String garminDeviceOffline(String device);
+
   /// No description provided for @mapStyleTitle.
   ///
   /// In de, this message translates to:
