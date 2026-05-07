@@ -118,6 +118,18 @@ func gpxToFitCourse(gpxData []byte, courseName string) ([]byte, error) {
 	lap.Sport = fit.SportCycling
 	course.Laps = []*fit.LapMsg{lap}
 
+	// Event start / stop_disable_all bracket the records — Garmin Edge
+	// rejects courses without these as "ungültige Strecke".
+	startEv := fit.NewEventMsg()
+	startEv.Timestamp = now
+	startEv.Event = fit.EventTimer
+	startEv.EventType = fit.EventTypeStart
+	stopEv := fit.NewEventMsg()
+	stopEv.Timestamp = records[len(records)-1].Timestamp
+	stopEv.Event = fit.EventTimer
+	stopEv.EventType = fit.EventTypeStopDisableAll
+	course.Events = []*fit.EventMsg{startEv, stopEv}
+
 	var buf bytes.Buffer
 	if err := fit.Encode(&buf, file, binary.LittleEndian); err != nil {
 		return nil, fmt.Errorf("fit encode: %w", err)
