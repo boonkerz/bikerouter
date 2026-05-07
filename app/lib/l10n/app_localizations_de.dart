@@ -717,6 +717,44 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noRouteHere => 'Keine Route an dieser Stelle gefunden';
 
   @override
+  String get shareSheetTitle => 'Route teilen';
+
+  @override
+  String get shareCopyLink => 'Link kopieren';
+
+  @override
+  String get shareCopyLinkSubtitle => 'Empfänger öffnet sie im Browser';
+
+  @override
+  String get shareToGarmin => 'An Garmin senden';
+
+  @override
+  String get shareToGarminSubtitle => 'Code in der Garmin-Edge-App eingeben';
+
+  @override
+  String get garminCodeTitle => 'Code für deinen Garmin';
+
+  @override
+  String get garminCodeHint =>
+      'In der Wegwiesel-Sync-App auf der Edge eingeben. Gültig 7 Tage.';
+
+  @override
+  String garminCodeExpiresAt(String date) {
+    return 'Gültig bis $date';
+  }
+
+  @override
+  String get garminCodeCopied => 'Code kopiert';
+
+  @override
+  String garminUploadFailed(String error) {
+    return 'Senden fehlgeschlagen: $error';
+  }
+
+  @override
+  String get garminUploading => 'Wird hochgeladen…';
+
+  @override
   String get mapStyleTitle => 'Kartenstil';
 
   @override

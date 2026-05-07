@@ -19,6 +19,7 @@ import '../models/route_segment.dart';
 import '../models/route_poi.dart';
 import '../models/saved_route.dart';
 import '../services/brouter_service.dart';
+import '../services/garmin_share_service.dart';
 import '../services/gpx_builder.dart';
 import '../services/nogo_storage.dart';
 import '../services/profile_speed_prefs.dart';
@@ -2865,6 +2866,51 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _shareRoute() async {
     if (_waypoints.isEmpty) return;
+    final l = AppLocalizations.of(context);
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  Text(
+                    l.shareSheetTitle,
+                    style: Theme.of(ctx).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.link),
+              title: Text(l.shareCopyLink),
+              subtitle: Text(l.shareCopyLinkSubtitle),
+              onTap: () => Navigator.pop(ctx, 'link'),
+            ),
+            if (_route != null)
+              ListTile(
+                leading: const Icon(Icons.directions_bike),
+                title: Text(l.shareToGarmin),
+                subtitle: Text(l.shareToGarminSubtitle),
+                onTap: () => Navigator.pop(ctx, 'garmin'),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (action == 'link') {
+      await _copyShareLink();
+    } else if (action == 'garmin') {
+      await _sendToGarmin();
+    }
+  }
+
+  Future<void> _copyShareLink() async {
     final shared = SharedRoute(
       waypoints: _waypoints.map((w) => [w.latitude, w.longitude]).toList(),
       profile: _profile,
@@ -2878,6 +2924,97 @@ class _MapScreenState extends State<MapScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).routeLinkCopied)),
+    );
+  }
+
+  Future<void> _sendToGarmin() async {
+    if (_route == null) return;
+    final l = AppLocalizations.of(context);
+    final trackName = _roundtripMode
+        ? l.roundtripTourName(_rtDistanceKm)
+        : l.defaultTourName;
+    final gpx = GpxBuilder.build(
+      route: _route!,
+      trackName: trackName,
+      pois: _pois,
+      poiFallbackName: (poi) => poi.category.localizedLabel(l),
+    );
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await GarminShareService.upload(
+        name: trackName,
+        gpx: gpx,
+        distanceMeters: (_route!.distance * 1000).round(),
+      );
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // dismiss spinner
+      await _showGarminCodeDialog(result);
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.garminUploadFailed(e.toString()))),
+      );
+    }
+  }
+
+  Future<void> _showGarminCodeDialog(GarminShareResult result) async {
+    final l = AppLocalizations.of(context);
+    final expiresLocal = result.expiresAt.toLocal();
+    final dateStr =
+        '${expiresLocal.day.toString().padLeft(2, '0')}.${expiresLocal.month.toString().padLeft(2, '0')}.${expiresLocal.year} '
+        '${expiresLocal.hour.toString().padLeft(2, '0')}:${expiresLocal.minute.toString().padLeft(2, '0')}';
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.garminCodeTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            SelectableText(
+              result.code,
+              style: const TextStyle(
+                fontSize: 42,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 6,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(l.garminCodeHint, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              l.garminCodeExpiresAt(dateStr),
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: result.code));
+              if (!ctx.mounted) return;
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text(l.garminCodeCopied)),
+              );
+            },
+            icon: const Icon(Icons.copy, size: 18),
+            label: Text(MaterialLocalizations.of(ctx).copyButtonLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(MaterialLocalizations.of(ctx).okButtonLabel),
+          ),
+        ],
+      ),
     );
   }
 

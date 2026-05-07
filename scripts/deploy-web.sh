@@ -27,6 +27,20 @@ rsync -avz --delete \
 echo "Rebuilding feedback container..."
 ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml up -d --build feedback"
 
+echo "Syncing share service..."
+rsync -avz --delete \
+  --exclude='*.db' --exclude='*.db-*' \
+  share/ root@$SERVER:$REMOTE_PATH/share/
+
+echo "Ensuring share data dir + .env..."
+ssh root@$SERVER "mkdir -p $REMOTE_PATH/share-data && chown 65532:65532 $REMOTE_PATH/share-data && \
+  if ! grep -q SHARE_IP_SALT $REMOTE_PATH/.env 2>/dev/null; then \
+    echo SHARE_IP_SALT=\$(openssl rand -hex 32) >> $REMOTE_PATH/.env; \
+  fi"
+
+echo "Rebuilding share container..."
+ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml up -d --build share"
+
 echo "Reloading Caddy..."
 ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml up -d caddy && docker compose -f docker-compose.prod.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
 

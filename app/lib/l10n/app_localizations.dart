@@ -1454,6 +1454,72 @@ abstract class AppLocalizations {
   /// **'Keine Route an dieser Stelle gefunden'**
   String get noRouteHere;
 
+  /// No description provided for @shareSheetTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Route teilen'**
+  String get shareSheetTitle;
+
+  /// No description provided for @shareCopyLink.
+  ///
+  /// In de, this message translates to:
+  /// **'Link kopieren'**
+  String get shareCopyLink;
+
+  /// No description provided for @shareCopyLinkSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Empfänger öffnet sie im Browser'**
+  String get shareCopyLinkSubtitle;
+
+  /// No description provided for @shareToGarmin.
+  ///
+  /// In de, this message translates to:
+  /// **'An Garmin senden'**
+  String get shareToGarmin;
+
+  /// No description provided for @shareToGarminSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Code in der Garmin-Edge-App eingeben'**
+  String get shareToGarminSubtitle;
+
+  /// No description provided for @garminCodeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Code für deinen Garmin'**
+  String get garminCodeTitle;
+
+  /// No description provided for @garminCodeHint.
+  ///
+  /// In de, this message translates to:
+  /// **'In der Wegwiesel-Sync-App auf der Edge eingeben. Gültig 7 Tage.'**
+  String get garminCodeHint;
+
+  /// No description provided for @garminCodeExpiresAt.
+  ///
+  /// In de, this message translates to:
+  /// **'Gültig bis {date}'**
+  String garminCodeExpiresAt(String date);
+
+  /// No description provided for @garminCodeCopied.
+  ///
+  /// In de, this message translates to:
+  /// **'Code kopiert'**
+  String get garminCodeCopied;
+
+  /// No description provided for @garminUploadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Senden fehlgeschlagen: {error}'**
+  String garminUploadFailed(String error);
+
+  /// No description provided for @garminUploading.
+  ///
+  /// In de, this message translates to:
+  /// **'Wird hochgeladen…'**
+  String get garminUploading;
+
   /// No description provided for @mapStyleTitle.
   ///
   /// In de, this message translates to:

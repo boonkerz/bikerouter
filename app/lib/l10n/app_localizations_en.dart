@@ -717,6 +717,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRouteHere => 'No route found here';
 
   @override
+  String get shareSheetTitle => 'Share route';
+
+  @override
+  String get shareCopyLink => 'Copy link';
+
+  @override
+  String get shareCopyLinkSubtitle => 'Recipient opens it in their browser';
+
+  @override
+  String get shareToGarmin => 'Send to Garmin';
+
+  @override
+  String get shareToGarminSubtitle =>
+      'Enter the code in the Garmin Edge companion app';
+
+  @override
+  String get garminCodeTitle => 'Code for your Garmin';
+
+  @override
+  String get garminCodeHint =>
+      'Enter this code in the Wegwiesel Sync app on your Edge. Valid for 7 days.';
+
+  @override
+  String garminCodeExpiresAt(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get garminCodeCopied => 'Code copied';
+
+  @override
+  String garminUploadFailed(String error) {
+    return 'Upload failed: $error';
+  }
+
+  @override
+  String get garminUploading => 'Uploading…';
+
+  @override
   String get mapStyleTitle => 'Map style';
 
   @override

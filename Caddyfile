@@ -18,6 +18,11 @@ wegwiesel.app {
 		reverse_proxy feedback:8080
 	}
 
+	# Share Service (Garmin sync codes)
+	handle /api/share* {
+		reverse_proxy share:8080
+	}
+
 	# Flutter Web App
 	handle {
 		root * /srv/web
