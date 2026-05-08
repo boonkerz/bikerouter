@@ -37,6 +37,10 @@
 	<string>Wegwiesel benötigt deinen Standort um Routen von deiner aktuellen Position zu planen.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Wegwiesel benötigt deinen Standort um Routen von deiner aktuellen Position zu planen.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Wegwiesel benutzt Bluetooth, um geplante Strecken über Garmin Connect Mobile direkt an deine gepairte Edge zu schicken.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Wegwiesel benutzt Bluetooth, um geplante Strecken über Garmin Connect Mobile direkt an deine gepairte Edge zu schicken.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
