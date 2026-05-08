@@ -790,6 +790,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get garminNoDevicesAfterPick => 'Keine Edge ausgewählt';
 
   @override
+  String get garminRepickDevices => 'Edge neu auswählen';
+
+  @override
+  String get garminRepickDevicesSubtitle =>
+      'Garmin Connect Mobile öffnen und Berechtigung erneuern';
+
+  @override
   String garminDeviceOffline(String device) {
     return '$device ist nicht erreichbar';
   }

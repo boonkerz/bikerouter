@@ -1574,6 +1574,18 @@ abstract class AppLocalizations {
   /// **'Keine Edge ausgewählt'**
   String get garminNoDevicesAfterPick;
 
+  /// No description provided for @garminRepickDevices.
+  ///
+  /// In de, this message translates to:
+  /// **'Edge neu auswählen'**
+  String get garminRepickDevices;
+
+  /// No description provided for @garminRepickDevicesSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Garmin Connect Mobile öffnen und Berechtigung erneuern'**
+  String get garminRepickDevicesSubtitle;
+
   /// No description provided for @garminDeviceOffline.
   ///
   /// In de, this message translates to:

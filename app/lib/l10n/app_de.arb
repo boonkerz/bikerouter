@@ -295,6 +295,8 @@
   "garminSendFailed": "Senden fehlgeschlagen: {error}",
   "@garminSendFailed": { "placeholders": { "error": { "type": "String" } } },
   "garminNoDevicesAfterPick": "Keine Edge ausgewählt",
+  "garminRepickDevices": "Edge neu auswählen",
+  "garminRepickDevicesSubtitle": "Garmin Connect Mobile öffnen und Berechtigung erneuern",
   "garminDeviceOffline": "{device} ist nicht erreichbar",
   "@garminDeviceOffline": { "placeholders": { "device": { "type": "String" } } },
 

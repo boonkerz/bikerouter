@@ -3,6 +3,8 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
+const VERSION = "1.5.1";
+
 class MainView extends WatchUi.View {
 
     private var _status as String = "";
@@ -65,6 +67,12 @@ class MainView extends WatchUi.View {
             dc.drawText(w / 2, h - 28, Graphics.FONT_XTINY, _status,
                 Graphics.TEXT_JUSTIFY_CENTER);
         }
+
+        // Version pinned to the bottom-right corner so a quick glance
+        // confirms which build is running.
+        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(w - 6, h - 18, Graphics.FONT_XTINY, "v" + VERSION,
+            Graphics.TEXT_JUSTIFY_RIGHT);
     }
 
     function getButtonRect() as [Number, Number, Number, Number] {

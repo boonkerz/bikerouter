@@ -3038,40 +3038,42 @@ class _MapScreenState extends State<MapScreen> {
 
     var devices = await GarminConnect.listDevices();
     if (!mounted) return;
-    if (devices.isEmpty) {
-      final go = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(l.garminPickDevicesTitle),
-          content: Text(l.garminPickDevicesPrompt),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.garminPickDevicesAction),
-            ),
-          ],
-        ),
-      );
-      if (go != true || !mounted) return;
-      devices = await GarminConnect.pickDevices();
-      if (!mounted) return;
-      if (devices.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.garminNoDevicesAfterPick)),
-        );
-        return;
-      }
-    }
-
     GarminDevice? target;
-    if (devices.length == 1) {
-      target = devices.first;
-    } else {
-      target = await showModalBottomSheet<GarminDevice>(
+    while (target == null) {
+      if (devices.isEmpty) {
+        final go = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l.garminPickDevicesTitle),
+            content: Text(l.garminPickDevicesPrompt),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(l.garminPickDevicesAction),
+              ),
+            ],
+          ),
+        );
+        if (go != true || !mounted) return;
+        devices = await GarminConnect.pickDevices();
+        if (!mounted) return;
+        if (devices.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.garminNoDevicesAfterPick)),
+          );
+          return;
+        }
+        continue;
+      }
+
+      // Always show the picker sheet — even with one device — so the user
+      // can re-trigger the GCM authorisation flow if "device offline"
+      // shows up wrongly (a fresh pickDevices() refreshes status).
+      final choice = await showModalBottomSheet<_DevicePickerResult>(
         context: context,
         builder: (ctx) => SafeArea(
           child: Column(
@@ -3091,15 +3093,27 @@ class _MapScreenState extends State<MapScreen> {
                       : Icons.bluetooth_disabled),
                   title: Text(d.name.isEmpty ? d.modelName : d.name),
                   subtitle: d.isConnected ? null : Text(l.garminDeviceOffline(d.name)),
-                  enabled: d.isConnected,
-                  onTap: () => Navigator.pop(ctx, d),
+                  onTap: () => Navigator.pop(ctx, _DevicePickerResult.pick(d)),
                 ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: Text(l.garminRepickDevices),
+                subtitle: Text(l.garminRepickDevicesSubtitle),
+                onTap: () => Navigator.pop(ctx, _DevicePickerResult.repick()),
+              ),
               const SizedBox(height: 8),
             ],
           ),
         ),
       );
-      if (target == null || !mounted) return;
+      if (choice == null || !mounted) return;
+      if (choice.device != null) {
+        target = choice.device;
+      } else {
+        devices = await GarminConnect.pickDevices();
+        if (!mounted) return;
+      }
     }
 
     final trackName = _roundtripMode
@@ -3240,4 +3254,11 @@ class _PoiEditResult {
     required this.name,
     required this.note,
   }) : isDelete = false;
+}
+
+class _DevicePickerResult {
+  final GarminDevice? device;
+  const _DevicePickerResult._(this.device);
+  factory _DevicePickerResult.pick(GarminDevice d) => _DevicePickerResult._(d);
+  factory _DevicePickerResult.repick() => const _DevicePickerResult._(null);
 }

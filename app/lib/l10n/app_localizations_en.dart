@@ -791,6 +791,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get garminNoDevicesAfterPick => 'No Edge picked';
 
   @override
+  String get garminRepickDevices => 'Pick a different Edge';
+
+  @override
+  String get garminRepickDevicesSubtitle =>
+      'Open Garmin Connect Mobile and refresh authorisation';
+
+  @override
   String garminDeviceOffline(String device) {
     return '$device is offline';
   }

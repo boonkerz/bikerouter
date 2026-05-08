@@ -295,6 +295,8 @@
   "garminSendFailed": "Send failed: {error}",
   "@garminSendFailed": { "placeholders": { "error": { "type": "String" } } },
   "garminNoDevicesAfterPick": "No Edge picked",
+  "garminRepickDevices": "Pick a different Edge",
+  "garminRepickDevicesSubtitle": "Open Garmin Connect Mobile and refresh authorisation",
   "garminDeviceOffline": "{device} is offline",
   "@garminDeviceOffline": { "placeholders": { "device": { "type": "String" } } },
 
