@@ -1,0 +1,22 @@
+[     950ms] Error
+    at Object.i (https://wegwiesel.app/main.dart.js:3987:20)
+    at EG.an (https://wegwiesel.app/main.dart.js:46381:9)
+    at O3.D_ (https://wegwiesel.app/main.dart.js:117643:17)
+    at O3.aAf (https://wegwiesel.app/main.dart.js:117618:27)
+    at tear_off.<anonymous> (https://wegwiesel.app/main.dart.js:4139:65)
+    at aRV.aS1 (https://wegwiesel.app/main.dart.js:48870:23)
+    at aRV.BA (https://wegwiesel.app/main.dart.js:48874:21)
+    at B3.mM (https://wegwiesel.app/main.dart.js:48577:5)
+    at B3.jd (https://wegwiesel.app/main.dart.js:48551:14)
+    at aCO.$2 (https://wegwiesel.app/main.dart.js:118123:3)
+[     980ms] [LOG] Unsupported operation: Infinity.round() @ https://wegwiesel.app/main.dart.js:35565
+[     983ms] [LOG] at Object.i (https://wegwiesel.app/main.dart.js:3987:20) @ https://wegwiesel.app/main.dart.js:35565
+[     984ms] [LOG]     at EG.an (https://wegwiesel.app/main.dart.js:46381:9) @ https://wegwiesel.app/main.dart.js:35565
+[     984ms] [LOG]     at O3.J (https://wegwiesel.app/main.dart.js:117590:13) @ https://wegwiesel.app/main.dart.js:35565
+[     984ms] [LOG]     at jX.mW (https://wegwiesel.app/main.dart.js:96647:21) @ https://wegwiesel.app/main.dart.js:35565
+[     985ms] [LOG]     at jX.kE (https://wegwiesel.app/main.dart.js:96618:9) @ https://wegwiesel.app/main.dart.js:35565
+[     985ms] [LOG]     at jX.kE (https://wegwiesel.app/main.dart.js:96653:11) @ https://wegwiesel.app/main.dart.js:35565
+[     985ms] [LOG]     at jX.Ii (https://wegwiesel.app/main.dart.js:96567:10) @ https://wegwiesel.app/main.dart.js:35565
+[     985ms] [LOG]     at jX.ada (https://wegwiesel.app/main.dart.js:96568:19) @ https://wegwiesel.app/main.dart.js:35565
+[     986ms] [LOG]     at R0.aFq (https://wegwiesel.app/main.dart.js:96278:7) @ https://wegwiesel.app/main.dart.js:35565
+[     986ms] [LOG]     at R0.aru (https://wegwiesel.app/main.dart.js:96285:18) @ https://wegwiesel.app/main.dart.js:35565
