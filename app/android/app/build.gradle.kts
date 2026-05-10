@@ -67,3 +67,12 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // The Garmin Connect IQ Mobile SDK ships as an AAR. AGP 8 won't let a
+    // Flutter plugin (library module) declare a direct local-AAR
+    // implementation, so the host app pulls it in here while the plugin
+    // depends on it compileOnly. Keeps a single source of truth in the
+    // plugin tree.
+    implementation(files("../../packages/garmin_connect/android/libs/ciq-companion-app-sdk-2.4.0.aar"))
+}
