@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../models/nogo_area.dart';
 import '../models/route_result.dart';
 import 'profile_speed_prefs.dart';
+import 'road_snap_service.dart';
 
 class BRouterService {
   static String baseUrl = kIsWeb
@@ -38,13 +39,35 @@ class BRouterService {
     return 'profile=$profile';
   }
 
+  static bool _isCar(String profile) =>
+      profile == 'car' || profile == 'car-trailer';
+
+  /// For car profiles, snap each waypoint to the nearest publicly drivable
+  /// road via Overpass. Geocoded destinations (campsites, business parks)
+  /// often sit on private driveways behind gates — BRouter won't route to
+  /// those. Falls back to the original waypoint if Overpass is unreachable
+  /// or finds nothing nearby.
+  static Future<List<List<double>>> _snapForCar(
+    List<List<double>> waypoints,
+    String profile,
+  ) async {
+    if (!_isCar(profile)) return waypoints;
+    final snapped = await Future.wait(waypoints.map((w) async {
+      final s = await RoadSnapService.snap(w[1], w[0]);
+      if (s == null) return w;
+      return [s[1], s[0]]; // [lon, lat]
+    }));
+    return snapped;
+  }
+
   static Future<RouteResult> calculateRoute({
     required List<List<double>> waypoints,
     required String profile,
     int alternativeIdx = 0,
     List<NogoArea> nogos = const [],
   }) async {
-    final lonlats = waypoints.map((w) => '${w[0]},${w[1]}').join('|');
+    final wps = await _snapForCar(waypoints, profile);
+    final lonlats = wps.map((w) => '${w[0]},${w[1]}').join('|');
     final uri = Uri.parse('$baseUrl?lonlats=$lonlats'
         '&${_profileParam(profile)}'
         '&alternativeidx=$alternativeIdx'
@@ -68,7 +91,8 @@ class BRouterService {
     required int direction,
     List<NogoArea> nogos = const [],
   }) async {
-    final uri = Uri.parse('$baseUrl?lonlats=${start[0]},${start[1]}'
+    final snapped = (await _snapForCar([start], profile)).first;
+    final uri = Uri.parse('$baseUrl?lonlats=${snapped[0]},${snapped[1]}'
         '&${_profileParam(profile)}'
         '&engineMode=4'
         '&roundTripDistance=$radius'
@@ -139,7 +163,8 @@ class BRouterService {
     required String profile,
     List<NogoArea> nogos = const [],
   }) async {
-    final lonlats = waypoints.map((w) => '${w[0]},${w[1]}').join('|');
+    final wps = await _snapForCar(waypoints, profile);
+    final lonlats = wps.map((w) => '${w[0]},${w[1]}').join('|');
     final uri = Uri.parse('$baseUrl?lonlats=$lonlats'
         '&${_profileParam(profile)}'
         '&format=gpx'
@@ -161,7 +186,8 @@ class BRouterService {
     List<NogoArea> nogos = const [],
   }) async {
     final radius = (distanceKm * 1000 / pi).round();
-    final uri = Uri.parse('$baseUrl?lonlats=${start[0]},${start[1]}'
+    final snapped = (await _snapForCar([start], profile)).first;
+    final uri = Uri.parse('$baseUrl?lonlats=${snapped[0]},${snapped[1]}'
         '&${_profileParam(profile)}'
         '&engineMode=4'
         '&roundTripDistance=$radius'
