@@ -4,48 +4,70 @@
       <stop offset="0%" stop-color="#1a1a2e"/>
       <stop offset="100%" stop-color="#16213e"/>
     </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b27040"/>
+      <stop offset="100%" stop-color="#7d4f25"/>
+    </linearGradient>
+    <linearGradient id="post" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6a4218"/>
+      <stop offset="50%" stop-color="#a26a36"/>
+      <stop offset="100%" stop-color="#6a4218"/>
+    </linearGradient>
   </defs>
+
   <!-- Background -->
   <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
-  <!-- Subtle map grid/streets in background -->
-  <g opacity="0.08" stroke="#4fc3f7" stroke-width="3" fill="none">
-    <!-- Horizontal streets -->
-    <line x1="100" y1="200" x2="924" y2="200"/>
-    <line x1="100" y1="380" x2="924" y2="380"/>
-    <line x1="100" y1="560" x2="924" y2="560"/>
-    <line x1="100" y1="740" x2="924" y2="740"/>
-    <!-- Vertical streets -->
-    <line x1="200" y1="100" x2="200" y2="924"/>
-    <line x1="400" y1="100" x2="400" y2="924"/>
-    <line x1="624" y1="100" x2="624" y2="924"/>
-    <line x1="824" y1="100" x2="824" y2="924"/>
-    <!-- Diagonal / curved streets -->
-    <path d="M100 300 Q300 250 500 320 Q700 390 924 340"/>
-    <path d="M100 650 Q350 600 512 660 Q700 720 924 670"/>
-    <path d="M300 100 Q260 400 320 700 Q350 850 300 924"/>
-    <path d="M720 100 Q750 350 700 550 Q660 750 720 924"/>
+
+  <!-- Subtle map hint behind -->
+  <g opacity="0.06" stroke="#4fc3f7" stroke-width="3" fill="none">
+    <line x1="80" y1="220" x2="944" y2="220"/>
+    <line x1="80" y1="520" x2="944" y2="520"/>
+    <line x1="80" y1="820" x2="944" y2="820"/>
+    <line x1="220" y1="80" x2="220" y2="944"/>
+    <line x1="804" y1="80" x2="804" y2="944"/>
+    <path d="M80 380 Q300 340 540 400 Q740 460 944 420"/>
+    <path d="M80 700 Q280 660 480 720 Q700 780 944 740"/>
   </g>
-  <!-- Subtle map blocks -->
-  <g opacity="0.04" fill="#4fc3f7">
-    <rect x="220" y="220" width="160" height="140" rx="4"/>
-    <rect x="420" y="400" width="180" height="140" rx="4"/>
-    <rect x="640" y="220" width="160" height="140" rx="4"/>
-    <rect x="220" y="580" width="160" height="140" rx="4"/>
-    <rect x="640" y="580" width="160" height="140" rx="4"/>
+
+  <!-- Post (vertical wooden pole) -->
+  <rect x="478" y="300" width="68" height="640" fill="url(#post)" rx="8"/>
+  <rect x="478" y="300" width="68" height="640" fill="none" stroke="#3a2210" stroke-width="4" rx="8"/>
+  <!-- Wood-grain hint -->
+  <line x1="498" y1="320" x2="498" y2="920" stroke="#3a2210" stroke-width="2" opacity="0.3"/>
+  <line x1="528" y1="320" x2="528" y2="920" stroke="#3a2210" stroke-width="2" opacity="0.3"/>
+
+  <!-- Top marker (location pin) -->
+  <g transform="translate(512, 240)">
+    <path d="M0 -60 C-46 -60 -64 -30 -64 -8 C-64 28 0 80 0 80 C0 80 64 28 64 -8 C64 -30 46 -60 0 -60Z"
+          fill="#ef5350" stroke="#b6362f" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="0" cy="-14" r="18" fill="white"/>
   </g>
-  <!-- Bike wheel left -->
-  <circle cx="340" cy="620" r="100" fill="none" stroke="#4fc3f7" stroke-width="20"/>
-  <circle cx="340" cy="620" r="12" fill="#4fc3f7"/>
-  <!-- Bike wheel right -->
-  <circle cx="684" cy="620" r="100" fill="none" stroke="#4fc3f7" stroke-width="20"/>
-  <circle cx="684" cy="620" r="12" fill="#4fc3f7"/>
-  <!-- Bike frame -->
-  <path d="M340 620 L480 460 L684 620 M480 460 L580 460 L684 620 M480 460 L440 400 L520 400"
-        fill="none" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Location pin -->
-  <g transform="translate(512, 200)">
-    <path d="M0 -80 C-44 -80 -60 -44 -60 -20 C-60 20 0 70 0 70 C0 70 60 20 60 -20 C60 -44 44 -80 0 -80Z"
-          fill="#ef5350"/>
-    <circle cx="0" cy="-24" r="18" fill="white"/>
+
+  <!-- Top arrow plank (pointing right) -->
+  <g transform="translate(0, 430)">
+    <path d="M170 -52 L780 -52 L860 0 L780 52 L170 52 Z"
+          fill="url(#wood)" stroke="#3a2210" stroke-width="5" stroke-linejoin="round"/>
+    <line x1="200" y1="-30" x2="780" y2="-30" stroke="#3a2210" stroke-width="2" opacity="0.35"/>
+    <line x1="200" y1="30" x2="780" y2="30" stroke="#3a2210" stroke-width="2" opacity="0.35"/>
+    <!-- accent stripe -->
+    <rect x="220" y="-12" width="540" height="24" fill="#4fc3f7" opacity="0.18" rx="3"/>
+  </g>
+
+  <!-- Middle arrow plank (pointing left, slightly longer) -->
+  <g transform="translate(0, 580)">
+    <path d="M854 -52 L244 -52 L164 0 L244 52 L854 52 Z"
+          fill="url(#wood)" stroke="#3a2210" stroke-width="5" stroke-linejoin="round"/>
+    <line x1="824" y1="-30" x2="244" y2="-30" stroke="#3a2210" stroke-width="2" opacity="0.35"/>
+    <line x1="824" y1="30" x2="244" y2="30" stroke="#3a2210" stroke-width="2" opacity="0.35"/>
+    <rect x="264" y="-12" width="540" height="24" fill="#ffc107" opacity="0.22" rx="3"/>
+  </g>
+
+  <!-- Bottom arrow plank (pointing right, shorter) -->
+  <g transform="translate(0, 730)">
+    <path d="M170 -46 L660 -46 L730 0 L660 46 L170 46 Z"
+          fill="url(#wood)" stroke="#3a2210" stroke-width="5" stroke-linejoin="round"/>
+    <line x1="200" y1="-26" x2="660" y2="-26" stroke="#3a2210" stroke-width="2" opacity="0.35"/>
+    <line x1="200" y1="26" x2="660" y2="26" stroke="#3a2210" stroke-width="2" opacity="0.35"/>
+    <rect x="220" y="-10" width="420" height="20" fill="#81c784" opacity="0.22" rx="3"/>
   </g>
 </svg>
