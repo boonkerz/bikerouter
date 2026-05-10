@@ -519,6 +519,7 @@ class _MapScreenState extends State<MapScreen> {
                         ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
                         : 94)
                     : 0) +
+                (_alternativeRoutes.isNotEmpty ? 56 : 0) +
                 bottomPadding +
                 12,
             child: Column(
@@ -556,6 +557,7 @@ class _MapScreenState extends State<MapScreen> {
                         ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
                         : 94)
                     : 0) +
+                (_alternativeRoutes.isNotEmpty ? 56 : 0) +
                 bottomPadding +
                 12,
             child: Column(
