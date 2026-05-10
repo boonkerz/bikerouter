@@ -85,6 +85,7 @@
   "profileCategoryGravel": "Gravel",
   "profileCategoryTrekking": "Trekking",
   "profileCategoryMtb": "MTB",
+  "profileCategoryCar": "Car",
   "profileCategoryOther": "Other",
   "profileFastbike": "Road bike",
   "profileFastbikeLowTraffic": "Road bike (low traffic)",
@@ -99,6 +100,8 @@
   "profileMtbZossebartHard": "MTB “Zossebart” (hard)",
   "profileHiking": "Hiking (beta)",
   "profileShortest": "Shortest route",
+  "profileCar": "Car",
+  "profileCarTrailer": "Car with trailer",
 
   "roundtripTitle": "Round trip",
   "roundtripDistance": "Distance",

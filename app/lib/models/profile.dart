@@ -1,6 +1,6 @@
 import '../l10n/app_localizations.dart';
 
-enum ProfileCategory { road, gravel, trekking, mtb, other }
+enum ProfileCategory { road, gravel, trekking, mtb, car, other }
 
 class BikeProfile {
   final String id;
@@ -43,6 +43,10 @@ class BikeProfile {
         return l.profileHiking;
       case 'shortest':
         return l.profileShortest;
+      case 'car':
+        return l.profileCar;
+      case 'car-trailer':
+        return l.profileCarTrailer;
     }
     return id;
   }
@@ -57,6 +61,8 @@ class BikeProfile {
         return l.profileCategoryTrekking;
       case ProfileCategory.mtb:
         return l.profileCategoryMtb;
+      case ProfileCategory.car:
+        return l.profileCategoryCar;
       case ProfileCategory.other:
         return l.profileCategoryOther;
     }
@@ -87,6 +93,9 @@ const profiles = [
   // MTB
   BikeProfile(id: 'mtb-zossebart', category: ProfileCategory.mtb, icon: '⛰️', avgSpeedKmh: 15),
   BikeProfile(id: 'mtb-zossebart-hard', category: ProfileCategory.mtb, icon: '⛰️', avgSpeedKmh: 13),
+  // Car
+  BikeProfile(id: 'car', category: ProfileCategory.car, icon: '🚗', avgSpeedKmh: 100),
+  BikeProfile(id: 'car-trailer', category: ProfileCategory.car, icon: '🚙', avgSpeedKmh: 80),
   // Other
   BikeProfile(id: 'hiking-beta', category: ProfileCategory.other, icon: '🥾', avgSpeedKmh: 5),
   BikeProfile(id: 'shortest', category: ProfileCategory.other, icon: '📏', avgSpeedKmh: 20),

@@ -518,6 +518,12 @@ abstract class AppLocalizations {
   /// **'MTB'**
   String get profileCategoryMtb;
 
+  /// No description provided for @profileCategoryCar.
+  ///
+  /// In de, this message translates to:
+  /// **'Auto'**
+  String get profileCategoryCar;
+
   /// No description provided for @profileCategoryOther.
   ///
   /// In de, this message translates to:
@@ -601,6 +607,18 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Kürzeste Route'**
   String get profileShortest;
+
+  /// No description provided for @profileCar.
+  ///
+  /// In de, this message translates to:
+  /// **'Auto'**
+  String get profileCar;
+
+  /// No description provided for @profileCarTrailer.
+  ///
+  /// In de, this message translates to:
+  /// **'Auto mit Anhänger'**
+  String get profileCarTrailer;
 
   /// No description provided for @roundtripTitle.
   ///

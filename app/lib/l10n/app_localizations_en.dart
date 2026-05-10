@@ -223,6 +223,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileCategoryMtb => 'MTB';
 
   @override
+  String get profileCategoryCar => 'Car';
+
+  @override
   String get profileCategoryOther => 'Other';
 
   @override
@@ -263,6 +266,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileShortest => 'Shortest route';
+
+  @override
+  String get profileCar => 'Car';
+
+  @override
+  String get profileCarTrailer => 'Car with trailer';
 
   @override
   String get roundtripTitle => 'Round trip';
