@@ -862,6 +862,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigateHeadingUp => 'Heading up';
 
   @override
+  String get altRoutePrimary => 'Main';
+
+  @override
+  String altRouteVariant(int n) {
+    return 'Variant $n';
+  }
+
+  @override
   String get mapStyleTitle => 'Map style';
 
   @override

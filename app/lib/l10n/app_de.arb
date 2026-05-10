@@ -319,6 +319,9 @@
   "navigateStop": "Stopp",
   "navigateNorthUp": "Nach Norden",
   "navigateHeadingUp": "In Fahrtrichtung",
+  "altRoutePrimary": "Hauptroute",
+  "altRouteVariant": "Variante {n}",
+  "@altRouteVariant": { "placeholders": { "n": { "type": "int" } } },
   "@garminDeviceOffline": { "placeholders": { "device": { "type": "String" } } },
 
   "mapStyleTitle": "Kartenstil",

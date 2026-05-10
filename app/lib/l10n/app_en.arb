@@ -319,6 +319,9 @@
   "navigateStop": "Stop",
   "navigateNorthUp": "North up",
   "navigateHeadingUp": "Heading up",
+  "altRoutePrimary": "Main",
+  "altRouteVariant": "Variant {n}",
+  "@altRouteVariant": { "placeholders": { "n": { "type": "int" } } },
   "@garminDeviceOffline": { "placeholders": { "device": { "type": "String" } } },
 
   "mapStyleTitle": "Map style",

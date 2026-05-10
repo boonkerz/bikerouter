@@ -861,6 +861,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navigateHeadingUp => 'In Fahrtrichtung';
 
   @override
+  String get altRoutePrimary => 'Hauptroute';
+
+  @override
+  String altRouteVariant(int n) {
+    return 'Variante $n';
+  }
+
+  @override
   String get mapStyleTitle => 'Kartenstil';
 
   @override

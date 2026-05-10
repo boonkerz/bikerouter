@@ -56,6 +56,9 @@ class _MapScreenState extends State<MapScreen> {
   final List<LatLng> _waypoints = [];
   RouteResult? _route;
   List<LatLng> _routePoints = [];
+  // Up-to-two alternative routes alongside the active one. Empty in
+  // roundtrip mode (BRouter's roundtrip engine doesn't accept alternatives).
+  List<RouteResult> _alternativeRoutes = const [];
   bool _loading = false;
   String _profile = 'fastbike';
   MapStyle _mapStyle = mapStyles[0];
@@ -265,6 +268,19 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ],
                       ),
+                    if (_alternativeRoutes.isNotEmpty)
+                      PolylineLayer(
+                        polylines: [
+                          for (final alt in _alternativeRoutes)
+                            Polyline(
+                              points: alt.coordinates
+                                  .map((c) => LatLng(c[1], c[0]))
+                                  .toList(growable: false),
+                              color: Colors.grey.withValues(alpha: 0.65),
+                              strokeWidth: 6,
+                            ),
+                        ],
+                      ),
                     if (_routePoints.isNotEmpty) ...[
                       if (_route != null && _routeVizMode == 'surface' && _route!.segments.isNotEmpty)
                         PolylineLayer(polylines: _buildSurfacePolylines())
@@ -359,6 +375,8 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
               ),),
+              if (_route != null && _alternativeRoutes.isNotEmpty)
+                _buildAlternativesBar(),
               if (_route != null)
                 StatsBar(
                   route: _route!,
@@ -2372,12 +2390,21 @@ class _MapScreenState extends State<MapScreen> {
       if (_roundtripMode && pts.length >= 2) {
         pts.add(pts.first);
       }
-      final result = await BRouterService.calculateRoute(
-        waypoints: pts,
-        profile: _profile,
-        nogos: _nogos,
-      );
-      _displayRoute(result);
+      if (_roundtripMode) {
+        final result = await BRouterService.calculateRoute(
+          waypoints: pts,
+          profile: _profile,
+          nogos: _nogos,
+        );
+        _displayRoute(result, alternatives: const []);
+      } else {
+        final results = await BRouterService.calculateRoutesWithAlternatives(
+          waypoints: pts,
+          profile: _profile,
+          nogos: _nogos,
+        );
+        _displayRoute(results.first, alternatives: results.skip(1).toList());
+      }
     } catch (e) {
       if (mounted) _showError(AppLocalizations.of(context).routingFailed(e.toString()));
     } finally {
@@ -2420,7 +2447,86 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _displayRoute(RouteResult result) {
+  Widget _buildAlternativesBar() {
+    final l = AppLocalizations.of(context);
+    final speed = ProfileSpeedPrefs.speedFor(_profile);
+    final all = [_route!, ..._alternativeRoutes];
+    return Container(
+      color: const Color(0xFF1a1a2e),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (int i = 0; i < all.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              _altChip(i, all[i], i == 0, speed, l),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _altChip(
+    int idx,
+    RouteResult r,
+    bool active,
+    int userSpeedKmh,
+    AppLocalizations l,
+  ) {
+    final km = r.distance.toStringAsFixed(r.distance < 100 ? 1 : 0);
+    final mins = ((r.distance / userSpeedKmh) * 60).round();
+    final timeStr = mins < 60
+        ? '$mins min'
+        : '${(mins / 60).floor()}h ${(mins % 60).toString().padLeft(2, '0')}';
+    final label = idx == 0 ? l.altRoutePrimary : l.altRouteVariant(idx);
+    return Material(
+      color: active ? const Color(0xFF1565c0) : const Color(0xFF2a2a44),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: active ? null : () => _activateAlternative(idx),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                  )),
+              Text('$km km · $timeStr',
+                  style: const TextStyle(color: Colors.white, fontSize: 13)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _activateAlternative(int idx) {
+    if (idx <= 0 || idx > _alternativeRoutes.length) return;
+    final newPrimary = _alternativeRoutes[idx - 1];
+    final newAlts = <RouteResult>[
+      _route!,
+      ..._alternativeRoutes.sublist(0, idx - 1),
+      ..._alternativeRoutes.sublist(idx),
+    ];
+    setState(() {
+      _route = newPrimary;
+      _routePoints =
+          newPrimary.coordinates.map((c) => LatLng(c[1], c[0])).toList();
+      _alternativeRoutes = newAlts;
+      _highlightIndex = null;
+    });
+  }
+
+  void _displayRoute(RouteResult result,
+      {List<RouteResult> alternatives = const []}) {
     final points = result.coordinates
         .map((c) => LatLng(c[1], c[0]))
         .toList();
@@ -2438,6 +2544,7 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _route = result;
       _routePoints = points;
+      _alternativeRoutes = alternatives;
       _showElevation = true;
       _highlightIndex = null;
       _sights = [];

@@ -1706,6 +1706,18 @@ abstract class AppLocalizations {
   /// **'In Fahrtrichtung'**
   String get navigateHeadingUp;
 
+  /// No description provided for @altRoutePrimary.
+  ///
+  /// In de, this message translates to:
+  /// **'Hauptroute'**
+  String get altRoutePrimary;
+
+  /// No description provided for @altRouteVariant.
+  ///
+  /// In de, this message translates to:
+  /// **'Variante {n}'**
+  String altRouteVariant(int n);
+
   /// No description provided for @mapStyleTitle.
   ///
   /// In de, this message translates to:

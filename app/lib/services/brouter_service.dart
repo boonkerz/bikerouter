@@ -67,6 +67,50 @@ class BRouterService {
     List<NogoArea> nogos = const [],
   }) async {
     final wps = await _snapForCar(waypoints, profile);
+    return _fetchOne(
+      wps: wps,
+      profile: profile,
+      alternativeIdx: alternativeIdx,
+      nogos: nogos,
+    );
+  }
+
+  /// Fetches the primary route plus up to two alternatives in parallel.
+  /// Routes whose distance differs by less than 1% from the primary are
+  /// dropped as duplicates — BRouter sometimes returns the same path for
+  /// alternativeidx 0/1/2 when no real alternative exists.
+  static Future<List<RouteResult>> calculateRoutesWithAlternatives({
+    required List<List<double>> waypoints,
+    required String profile,
+    List<NogoArea> nogos = const [],
+  }) async {
+    final wps = await _snapForCar(waypoints, profile);
+    final futures = [0, 1, 2].map((idx) =>
+        _fetchOne(wps: wps, profile: profile, alternativeIdx: idx, nogos: nogos)
+            .then<RouteResult?>((r) => r)
+            .catchError((_) => null));
+    final results = await Future.wait(futures);
+    final primary = results[0];
+    if (primary == null) {
+      throw Exception('Routing failed');
+    }
+    final out = <RouteResult>[primary];
+    for (int i = 1; i < results.length; i++) {
+      final r = results[i];
+      if (r == null) continue;
+      final dup = out.any((existing) =>
+          ((r.distance - existing.distance).abs() / existing.distance) < 0.01);
+      if (!dup) out.add(r);
+    }
+    return out;
+  }
+
+  static Future<RouteResult> _fetchOne({
+    required List<List<double>> wps,
+    required String profile,
+    required int alternativeIdx,
+    required List<NogoArea> nogos,
+  }) async {
     final lonlats = wps.map((w) => '${w[0]},${w[1]}').join('|');
     final uri = Uri.parse('$baseUrl?lonlats=$lonlats'
         '&${_profileParam(profile)}'
@@ -79,7 +123,6 @@ class BRouterService {
     if (response.statusCode != 200) {
       throw Exception('Routing failed: ${response.body}');
     }
-
     final geojson = jsonDecode(response.body) as Map<String, dynamic>;
     return RouteResult.fromGeojson(geojson);
   }
