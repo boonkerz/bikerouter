@@ -25,10 +25,14 @@ class BRouterService {
       final vmax = ProfileSpeedPrefs.speedFor(profile);
       final totalweight = profile == 'car-trailer' ? 2640 : 1640;
       final avoidUnpaved = profile == 'car-trailer' ? 1 : 0;
+      // add_beeline lets BRouter draw a beeline from the user's clicked
+      // waypoint to the nearest car-accessible road. Without it, taps that
+      // land on bike paths or footways trigger "target island failed".
       return 'profile=car-vario'
           '&profile:vmax=$vmax'
           '&profile:totalweight=$totalweight'
-          '&profile:avoid_unpaved=$avoidUnpaved';
+          '&profile:avoid_unpaved=$avoidUnpaved'
+          '&profile:add_beeline=1';
     }
     return 'profile=$profile';
   }
