@@ -94,7 +94,7 @@ const profiles = [
   BikeProfile(id: 'mtb-zossebart', category: ProfileCategory.mtb, icon: '⛰️', avgSpeedKmh: 15),
   BikeProfile(id: 'mtb-zossebart-hard', category: ProfileCategory.mtb, icon: '⛰️', avgSpeedKmh: 13),
   // Car
-  BikeProfile(id: 'car', category: ProfileCategory.car, icon: '🚗', avgSpeedKmh: 100),
+  BikeProfile(id: 'car', category: ProfileCategory.car, icon: '🚗', avgSpeedKmh: 130),
   BikeProfile(id: 'car-trailer', category: ProfileCategory.car, icon: '🚙', avgSpeedKmh: 80),
   // Other
   BikeProfile(id: 'hiking-beta', category: ProfileCategory.other, icon: '🥾', avgSpeedKmh: 5),
