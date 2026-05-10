@@ -1,0 +1,94 @@
+# Wegwiesel: time-greedy car routing.
+#
+# Unlike the bundled car-vario, which is energetically optimal and
+# happily takes 100 km Bundesstrasse shortcuts to save fuel, this
+# profile uses the classic StdModel with explicit class-based costs
+# so long-distance routes stay on the autobahn the way Google Maps
+# would.
+
+---context:global
+
+assign validForCars = true
+
+# Tunables exposed to the URL.
+assign avoid_toll       = false  # %avoid_toll% | Avoid paid roads | boolean
+assign avoid_motorways  = false  # %avoid_motorways% | Avoid motorways | boolean
+assign avoid_unpaved    = false  # %avoid_unpaved% | Avoid unpaved roads | boolean
+assign add_beeline      = false  # %add_beeline% | Beeline to nearest road | boolean
+assign vmax             = 130    # %vmax% | Max planning speed (km/h) | number
+assign totalweight      = 1640   # %totalweight% | Total weight (kg) | number
+
+assign turnInstructionMode = 1   # %turnInstructionMode% | turn instruction mode | [0=none, 1=auto, 2=locus, 3=osmand, 4=comment, 5=gpsies, 6=orux]
+
+
+---context:way   # tags on the way
+
+# car access logic — does this way allow motorcars?
+assign caraccess
+       switch motorcar=
+              switch motor_vehicle=
+                     switch vehicle=
+                            switch access=
+                                   not highway=cycleway|footway|bridleway|path|steps|pedestrian|track
+                                   or access=yes|permissive|designated|destination
+                                      not access=no|private
+                            or vehicle=yes|permissive|designated|destination
+                               not vehicle=no|private
+                     or motor_vehicle=yes|permissive|designated|destination
+                        not motor_vehicle=no|private
+              or motorcar=yes|permissive|designated|destination
+                 not motorcar=no|private
+
+assign is_unpaved or surface=unpaved
+                  or surface=gravel|dirt|earth|grass|sand|mud|ground|fine_gravel|compacted
+                  or tracktype=grade2|grade3|grade4|grade5
+                  highway=track
+
+# Cost factor = multiplier on edge length. 10000 = blocked.
+# 1.0 = motorway. Anything else gets a steep penalty so long Bundes-
+# strasse shortcuts can't beat 50% extra autobahn distance.
+assign costfactor
+       if highway=cycleway|footway|bridleway|path|steps|pedestrian then 10000
+       else if not caraccess then 10000
+       else if and avoid_motorways highway=motorway|motorway_link then 10000
+       else if and avoid_toll      toll=yes then 10000
+       else if and avoid_unpaved   is_unpaved then 10000
+       else if highway=motorway|motorway_link  then 1.0
+       else if highway=trunk|trunk_link        then 1.1
+       else if highway=primary|primary_link    then 1.7
+       else if highway=secondary|secondary_link then 2.2
+       else if highway=tertiary|tertiary_link  then 2.6
+       else if highway=unclassified            then 3.0
+       else if highway=residential|living_street then 3.5
+       else if highway=service                 then 4.5
+       else if highway=track                   then 5.0
+       else 3.0
+
+# Time / vmax estimate per highway class — clamped by the user-set vmax
+# so the slider also pulls the displayed ETA down.
+assign maxspeed
+       min vmax
+       if      highway=motorway|motorway_link  then 130
+       else if highway=trunk|trunk_link        then 100
+       else if highway=primary|primary_link    then 80
+       else if highway=secondary|secondary_link then 70
+       else if highway=tertiary|tertiary_link  then 60
+       else if highway=unclassified            then 50
+       else if highway=residential|living_street then 30
+       else 20
+
+
+---context:node  # tags on a node
+
+assign caraccess
+       switch motorcar=
+              switch motor_vehicle=
+                     switch vehicle=
+                            switch access=
+                                   not barrier=gate|bollard|lift_gate|cycle_barrier
+                                   access=yes|permissive|designated|destination
+                            vehicle=yes|permissive|designated|destination
+                     motor_vehicle=yes|permissive|designated|destination
+              motorcar=yes|permissive|designated|destination
+
+assign initialcost = switch caraccess 0 1000000

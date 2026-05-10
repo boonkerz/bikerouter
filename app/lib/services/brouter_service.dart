@@ -17,9 +17,10 @@ class BRouterService {
   }
 
   /// Wegwiesel exposes "car" and "car-trailer" as user-facing profiles.
-  /// Both ride on top of BRouter's parametric `car-vario` profile, just
-  /// with different defaults for vmax (incl. user override), totalweight
-  /// and avoid_unpaved.
+  /// Both ride on top of our custom wegwiesel-car profile (class-based
+  /// costfactor, no kinematic eco-bias, so long routes stay on the
+  /// autobahn instead of taking Bundesstrasse shortcuts the way the
+  /// stock car-vario does).
   static String _profileParam(String profile) {
     if (profile == 'car' || profile == 'car-trailer') {
       final vmax = ProfileSpeedPrefs.speedFor(profile);
@@ -28,7 +29,7 @@ class BRouterService {
       // add_beeline lets BRouter draw a beeline from the user's clicked
       // waypoint to the nearest car-accessible road. Without it, taps that
       // land on bike paths or footways trigger "target island failed".
-      return 'profile=car-vario'
+      return 'profile=wegwiesel-car'
           '&profile:vmax=$vmax'
           '&profile:totalweight=$totalweight'
           '&profile:avoid_unpaved=$avoidUnpaved'
