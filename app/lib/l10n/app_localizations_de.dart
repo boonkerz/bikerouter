@@ -811,6 +811,56 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get menuStartNavigation => 'Navigation starten';
+
+  @override
+  String get navigateContinue => 'Weiterfahren';
+
+  @override
+  String get navigateTurnLeft => 'links abbiegen';
+
+  @override
+  String get navigateTurnRight => 'rechts abbiegen';
+
+  @override
+  String get navigateKeepLeft => 'links halten';
+
+  @override
+  String get navigateKeepRight => 'rechts halten';
+
+  @override
+  String get navigateStraight => 'geradeaus';
+
+  @override
+  String get navigateUTurn => 'wenden';
+
+  @override
+  String get navigateExit => 'Ausfahrt nehmen';
+
+  @override
+  String navigateRoundabout(int n) {
+    return '$n. Ausfahrt im Kreisverkehr';
+  }
+
+  @override
+  String get navigateRemaining => 'verbleibend';
+
+  @override
+  String get navigateRerouting => 'Neu berechnen…';
+
+  @override
+  String get navigateArrived => 'Angekommen';
+
+  @override
+  String get navigateStop => 'Stopp';
+
+  @override
+  String get navigateNorthUp => 'Nach Norden';
+
+  @override
+  String get navigateHeadingUp => 'In Fahrtrichtung';
+
+  @override
   String get mapStyleTitle => 'Kartenstil';
 
   @override

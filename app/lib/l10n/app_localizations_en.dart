@@ -812,6 +812,56 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get menuStartNavigation => 'Start navigation';
+
+  @override
+  String get navigateContinue => 'Continue';
+
+  @override
+  String get navigateTurnLeft => 'turn left';
+
+  @override
+  String get navigateTurnRight => 'turn right';
+
+  @override
+  String get navigateKeepLeft => 'keep left';
+
+  @override
+  String get navigateKeepRight => 'keep right';
+
+  @override
+  String get navigateStraight => 'straight';
+
+  @override
+  String get navigateUTurn => 'u-turn';
+
+  @override
+  String get navigateExit => 'take the exit';
+
+  @override
+  String navigateRoundabout(int n) {
+    return 'take exit $n at the roundabout';
+  }
+
+  @override
+  String get navigateRemaining => 'remaining';
+
+  @override
+  String get navigateRerouting => 'Re-routing…';
+
+  @override
+  String get navigateArrived => 'Arrived';
+
+  @override
+  String get navigateStop => 'Stop';
+
+  @override
+  String get navigateNorthUp => 'North up';
+
+  @override
+  String get navigateHeadingUp => 'Heading up';
+
+  @override
   String get mapStyleTitle => 'Map style';
 
   @override

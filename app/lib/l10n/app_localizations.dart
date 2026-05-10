@@ -1610,6 +1610,102 @@ abstract class AppLocalizations {
   /// **'{device} ist nicht erreichbar'**
   String garminDeviceOffline(String device);
 
+  /// No description provided for @menuStartNavigation.
+  ///
+  /// In de, this message translates to:
+  /// **'Navigation starten'**
+  String get menuStartNavigation;
+
+  /// No description provided for @navigateContinue.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiterfahren'**
+  String get navigateContinue;
+
+  /// No description provided for @navigateTurnLeft.
+  ///
+  /// In de, this message translates to:
+  /// **'links abbiegen'**
+  String get navigateTurnLeft;
+
+  /// No description provided for @navigateTurnRight.
+  ///
+  /// In de, this message translates to:
+  /// **'rechts abbiegen'**
+  String get navigateTurnRight;
+
+  /// No description provided for @navigateKeepLeft.
+  ///
+  /// In de, this message translates to:
+  /// **'links halten'**
+  String get navigateKeepLeft;
+
+  /// No description provided for @navigateKeepRight.
+  ///
+  /// In de, this message translates to:
+  /// **'rechts halten'**
+  String get navigateKeepRight;
+
+  /// No description provided for @navigateStraight.
+  ///
+  /// In de, this message translates to:
+  /// **'geradeaus'**
+  String get navigateStraight;
+
+  /// No description provided for @navigateUTurn.
+  ///
+  /// In de, this message translates to:
+  /// **'wenden'**
+  String get navigateUTurn;
+
+  /// No description provided for @navigateExit.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausfahrt nehmen'**
+  String get navigateExit;
+
+  /// No description provided for @navigateRoundabout.
+  ///
+  /// In de, this message translates to:
+  /// **'{n}. Ausfahrt im Kreisverkehr'**
+  String navigateRoundabout(int n);
+
+  /// No description provided for @navigateRemaining.
+  ///
+  /// In de, this message translates to:
+  /// **'verbleibend'**
+  String get navigateRemaining;
+
+  /// No description provided for @navigateRerouting.
+  ///
+  /// In de, this message translates to:
+  /// **'Neu berechnen…'**
+  String get navigateRerouting;
+
+  /// No description provided for @navigateArrived.
+  ///
+  /// In de, this message translates to:
+  /// **'Angekommen'**
+  String get navigateArrived;
+
+  /// No description provided for @navigateStop.
+  ///
+  /// In de, this message translates to:
+  /// **'Stopp'**
+  String get navigateStop;
+
+  /// No description provided for @navigateNorthUp.
+  ///
+  /// In de, this message translates to:
+  /// **'Nach Norden'**
+  String get navigateNorthUp;
+
+  /// No description provided for @navigateHeadingUp.
+  ///
+  /// In de, this message translates to:
+  /// **'In Fahrtrichtung'**
+  String get navigateHeadingUp;
+
   /// No description provided for @mapStyleTitle.
   ///
   /// In de, this message translates to:

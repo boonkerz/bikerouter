@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'route_segment.dart';
+import 'turn_hint.dart';
 
 class RouteResult {
   final Map<String, dynamic> geojson;
@@ -10,6 +11,7 @@ class RouteResult {
   final double time; // seconds
   final List<List<double>> coordinates; // [lon, lat, elevation]
   final List<RouteSegment> segments;
+  final List<TurnHint> turnHints;
 
   RouteResult({
     required this.geojson,
@@ -19,6 +21,7 @@ class RouteResult {
     required this.time,
     required this.coordinates,
     required this.segments,
+    this.turnHints = const [],
   });
 
   factory RouteResult.fromGeojson(Map<String, dynamic> geojson) {
@@ -62,6 +65,17 @@ class RouteResult {
 
     final segments = _parseSegments(props, rawCoords);
 
+    final hints = <TurnHint>[];
+    final voicehints = props['voicehints'];
+    if (voicehints is List) {
+      for (final row in voicehints) {
+        if (row is List) {
+          final h = TurnHint.fromList(row);
+          if (h != null) hints.add(h);
+        }
+      }
+    }
+
     return RouteResult(
       geojson: geojson,
       distance: distance,
@@ -70,6 +84,7 @@ class RouteResult {
       time: time,
       coordinates: rawCoords,
       segments: segments,
+      turnHints: hints,
     );
   }
 

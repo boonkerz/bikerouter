@@ -19,6 +19,7 @@ import '../models/route_segment.dart';
 import '../models/route_poi.dart';
 import '../models/saved_route.dart';
 import 'package:garmin_connect/garmin_connect.dart';
+import 'navigation_screen.dart';
 import '../services/brouter_service.dart';
 import '../services/garmin_share_service.dart';
 import '../services/gpx_builder.dart';
@@ -582,6 +583,15 @@ class _MapScreenState extends State<MapScreen> {
                       itemBuilder: (ctx) {
                         final l = AppLocalizations.of(ctx);
                         return [
+                          PopupMenuItem(
+                            value: 'navigate',
+                            enabled: _route != null,
+                            child: Row(children: [
+                              const Icon(Icons.navigation, color: Color(0xFF4fc3f7), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuStartNavigation, style: const TextStyle(color: Colors.white)),
+                            ]),
+                          ),
                           PopupMenuItem(
                             value: 'save',
                             enabled: _route != null,
@@ -2492,8 +2502,26 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {});
   }
 
+  Future<void> _startNavigation() async {
+    if (_route == null || _waypoints.length < 2) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => NavigationScreen(
+          route: _route!,
+          waypoints: List<LatLng>.from(_waypoints),
+          profile: _profile,
+          nogos: _nogos,
+          mapStyle: _mapStyle,
+        ),
+      ),
+    );
+  }
+
   Future<void> _onMenuSelected(String value) async {
     switch (value) {
+      case 'navigate':
+        await _startNavigation();
+        break;
       case 'save':
         await _saveRoute();
         break;
