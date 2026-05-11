@@ -84,7 +84,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               min: 30,
               max: 480,
               divisions: 30,
-              activeColor: const Color(0xFF4fc3f7),
+              activeColor: const Color(0xFF8aa5c8),
               inactiveColor: Colors.white24,
               onChanged: (v) {
                 setState(() => _timeMinutes = v.round());
@@ -105,7 +105,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               min: 5,
               max: 200,
               divisions: 39,
-              activeColor: const Color(0xFF4fc3f7),
+              activeColor: const Color(0xFF8aa5c8),
               inactiveColor: Colors.white24,
               onChanged: (v) => widget.onDistanceChanged(v.round()),
             ),
@@ -120,7 +120,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
             min: 0,
             max: 350,
             divisions: 35,
-            activeColor: const Color(0xFF4fc3f7),
+            activeColor: const Color(0xFF8aa5c8),
             inactiveColor: Colors.white24,
             onChanged: (v) => widget.onDirectionChanged(v.round()),
           ),
@@ -142,7 +142,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
                   child: Text(d.$1,
                       style: TextStyle(
                         color: widget.direction == d.$2
-                            ? const Color(0xFF4fc3f7)
+                            ? const Color(0xFF8aa5c8)
                             : Colors.white54,
                       )),
                 ),
@@ -152,7 +152,7 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
           ElevatedButton(
             onPressed: widget.hasStart ? () => widget.onGenerate(_request) : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4fc3f7),
+              backgroundColor: const Color(0xFF8aa5c8),
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -165,8 +165,8 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
           OutlinedButton(
             onPressed: widget.hasStart ? () => widget.onShuffle(_request) : null,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF4fc3f7),
-              side: const BorderSide(color: Color(0xFF4fc3f7)),
+              foregroundColor: const Color(0xFF8aa5c8),
+              side: const BorderSide(color: Color(0xFF8aa5c8)),
             ),
             child: Text(l.roundtripAlternative),
           ),
@@ -181,16 +181,16 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF4fc3f7).withValues(alpha: 0.2) : Colors.transparent,
+          color: active ? const Color(0xFF8aa5c8).withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: active ? const Color(0xFF4fc3f7) : Colors.white24,
+            color: active ? const Color(0xFF8aa5c8) : Colors.white24,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? const Color(0xFF4fc3f7) : Colors.white54,
+            color: active ? const Color(0xFF8aa5c8) : Colors.white54,
             fontSize: 12,
             fontWeight: active ? FontWeight.w600 : FontWeight.normal,
           ),

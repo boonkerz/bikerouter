@@ -20,7 +20,8 @@ class WegwieselApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF1a1a2e),
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF4fc3f7),
+          primary: Color(0xFF8aa5c8),
+          secondary: Color(0xFFc89868),
           surface: Color(0xFF1a1a2e),
         ),
         useMaterial3: true,

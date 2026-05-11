@@ -97,7 +97,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                 decoration: InputDecoration(
                   hintText: l.searchHint,
                   hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF4fc3f7)),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF8aa5c8)),
                   suffixIcon: _searching
                       ? const Padding(
                           padding: EdgeInsets.all(12),
@@ -106,7 +106,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Color(0xFF4fc3f7),
+                              color: Color(0xFF8aa5c8),
                             ),
                           ),
                         )
@@ -146,7 +146,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                       itemBuilder: (ctx, i) {
                         final r = _results[i];
                         return ListTile(
-                          leading: const Icon(Icons.place, color: Color(0xFF4fc3f7)),
+                          leading: const Icon(Icons.place, color: Color(0xFF8aa5c8)),
                           title: Text(
                             r.displayName,
                             style: const TextStyle(color: Colors.white, fontSize: 14),

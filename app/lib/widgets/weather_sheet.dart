@@ -88,7 +88,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
       lastDate: now.add(const Duration(days: 14)),
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(primary: Color(0xFF4fc3f7)),
+          colorScheme: const ColorScheme.dark(primary: Color(0xFF8aa5c8)),
         ),
         child: child ?? const SizedBox.shrink(),
       ),
@@ -99,7 +99,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
       initialTime: TimeOfDay.fromDateTime(_departure),
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(primary: Color(0xFF4fc3f7)),
+          colorScheme: const ColorScheme.dark(primary: Color(0xFF8aa5c8)),
         ),
         child: child ?? const SizedBox.shrink(),
       ),
@@ -142,10 +142,10 @@ class _WeatherSheetState extends State<_WeatherSheet> {
                         style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                   TextButton.icon(
-                    icon: const Icon(Icons.schedule, size: 16, color: Color(0xFF4fc3f7)),
+                    icon: const Icon(Icons.schedule, size: 16, color: Color(0xFF8aa5c8)),
                     label: Text(
                       _formatDeparture(l, _departure),
-                      style: const TextStyle(color: Color(0xFF4fc3f7)),
+                      style: const TextStyle(color: Color(0xFF8aa5c8)),
                     ),
                     onPressed: _pickDeparture,
                   ),
@@ -162,7 +162,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
 
   Widget _buildBody(ScrollController sc, AppLocalizations l) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF4fc3f7)));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF8aa5c8)));
     }
     if (_error != null) {
       return Center(child: Text(_error!, style: const TextStyle(color: Colors.white70)));
@@ -212,7 +212,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
           if (s.windDirDeg != null)
             Transform.rotate(
               angle: (s.windDirDeg! + 180) * pi / 180, // arrow shows wind direction (where it's going toward)
-              child: const Icon(Icons.arrow_upward, size: 18, color: Color(0xFF4fc3f7)),
+              child: const Icon(Icons.arrow_upward, size: 18, color: Color(0xFF8aa5c8)),
             ),
           const SizedBox(width: 4),
           SizedBox(
