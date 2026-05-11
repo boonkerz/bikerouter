@@ -16,7 +16,7 @@ Future<StagesResult?> showStagesSheet(
 }) {
   return showModalBottomSheet<StagesResult>(
     context: context,
-    backgroundColor: const Color(0xFF1a1a2e),
+    backgroundColor: const Color(0xFFf5e9d8),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -88,7 +88,7 @@ class _SheetState extends State<_Sheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: Colors.black26,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -97,16 +97,16 @@ class _SheetState extends State<_Sheet> {
             Row(
               children: [
                 Text(l.stagesTitle,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)),
                 const Spacer(),
                 Text(l.stagesTotalKm(widget.totalKm.toStringAsFixed(0)),
-                    style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    style: const TextStyle(color: Colors.black54, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Text(l.stagesTargetLabel, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(l.stagesTargetLabel, style: const TextStyle(color: Colors.black54, fontSize: 12)),
                 Expanded(
                   child: Slider(
                     value: _targetKm,
@@ -114,7 +114,7 @@ class _SheetState extends State<_Sheet> {
                     max: 150,
                     divisions: 26,
                     label: '${_targetKm.round()} km',
-                    activeColor: const Color(0xFFc89868),
+                    activeColor: const Color(0xFF6a4a28),
                     onChanged: (v) => setState(() => _targetKm = v),
                     onChangeEnd: (_) => _fetch(),
                   ),
@@ -122,11 +122,11 @@ class _SheetState extends State<_Sheet> {
                 SizedBox(
                   width: 56,
                   child: Text('${_targetKm.round()} km',
-                      style: const TextStyle(color: Colors.white, fontSize: 12)),
+                      style: const TextStyle(color: Colors.black87, fontSize: 12)),
                 ),
               ],
             ),
-            const Divider(color: Colors.white24, height: 16),
+            const Divider(color: Colors.black26, height: 16),
             Expanded(child: _buildList(sc, l)),
             if (_stages != null && _stages!.isNotEmpty)
               Padding(
@@ -134,7 +134,10 @@ class _SheetState extends State<_Sheet> {
                 child: FilledButton.icon(
                   icon: const Icon(Icons.check, size: 18),
                   label: Text(l.stagesShowOnMap),
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFc89868)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF6a4a28),
+                    foregroundColor: const Color(0xFFf5e9d8),
+                  ),
                   onPressed: () => Navigator.pop(context, StagesResult(_stages!, _targetKm)),
                 ),
               ),
@@ -146,18 +149,18 @@ class _SheetState extends State<_Sheet> {
 
   Widget _buildList(ScrollController sc, AppLocalizations l) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFc89868)));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF6a4a28)));
     }
     final stages = _stages;
     if (stages == null || stages.isEmpty) {
       return Center(
-        child: Text(l.stagesEmpty, style: const TextStyle(color: Colors.white54)),
+        child: Text(l.stagesEmpty, style: const TextStyle(color: Colors.black54)),
       );
     }
     return ListView.separated(
       controller: sc,
       itemCount: stages.length,
-      separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
+      separatorBuilder: (_, __) => const Divider(color: Colors.black12, height: 1),
       itemBuilder: (ctx, i) => _row(stages[i], l),
     );
   }
@@ -173,7 +176,7 @@ class _SheetState extends State<_Sheet> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: const Color(0xFFc89868),
+              color: const Color(0xFF6a4a28),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -187,7 +190,7 @@ class _SheetState extends State<_Sheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(
                   l.stagesRowSummary(
@@ -195,7 +198,7 @@ class _SheetState extends State<_Sheet> {
                     s.ascentM.round(),
                     s.endKm.toStringAsFixed(0),
                   ),
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
             ),

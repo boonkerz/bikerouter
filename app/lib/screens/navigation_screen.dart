@@ -275,7 +275,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 child: Row(
                   children: [
                     Icon(_iconForCmd(hint?.cmd),
-                        color: Colors.white, size: 44),
+                        color: Colors.black87, size: 44),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -286,7 +286,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                                 ? l.navigateContinue
                                 : '${_formatDistance(hintDist)} ${_textForCmd(hint.cmd, l)}',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black87,
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
                             ),
@@ -294,7 +294,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           if (_rerouting)
                             Text(l.navigateRerouting,
                                 style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
+                                    color: Colors.black54, fontSize: 12)),
                         ],
                       ),
                     ),

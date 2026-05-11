@@ -22,7 +22,7 @@ class ProfileSelector extends StatelessWidget {
     final l = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -42,7 +42,7 @@ class ProfileSelector extends StatelessWidget {
                   child: Text(
                     l.profileTitle,
                     style: const TextStyle(
-                        color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                        color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -52,7 +52,7 @@ class ProfileSelector extends StatelessWidget {
                         child: Text(
                           entry.value.first.localizedCategory(l),
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.5,
@@ -66,7 +66,7 @@ class ProfileSelector extends StatelessWidget {
                           dense: true,
                           leading: Text(p.icon, style: const TextStyle(fontSize: 18)),
                           title: Text(p.localizedName(l),
-                              style: const TextStyle(color: Colors.white)),
+                              style: const TextStyle(color: Colors.black87)),
                           subtitle: Row(
                             children: [
                               Icon(
@@ -74,7 +74,7 @@ class ProfileSelector extends StatelessWidget {
                                 size: 12,
                                 color: override
                                     ? const Color(0xFFffc107)
-                                    : Colors.white.withValues(alpha: 0.4),
+                                    : Colors.black.withValues(alpha: 0.4),
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -82,7 +82,7 @@ class ProfileSelector extends StatelessWidget {
                                 style: TextStyle(
                                   color: override
                                       ? const Color(0xFFffc107)
-                                      : Colors.white.withValues(alpha: 0.45),
+                                      : Colors.black.withValues(alpha: 0.45),
                                   fontSize: 11,
                                 ),
                               ),
@@ -90,7 +90,7 @@ class ProfileSelector extends StatelessWidget {
                           ),
                           trailing: IconButton(
                             icon: const Icon(Icons.tune, size: 18),
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: Colors.black.withValues(alpha: 0.6),
                             tooltip: l.profileSpeedEdit,
                             onPressed: () async {
                               await _showSpeedDialog(ctx, p);
@@ -98,7 +98,7 @@ class ProfileSelector extends StatelessWidget {
                             },
                           ),
                           selected: p.id == selectedProfile,
-                          selectedTileColor: const Color(0xFFc89868).withValues(alpha: 0.1),
+                          selectedTileColor: const Color(0xFF6a4a28).withValues(alpha: 0.1),
                           shape:
                               RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           onTap: () {
@@ -125,27 +125,27 @@ class ProfileSelector extends StatelessWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
-            backgroundColor: const Color(0xFF1a1a2e),
+            backgroundColor: const Color(0xFFf5e9d8),
             title: Text('${p.icon} ${p.localizedName(l)}',
-                style: const TextStyle(color: Colors.white)),
+                style: const TextStyle(color: Colors.black87)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('$value km/h',
                     style: const TextStyle(
-                        color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                        color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w600)),
                 Text(
                   l.profileSpeedDefault(defaultSpeed),
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
+                  style: TextStyle(color: Colors.black.withValues(alpha: 0.5), fontSize: 11),
                 ),
                 Slider(
                   value: value.toDouble(),
                   min: 5,
                   max: 40,
                   divisions: 35,
-                  activeColor: const Color(0xFFc89868),
-                  inactiveColor: Colors.white24,
+                  activeColor: const Color(0xFF6a4a28),
+                  inactiveColor: Colors.black26,
                   onChanged: (v) => setDialogState(() => value = v.round()),
                 ),
               ],
@@ -163,12 +163,12 @@ class ProfileSelector extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(l.commonCancel,
-                    style: const TextStyle(color: Colors.white60)),
+                    style: const TextStyle(color: Colors.black54)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFc89868),
-                  foregroundColor: Colors.black,
+                  backgroundColor: const Color(0xFF6a4a28),
+                  foregroundColor: const Color(0xFFf5e9d8),
                 ),
                 onPressed: () async {
                   if (value == defaultSpeed) {

@@ -205,8 +205,8 @@ class _ElevationChartState extends State<ElevationChart> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1a1a2e),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+        color: const Color(0xFFf5e9d8),
+        border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.1))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -350,7 +350,7 @@ class _ResizeHandle extends StatelessWidget {
             width: 40,
             height: 3,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -426,7 +426,7 @@ class _ModeBar extends StatelessWidget {
             IconButton(
               tooltip: l.profileZoomReset,
               icon: const Icon(Icons.zoom_out_map, size: 18),
-              color: Colors.white.withValues(alpha: 0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               onPressed: onResetZoom,
@@ -436,7 +436,7 @@ class _ModeBar extends StatelessWidget {
             icon: Icon(locked ? Icons.lock : Icons.lock_open, size: 18),
             color: locked
                 ? Colors.amber.withValues(alpha: 0.9)
-                : Colors.white.withValues(alpha: 0.5),
+                : Colors.black.withValues(alpha: 0.5),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: onToggleLock,
@@ -469,7 +469,7 @@ class _ModeButton extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFFc89868).withValues(alpha: 0.2) : Colors.transparent,
+          color: active ? const Color(0xFF6a4a28).withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -478,14 +478,14 @@ class _ModeButton extends StatelessWidget {
             Icon(
               icon,
               size: 14,
-              color: active ? const Color(0xFFc89868) : Colors.white.withValues(alpha: 0.6),
+              color: active ? const Color(0xFF6a4a28) : Colors.black.withValues(alpha: 0.6),
             ),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11,
-                color: active ? const Color(0xFFc89868) : Colors.white.withValues(alpha: 0.75),
+                color: active ? const Color(0xFF6a4a28) : Colors.black.withValues(alpha: 0.75),
                 fontWeight: active ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -751,7 +751,7 @@ class _ProfilePainter extends CustomPainter {
 
   void _paintGrid(Canvas canvas, Rect r, double minY, double maxY, double startKm, double endKm) {
     final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
+      ..color = Colors.black.withValues(alpha: 0.08)
       ..strokeWidth = 1;
 
     final yInterval = _niceInterval(maxY - minY, 4);
@@ -765,7 +765,7 @@ class _ProfilePainter extends CustomPainter {
         Offset(r.left - 4, py - 6),
         align: TextAlign.right,
         maxWidth: axisLeft - 4,
-        color: Colors.white.withValues(alpha: 0.4),
+        color: Colors.black.withValues(alpha: 0.4),
       );
     }
 
@@ -779,7 +779,7 @@ class _ProfilePainter extends CustomPainter {
         Offset(px - 20, r.bottom + 4),
         align: TextAlign.center,
         maxWidth: 40,
-        color: Colors.white.withValues(alpha: 0.4),
+        color: Colors.black.withValues(alpha: 0.4),
       );
     }
   }
@@ -806,7 +806,7 @@ class _ProfilePainter extends CustomPainter {
     fillPath.close();
     canvas.drawPath(
       fillPath,
-      Paint()..color = Colors.white.withValues(alpha: 0.05),
+      Paint()..color = Colors.black.withValues(alpha: 0.05),
     );
 
     // Draw colored segments.
@@ -864,10 +864,10 @@ class _ProfilePainter extends CustomPainter {
     final clamped = pct.clamp(-12.0, 12.0);
     if (clamped >= 0) {
       final t = (clamped / 12.0).clamp(0.0, 1.0);
-      return Color.lerp(const Color(0xFFc89868), const Color(0xFFD32F2F), t)!;
+      return Color.lerp(const Color(0xFF6a4a28), const Color(0xFFD32F2F), t)!;
     } else {
       final t = (-clamped / 12.0).clamp(0.0, 1.0);
-      return Color.lerp(const Color(0xFFc89868), const Color(0xFF2E7D32), t)!;
+      return Color.lerp(const Color(0xFF6a4a28), const Color(0xFF2E7D32), t)!;
     }
   }
 
@@ -917,16 +917,16 @@ class _ProfilePainter extends CustomPainter {
 
     // Crosshair
     final chPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
+      ..color = Colors.black.withValues(alpha: 0.35)
       ..strokeWidth = 1;
     canvas.drawLine(Offset(x, r.top), Offset(x, r.bottom), chPaint);
 
     // Dot
-    canvas.drawCircle(Offset(x, y), 4, Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(x, y), 4, Paint()..color = Colors.black87);
     canvas.drawCircle(
       Offset(x, y),
       3,
-      Paint()..color = const Color(0xFFc89868),
+      Paint()..color = const Color(0xFF6a4a28),
     );
 
     // Tooltip
@@ -975,7 +975,7 @@ class _ProfilePainter extends CustomPainter {
       final painter = TextPainter(
         text: TextSpan(
           text: line,
-          style: const TextStyle(color: Colors.white, fontSize: 11),
+          style: const TextStyle(color: Colors.black87, fontSize: 11),
         ),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: 260);
@@ -1001,12 +1001,12 @@ class _ProfilePainter extends CustomPainter {
     );
     canvas.drawRRect(
       box,
-      Paint()..color = const Color(0xFF222244).withValues(alpha: 0.95),
+      Paint()..color = const Color(0xFFe8d5b8).withValues(alpha: 0.95),
     );
     canvas.drawRRect(
       box,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.1)
+        ..color = Colors.black.withValues(alpha: 0.1)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1,
     );

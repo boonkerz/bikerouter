@@ -12,7 +12,7 @@ Future<Accommodation?> showAccommodationSheet(
 }) {
   return showModalBottomSheet<Accommodation>(
     context: context,
-    backgroundColor: const Color(0xFF1a1a2e),
+    backgroundColor: const Color(0xFFf5e9d8),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -92,7 +92,7 @@ class _SheetState extends State<_Sheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: Colors.black26,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -101,12 +101,12 @@ class _SheetState extends State<_Sheet> {
             Row(
               children: [
                 Text(l.accommodationTitle,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(widget.anchorLabel,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      style: const TextStyle(color: Colors.black54, fontSize: 12)),
                 ),
               ],
             ),
@@ -120,7 +120,7 @@ class _SheetState extends State<_Sheet> {
                     max: 20,
                     divisions: 19,
                     label: '${_radiusKm.round()} km',
-                    activeColor: const Color(0xFFc89868),
+                    activeColor: const Color(0xFF6a4a28),
                     onChanged: (v) => setState(() => _radiusKm = v),
                     onChangeEnd: (_) => _fetch(),
                   ),
@@ -128,11 +128,11 @@ class _SheetState extends State<_Sheet> {
                 SizedBox(
                   width: 44,
                   child: Text('${_radiusKm.round()} km',
-                      style: const TextStyle(color: Colors.white, fontSize: 12)),
+                      style: const TextStyle(color: Colors.black87, fontSize: 12)),
                 ),
               ],
             ),
-            const Divider(color: Colors.white24, height: 16),
+            const Divider(color: Colors.black26, height: 16),
             Expanded(child: _buildList(sc, l)),
           ],
         ),
@@ -142,22 +142,22 @@ class _SheetState extends State<_Sheet> {
 
   Widget _buildList(ScrollController sc, AppLocalizations l) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFc89868)));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF6a4a28)));
     }
     if (_error != null) {
-      return Center(child: Text(_error!, style: const TextStyle(color: Colors.white70)));
+      return Center(child: Text(_error!, style: const TextStyle(color: Colors.black54)));
     }
     final items = _items;
     if (items == null || items.isEmpty) {
       return Center(
         child: Text(l.accommodationNoResults,
-            style: const TextStyle(color: Colors.white54)),
+            style: const TextStyle(color: Colors.black54)),
       );
     }
     return ListView.separated(
       controller: sc,
       itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
+      separatorBuilder: (_, __) => const Divider(color: Colors.black12, height: 1),
       itemBuilder: (ctx, i) {
         final a = items[i];
         final typeLabel = a.localizedType(l);
@@ -166,18 +166,18 @@ class _SheetState extends State<_Sheet> {
           leading: Text(a.emoji, style: const TextStyle(fontSize: 20)),
           title: Text(
             a.name ?? typeLabel,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: const TextStyle(color: Colors.black87, fontSize: 14),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
             '$typeLabel · ${a.distanceKm.toStringAsFixed(1)} km'
             '${a.stars != null ? ' · ${a.stars}★' : ''}',
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
+            style: const TextStyle(color: Colors.black54, fontSize: 12),
           ),
           trailing: a.website != null
               ? IconButton(
-                  icon: const Icon(Icons.open_in_new, size: 18, color: Color(0xFFc89868)),
+                  icon: const Icon(Icons.open_in_new, size: 18, color: Color(0xFF6a4a28)),
                   onPressed: () => _openUrl(a.website!),
                 )
               : null,

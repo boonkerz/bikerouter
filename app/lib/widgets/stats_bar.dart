@@ -47,8 +47,8 @@ class StatsBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1a1a2e),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+        color: const Color(0xFFf5e9d8),
+        border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.1))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -70,7 +70,7 @@ class StatsBar extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                  top: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
                 ),
               ),
               child: SingleChildScrollView(
@@ -96,8 +96,8 @@ class _ActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = action.active ? Colors.black : const Color(0xFFc89868);
-    final bg = action.active ? const Color(0xFFc89868) : Colors.transparent;
+    final color = action.active ? const Color(0xFFf5e9d8) : const Color(0xFF6a4a28);
+    final bg = action.active ? const Color(0xFF6a4a28) : Colors.transparent;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Material(
@@ -148,7 +148,7 @@ class _Stat extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            color: Color(0xFFc89868),
+            color: Color(0xFF6a4a28),
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -157,7 +157,7 @@ class _Stat extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             fontSize: 11,
           ),
         ),

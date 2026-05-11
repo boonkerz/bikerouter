@@ -19,7 +19,7 @@ Future<AddressSearchResult?> showAddressSearch(BuildContext context) {
   return showModalBottomSheet<AddressSearchResult>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: const Color(0xFF1a1a2e),
+    backgroundColor: const Color(0xFFf5e9d8),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -84,7 +84,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: Colors.black26,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -93,11 +93,11 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
               child: TextField(
                 controller: _controller,
                 autofocus: true,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
                 decoration: InputDecoration(
                   hintText: l.searchHint,
-                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFFc89868)),
+                  hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.4)),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6a4a28)),
                   suffixIcon: _searching
                       ? const Padding(
                           padding: EdgeInsets.all(12),
@@ -106,13 +106,13 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Color(0xFFc89868),
+                              color: Color(0xFF6a4a28),
                             ),
                           ),
                         )
                       : _controller.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.white54),
+                              icon: const Icon(Icons.clear, color: Colors.black54),
                               onPressed: () {
                                 _controller.clear();
                                 setState(() => _results = []);
@@ -120,7 +120,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                             )
                           : null,
                   filled: true,
-                  fillColor: const Color(0xFF222244),
+                  fillColor: const Color(0xFFe8d5b8),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -137,7 +137,7 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                         _controller.text.isEmpty
                             ? l.searchPrompt
                             : l.searchNoResults,
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                        style: TextStyle(color: Colors.black.withValues(alpha: 0.4)),
                       ),
                     )
                   : ListView.builder(
@@ -146,10 +146,10 @@ class _AddressSearchSheetState extends State<_AddressSearchSheet> {
                       itemBuilder: (ctx, i) {
                         final r = _results[i];
                         return ListTile(
-                          leading: const Icon(Icons.place, color: Color(0xFFc89868)),
+                          leading: const Icon(Icons.place, color: Color(0xFF6a4a28)),
                           title: Text(
                             r.displayName,
-                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            style: const TextStyle(color: Colors.black87, fontSize: 14),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),

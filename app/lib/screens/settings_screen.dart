@@ -30,10 +30,10 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF0f0f1e),
+      backgroundColor: const Color(0xFFebd9bd),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1a2e),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFf5e9d8),
+        foregroundColor: Colors.black87,
         title: Text(l.settingsTitle),
         elevation: 0,
       ),
@@ -93,13 +93,13 @@ class SettingsScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF1a1a2e),
+                color: const Color(0xFFf5e9d8),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFc89868).withValues(alpha: 0.3)),
+                border: Border.all(color: const Color(0xFF6a4a28).withValues(alpha: 0.3)),
               ),
               child: Text(
                 l.settingsAbout,
-                style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                style: const TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
               ),
             ),
           ),
@@ -114,7 +114,7 @@ class SettingsScreen extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: const TextStyle(
-          color: Color(0xFFc89868),
+          color: Color(0xFF6a4a28),
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 1.2,
@@ -130,13 +130,13 @@ class SettingsScreen extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFFc89868)),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
+      leading: Icon(icon, color: const Color(0xFF6a4a28)),
+      title: Text(title, style: const TextStyle(color: Colors.black87)),
       subtitle: subtitle != null
-          ? Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12))
+          ? Text(subtitle, style: const TextStyle(color: Colors.black54, fontSize: 12))
           : null,
       trailing: onTap != null
-          ? const Icon(Icons.chevron_right, color: Colors.white30)
+          ? const Icon(Icons.chevron_right, color: Colors.black38)
           : null,
       onTap: onTap,
     );

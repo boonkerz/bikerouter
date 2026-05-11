@@ -296,7 +296,7 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                             Polyline(
                               points: _routePoints,
-                              color: const Color(0xFFc89868),
+                              color: const Color(0xFF6a4a28),
                               strokeWidth: 4,
                             ),
                           ],
@@ -317,9 +317,9 @@ class _MapScreenState extends State<MapScreen> {
                             height: 16,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Colors.black87,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFc89868), width: 2),
+                                border: Border.all(color: const Color(0xFF6a4a28), width: 2),
                                 boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
                               ),
                             ),
@@ -338,7 +338,7 @@ class _MapScreenState extends State<MapScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF2196F3),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 3),
+                                border: Border.all(color: Colors.black87, width: 3),
                                 boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
                               ),
                             ),
@@ -355,9 +355,9 @@ class _MapScreenState extends State<MapScreen> {
                             height: 18,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFc89868).withValues(alpha: 0.6),
+                                color: const Color(0xFF6a4a28).withValues(alpha: 0.6),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(color: Colors.black87, width: 2),
                                 boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                               ),
                             ),
@@ -404,7 +404,7 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                    color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.all(2),
@@ -423,7 +423,7 @@ class _MapScreenState extends State<MapScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                        color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -432,11 +432,11 @@ class _MapScreenState extends State<MapScreen> {
                             child: Text(
                               _profileLabel(context),
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Color(0xFFc89868), fontSize: 13, fontWeight: FontWeight.w600),
+                              style: const TextStyle(color: Color(0xFF6a4a28), fontSize: 13, fontWeight: FontWeight.w600),
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.expand_more, color: Color(0xFFc89868), size: 18),
+                          const Icon(Icons.expand_more, color: Color(0xFF6a4a28), size: 18),
                         ],
                       ),
                     ),
@@ -449,10 +449,10 @@ class _MapScreenState extends State<MapScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                      color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.layers, color: Color(0xFFc89868), size: 20),
+                    child: const Icon(Icons.layers, color: Color(0xFF6a4a28), size: 20),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -462,12 +462,12 @@ class _MapScreenState extends State<MapScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                        color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         _showControls ? Icons.close : Icons.tune,
-                        color: const Color(0xFFc89868),
+                        color: const Color(0xFF6a4a28),
                         size: 20,
                       ),
                     ),
@@ -484,7 +484,7 @@ class _MapScreenState extends State<MapScreen> {
               right: 8,
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1a1a2e).withValues(alpha: 0.95),
+                  color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: RoundtripPanel(
@@ -509,7 +509,7 @@ class _MapScreenState extends State<MapScreen> {
           // Loading
           if (_loading)
             const Center(
-                child: CircularProgressIndicator(color: Color(0xFFc89868))),
+                child: CircularProgressIndicator(color: Color(0xFF6a4a28))),
 
           // Action buttons
           Positioned(
@@ -590,13 +590,13 @@ class _MapScreenState extends State<MapScreen> {
                   width: 40,
                   height: 40,
                   child: Material(
-                    color: const Color(0xFF222244),
+                    color: const Color(0xFFe8d5b8),
                     shape: const CircleBorder(),
                     elevation: 6,
                     child: PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, color: Color(0xFFc89868), size: 20),
+                      icon: const Icon(Icons.more_vert, color: Color(0xFF6a4a28), size: 20),
                       iconSize: 20,
-                      color: const Color(0xFF1a1a2e),
+                      color: const Color(0xFFf5e9d8),
                       padding: EdgeInsets.zero,
                       tooltip: '',
                       onSelected: _onMenuSelected,
@@ -607,51 +607,51 @@ class _MapScreenState extends State<MapScreen> {
                             value: 'navigate',
                             enabled: _route != null,
                             child: Row(children: [
-                              const Icon(Icons.navigation, color: Color(0xFFc89868), size: 20),
+                              const Icon(Icons.navigation, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuStartNavigation, style: const TextStyle(color: Colors.white)),
+                              Text(l.menuStartNavigation, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
                             value: 'save',
                             enabled: _route != null,
                             child: Row(children: [
-                              const Icon(Icons.bookmark_add_outlined, color: Color(0xFFc89868), size: 20),
+                              const Icon(Icons.bookmark_add_outlined, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuSaveRoute, style: const TextStyle(color: Colors.white)),
+                              Text(l.menuSaveRoute, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
                             value: 'load',
                             child: Row(children: [
-                              const Icon(Icons.bookmarks_outlined, color: Color(0xFFc89868), size: 20),
+                              const Icon(Icons.bookmarks_outlined, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuSavedRoutes, style: const TextStyle(color: Colors.white)),
+                              Text(l.menuSavedRoutes, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
                             value: 'import_gpx',
                             child: Row(children: [
-                              const Icon(Icons.upload_file_outlined, color: Color(0xFFc89868), size: 20),
+                              const Icon(Icons.upload_file_outlined, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuImportGpx, style: const TextStyle(color: Colors.white)),
+                              Text(l.menuImportGpx, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
                             value: 'nogos',
                             child: Row(children: [
-                              const Icon(Icons.block, color: Color(0xFFc89868), size: 20),
+                              const Icon(Icons.block, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuNogos, style: const TextStyle(color: Colors.white)),
+                              Text(l.menuNogos, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           const PopupMenuDivider(),
                           PopupMenuItem(
                             value: 'settings',
                             child: Row(children: [
-                              const Icon(Icons.settings_outlined, color: Color(0xFFc89868), size: 20),
+                              const Icon(Icons.settings_outlined, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuSettings, style: const TextStyle(color: Colors.white)),
+                              Text(l.menuSettings, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                         ];
@@ -884,7 +884,7 @@ class _MapScreenState extends State<MapScreen> {
   void _showMapStyleSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -902,29 +902,29 @@ class _MapScreenState extends State<MapScreen> {
               Center(
                 child: Text(
                   l.mapStyleTitle,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 12),
               ...mapStyles.map((style) => ListTile(
                 dense: true,
                 leading: Text(style.icon, style: const TextStyle(fontSize: 18)),
-                title: Text(style.localizedName(l), style: const TextStyle(color: Colors.white)),
+                title: Text(style.localizedName(l), style: const TextStyle(color: Colors.black87)),
                 selected: style.id == _mapStyle.id,
-                selectedTileColor: const Color(0xFFc89868).withValues(alpha: 0.1),
+                selectedTileColor: const Color(0xFF6a4a28).withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () {
                   setState(() => _mapStyle = style);
                   Navigator.pop(ctx);
                 },
               )),
-              const Divider(color: Colors.white24, height: 24),
+              const Divider(color: Colors.black26, height: 24),
               Padding(
                 padding: const EdgeInsets.only(left: 16, bottom: 4),
                 child: Text(
                   l.mapOverlayRoutes,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
@@ -934,9 +934,9 @@ class _MapScreenState extends State<MapScreen> {
               ...routeOverlays.map((ov) => SwitchListTile(
                 dense: true,
                 secondary: Text(ov.icon, style: const TextStyle(fontSize: 18)),
-                title: Text(ov.localizedName(l), style: const TextStyle(color: Colors.white)),
+                title: Text(ov.localizedName(l), style: const TextStyle(color: Colors.black87)),
                 value: _activeOverlays.contains(ov.id),
-                activeThumbColor: const Color(0xFFc89868),
+                activeThumbColor: const Color(0xFF6a4a28),
                 onChanged: (v) {
                   setSheetState(() {
                     if (v) {
@@ -954,12 +954,12 @@ class _MapScreenState extends State<MapScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: Row(
                     children: [
-                      const Icon(Icons.opacity, color: Colors.white54, size: 16),
+                      const Icon(Icons.opacity, color: Colors.black54, size: 16),
                       const SizedBox(width: 8),
                       Text(
                         '${(_overlayOpacity * 100).round()}%',
                         style: const TextStyle(
-                          color: Colors.white70,
+                          color: Colors.black54,
                           fontSize: 12,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
@@ -970,8 +970,8 @@ class _MapScreenState extends State<MapScreen> {
                           min: 0.1,
                           max: 1.0,
                           divisions: 18,
-                          activeColor: const Color(0xFFc89868),
-                          inactiveColor: Colors.white24,
+                          activeColor: const Color(0xFF6a4a28),
+                          inactiveColor: Colors.black26,
                           onChanged: (v) {
                             setSheetState(() => _overlayOpacity = v);
                             setState(() {});
@@ -985,13 +985,13 @@ class _MapScreenState extends State<MapScreen> {
                     ],
                   ),
                 ),
-              const Divider(color: Colors.white24, height: 24),
+              const Divider(color: Colors.black26, height: 24),
               Padding(
                 padding: const EdgeInsets.only(left: 16, bottom: 4),
                 child: Text(
                   l.mapRouteVizTitle,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
@@ -1002,9 +1002,9 @@ class _MapScreenState extends State<MapScreen> {
                 ListTile(
                   dense: true,
                   leading: Text(entry[2], style: const TextStyle(fontSize: 18)),
-                  title: Text(entry[1], style: const TextStyle(color: Colors.white)),
+                  title: Text(entry[1], style: const TextStyle(color: Colors.black87)),
                   selected: _routeVizMode == entry[0],
-                  selectedTileColor: const Color(0xFFc89868).withValues(alpha: 0.1),
+                  selectedTileColor: const Color(0xFF6a4a28).withValues(alpha: 0.1),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   onTap: () {
                     setSheetState(() => _routeVizMode = entry[0]);
@@ -1045,7 +1045,7 @@ class _MapScreenState extends State<MapScreen> {
       } else if (isEnd && !_roundtripMode) {
         color = const Color(0xFFef5350);
       } else {
-        color = const Color(0xFFc89868);
+        color = const Color(0xFF6a4a28);
       }
 
       double size;
@@ -1083,10 +1083,10 @@ class _MapScreenState extends State<MapScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFef5350),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: Colors.black87, width: 2),
                         boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6)],
                       ),
-                      child: const Icon(Icons.delete, color: Colors.white, size: 16),
+                      child: const Icon(Icons.delete, color: Colors.black87, size: 16),
                     ),
                     Container(
                       width: 2,
@@ -1099,7 +1099,7 @@ class _MapScreenState extends State<MapScreen> {
                       decoration: BoxDecoration(
                         color: color,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+                        border: Border.all(color: Colors.black87, width: 1.5),
                       ),
                     ),
                   ],
@@ -1115,7 +1115,7 @@ class _MapScreenState extends State<MapScreen> {
                   decoration: BoxDecoration(
                     color: (isDragging || isHovered) ? color : color.withValues(alpha: isAnchor ? 0.7 : 1.0),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: isDragging ? 3 : (isHovered ? 2.5 : isAnchor ? 1.5 : 2)),
+                    border: Border.all(color: Colors.black87, width: isDragging ? 3 : (isHovered ? 2.5 : isAnchor ? 1.5 : 2)),
                     boxShadow: [
                       BoxShadow(
                         color: (isDragging || isHovered) ? color.withValues(alpha: 0.5) : Colors.black26,
@@ -1128,7 +1128,7 @@ class _MapScreenState extends State<MapScreen> {
                           child: Text(
                             label,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black87,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1156,13 +1156,13 @@ class _MapScreenState extends State<MapScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFFc89868) : Colors.transparent,
+          color: active ? const Color(0xFF6a4a28) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.black : Colors.white60,
+            color: active ? Colors.black : Colors.black54,
             fontSize: 13,
             fontWeight: active ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -1174,8 +1174,8 @@ class _MapScreenState extends State<MapScreen> {
   Widget _fab(IconData icon, VoidCallback onTap) {
     return FloatingActionButton.small(
       heroTag: icon.hashCode,
-      backgroundColor: const Color(0xFF222244),
-      foregroundColor: const Color(0xFFc89868),
+      backgroundColor: const Color(0xFFe8d5b8),
+      foregroundColor: const Color(0xFF6a4a28),
       onPressed: onTap,
       child: Icon(icon),
     );
@@ -1362,7 +1362,7 @@ class _MapScreenState extends State<MapScreen> {
   void _showAddPoiSheet(LatLng latLng) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1377,7 +1377,7 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 Text(l.poiAddTitle,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 12,
@@ -1400,14 +1400,14 @@ class _MapScreenState extends State<MapScreen> {
                               shape: BoxShape.circle,
                               boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
                             ),
-                            child: Icon(cat.icon, color: Colors.white, size: 28),
+                            child: Icon(cat.icon, color: Colors.black87, size: 28),
                           ),
                           const SizedBox(height: 4),
                           SizedBox(
                             width: 72,
                             child: Text(cat.localizedLabel(l),
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                                style: const TextStyle(color: Colors.black54, fontSize: 11)),
                           ),
                         ],
                       ),
@@ -1445,11 +1445,11 @@ class _MapScreenState extends State<MapScreen> {
         final l = AppLocalizations.of(ctx);
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
-            backgroundColor: const Color(0xFF1a1a2e),
+            backgroundColor: const Color(0xFFf5e9d8),
             title: Row(children: [
               Icon(selectedCat.icon, color: selectedCat.color),
               const SizedBox(width: 8),
-              Text(l.poiEditTitle, style: const TextStyle(color: Colors.white)),
+              Text(l.poiEditTitle, style: const TextStyle(color: Colors.black87)),
             ]),
             content: SingleChildScrollView(
               child: Column(
@@ -1457,7 +1457,7 @@ class _MapScreenState extends State<MapScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(l.poiCategoryLabel,
-                      style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
@@ -1474,11 +1474,11 @@ class _MapScreenState extends State<MapScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(cat.icon, color: selected ? Colors.white : cat.color, size: 14),
+                            Icon(cat.icon, color: selected ? Colors.black87 : cat.color, size: 14),
                             const SizedBox(width: 4),
                             Text(cat.localizedLabel(l),
                                 style: TextStyle(
-                                    color: selected ? Colors.white : cat.color, fontSize: 11)),
+                                    color: selected ? Colors.black87 : cat.color, fontSize: 11)),
                           ]),
                         ),
                       );
@@ -1487,27 +1487,27 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: nameCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.black87),
                     decoration: InputDecoration(
                       labelText: l.poiNameLabel,
-                      labelStyle: const TextStyle(color: Colors.white54),
+                      labelStyle: const TextStyle(color: Colors.black54),
                       enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFFc89868))),
+                          borderSide: BorderSide(color: Color(0xFF6a4a28))),
                       focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFFc89868), width: 2)),
+                          borderSide: BorderSide(color: Color(0xFF6a4a28), width: 2)),
                     ),
                   ),
                   TextField(
                     controller: noteCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.black87),
                     maxLines: 2,
                     decoration: InputDecoration(
                       labelText: l.poiNoteLabel,
-                      labelStyle: const TextStyle(color: Colors.white54),
+                      labelStyle: const TextStyle(color: Colors.black54),
                       enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFFc89868))),
+                          borderSide: BorderSide(color: Color(0xFF6a4a28))),
                       focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFFc89868), width: 2)),
+                          borderSide: BorderSide(color: Color(0xFF6a4a28), width: 2)),
                     ),
                   ),
                 ],
@@ -1531,7 +1531,7 @@ class _MapScreenState extends State<MapScreen> {
                     note: noteCtrl.text.trim(),
                   ),
                 ),
-                child: Text(l.commonSave, style: const TextStyle(color: Color(0xFFc89868))),
+                child: Text(l.commonSave, style: const TextStyle(color: Color(0xFF6a4a28))),
               ),
             ],
           ),
@@ -1568,10 +1568,10 @@ class _MapScreenState extends State<MapScreen> {
             decoration: BoxDecoration(
               color: p.category.color,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: Colors.black87, width: 2),
               boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
             ),
-            child: Icon(p.category.icon, color: Colors.white, size: 18),
+            child: Icon(p.category.icon, color: Colors.black87, size: 18),
           ),
         ),
       );
@@ -1598,10 +1598,10 @@ class _MapScreenState extends State<MapScreen> {
                 decoration: BoxDecoration(
                   color: _sightColor(s.category),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: Colors.black87, width: 2),
                   boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
                 ),
-                child: Icon(_sightIcon(s), color: Colors.white, size: 16),
+                child: Icon(_sightIcon(s), color: Colors.black87, size: 16),
               ),
             ),
           ),
@@ -1705,7 +1705,7 @@ class _MapScreenState extends State<MapScreen> {
   void _showSightFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1752,13 +1752,13 @@ class _MapScreenState extends State<MapScreen> {
                 Center(
                   child: Container(
                     width: 40, height: 4,
-                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Center(
                   child: Text(l.poiTypesTitle,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(height: 12),
                 for (final cat in sightTypes.keys) ...[
@@ -1775,7 +1775,7 @@ class _MapScreenState extends State<MapScreen> {
                           child: Text(
                             sightCategoryLabel(l, cat),
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
+                              color: Colors.black.withValues(alpha: 0.8),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.5,
@@ -1788,7 +1788,7 @@ class _MapScreenState extends State<MapScreen> {
                             toggleCategory(cat, !allOn);
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFFc89868),
+                            foregroundColor: const Color(0xFF6a4a28),
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             minimumSize: const Size(0, 28),
                           ),
@@ -1808,9 +1808,9 @@ class _MapScreenState extends State<MapScreen> {
                       controlAffinity: ListTileControlAffinity.leading,
                       value: _enabledSightTypes.contains('$cat:$sub'),
                       onChanged: (v) => toggle('$cat:$sub', v),
-                      activeColor: const Color(0xFFc89868),
+                      activeColor: const Color(0xFF6a4a28),
                       checkColor: Colors.black,
-                      title: Text(sightSubtypeLabel(l, sub), style: const TextStyle(color: Colors.white, fontSize: 13)),
+                      title: Text(sightSubtypeLabel(l, sub), style: const TextStyle(color: Colors.black87, fontSize: 13)),
                     ),
                 ],
               ],
@@ -1864,7 +1864,7 @@ class _MapScreenState extends State<MapScreen> {
   void _showRoutesListSheet(List<OsmRouteInfo> routes) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1883,13 +1883,13 @@ class _MapScreenState extends State<MapScreen> {
               Center(
                 child: Container(
                   width: 40, height: 4,
-                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 '${routes.length} × ${l.actionInfo}',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               for (final r in routes)
@@ -1898,12 +1898,12 @@ class _MapScreenState extends State<MapScreen> {
                   leading: Container(
                     width: 32, height: 32,
                     decoration: BoxDecoration(color: _routeColor(r), shape: BoxShape.circle),
-                    child: Icon(_routeIcon(r), color: Colors.white, size: 18),
+                    child: Icon(_routeIcon(r), color: Colors.black87, size: 18),
                   ),
-                  title: Text(r.localizedDisplayName(l), style: const TextStyle(color: Colors.white, fontSize: 14)),
+                  title: Text(r.localizedDisplayName(l), style: const TextStyle(color: Colors.black87, fontSize: 14)),
                   subtitle: Text(
                     [r.localizedType(l), if (r.network != null) r.localizedNetwork(l)].join(' · '),
-                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    style: const TextStyle(color: Colors.black54, fontSize: 12),
                   ),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -1920,7 +1920,7 @@ class _MapScreenState extends State<MapScreen> {
   void _showRouteInfoSheet(OsmRouteInfo r) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1946,9 +1946,9 @@ class _MapScreenState extends State<MapScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 16, color: const Color(0xFFc89868)),
+              Icon(icon, size: 16, color: const Color(0xFF6a4a28)),
               const SizedBox(width: 8),
-              Expanded(child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13))),
+              Expanded(child: Text(text, style: const TextStyle(color: Colors.black54, fontSize: 13))),
             ],
           ),
         );
@@ -1957,7 +1957,7 @@ class _MapScreenState extends State<MapScreen> {
       Center(
         child: Container(
           width: 40, height: 4,
-          decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+          decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(2)),
         ),
       ),
       const SizedBox(height: 12),
@@ -1966,7 +1966,7 @@ class _MapScreenState extends State<MapScreen> {
           Container(
             width: 40, height: 40,
             decoration: BoxDecoration(color: _routeColor(r), shape: BoxShape.circle),
-            child: Icon(_routeIcon(r), color: Colors.white, size: 22),
+            child: Icon(_routeIcon(r), color: Colors.black87, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1974,10 +1974,10 @@ class _MapScreenState extends State<MapScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(r.localizedDisplayName(l),
-                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
+                  style: const TextStyle(color: Colors.black87, fontSize: 17, fontWeight: FontWeight.w600)),
                 Text(
                   [r.localizedType(l), if (r.network != null) r.localizedNetwork(l)].join(' · '),
-                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
             ),
@@ -1986,7 +1986,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       if (r.description != null) ...[
         const SizedBox(height: 12),
-        Text(r.description!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(r.description!, style: const TextStyle(color: Colors.black54, fontSize: 13)),
       ],
       const SizedBox(height: 12),
       if (r.from != null || r.to != null)
@@ -2127,7 +2127,7 @@ class _MapScreenState extends State<MapScreen> {
   void _showSightInfo(OsmSight s) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -2154,7 +2154,7 @@ class _MapScreenState extends State<MapScreen> {
         child: Container(
           width: 40, height: 4,
           decoration: BoxDecoration(
-            color: Colors.white24,
+            color: Colors.black26,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -2173,9 +2173,9 @@ class _MapScreenState extends State<MapScreen> {
                 ? child
                 : Container(
                     height: 180,
-                    color: Colors.white10,
+                    color: Colors.black12,
                     alignment: Alignment.center,
-                    child: const CircularProgressIndicator(color: Color(0xFFc89868)),
+                    child: const CircularProgressIndicator(color: Color(0xFF6a4a28)),
                   ),
           ),
         ),
@@ -2186,7 +2186,7 @@ class _MapScreenState extends State<MapScreen> {
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(color: _sightColor(s.category), shape: BoxShape.circle),
-            child: Icon(_sightIcon(s), color: Colors.white, size: 20),
+            child: Icon(_sightIcon(s), color: Colors.black87, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2194,9 +2194,9 @@ class _MapScreenState extends State<MapScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(s.displayName(l),
-                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
+                  style: const TextStyle(color: Colors.black87, fontSize: 17, fontWeight: FontWeight.w600)),
                 Text(s.localizedSubtype(l),
-                  style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12)),
               ],
             ),
           ),
@@ -2204,7 +2204,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       if (s.description != null) ...[
         const SizedBox(height: 12),
-        Text(s.description!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(s.description!, style: const TextStyle(color: Colors.black54, fontSize: 13)),
       ],
       const SizedBox(height: 12),
       ..._sightInfoRows(l, s),
@@ -2251,10 +2251,10 @@ class _MapScreenState extends State<MapScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 16, color: const Color(0xFFc89868)),
+              Icon(icon, size: 16, color: const Color(0xFF6a4a28)),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                child: Text(text, style: const TextStyle(color: Colors.black54, fontSize: 13)),
               ),
             ],
           ),
@@ -2454,7 +2454,7 @@ class _MapScreenState extends State<MapScreen> {
     final speed = ProfileSpeedPrefs.speedFor(_profile);
     final all = [_route!, ..._alternativeRoutes];
     return Container(
-      color: const Color(0xFF1a1a2e),
+      color: const Color(0xFFf5e9d8),
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -2497,12 +2497,12 @@ class _MapScreenState extends State<MapScreen> {
             children: [
               Text(label,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black87,
                     fontSize: 11,
                     fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                   )),
               Text('$km km · $timeStr',
-                  style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  style: const TextStyle(color: Colors.black87, fontSize: 13)),
             ],
           ),
         ),
@@ -2657,7 +2657,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _showNogosSheet() async {
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
+      backgroundColor: const Color(0xFFf5e9d8),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -2677,7 +2677,7 @@ class _MapScreenState extends State<MapScreen> {
                       const SizedBox(width: 8),
                       Text(l.nogoTitle,
                           style: const TextStyle(
-                              color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                              color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -2685,7 +2685,7 @@ class _MapScreenState extends State<MapScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text(l.nogoEmpty,
-                          style: const TextStyle(color: Colors.white60, fontSize: 13)),
+                          style: const TextStyle(color: Colors.black54, fontSize: 13)),
                     )
                   else
                     ConstrainedBox(
@@ -2700,12 +2700,12 @@ class _MapScreenState extends State<MapScreen> {
                             leading: const Icon(Icons.adjust, color: Color(0xFFef5350)),
                             title: Text(
                               '${n.lat.toStringAsFixed(4)}, ${n.lon.toStringAsFixed(4)}',
-                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              style: const TextStyle(color: Colors.black87, fontSize: 13),
                             ),
                             subtitle: Text(l.nogoRadius(n.radiusMeters),
-                                style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                style: const TextStyle(color: Colors.black54, fontSize: 11)),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.white54),
+                              icon: const Icon(Icons.delete_outline, color: Colors.black54),
                               onPressed: () async {
                                 final updated = [..._nogos]..removeAt(i);
                                 await NogoStorage.save(updated);
@@ -2725,7 +2725,7 @@ class _MapScreenState extends State<MapScreen> {
                     label: Text(l.nogoAdd),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFef5350),
-                      foregroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFf5e9d8),
                     ),
                     onPressed: () {
                       Navigator.of(ctx).pop();
@@ -2752,13 +2752,13 @@ class _MapScreenState extends State<MapScreen> {
         final l = AppLocalizations.of(ctx);
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
-            backgroundColor: const Color(0xFF1a1a2e),
-            title: Text(l.nogoAdd, style: const TextStyle(color: Colors.white)),
+            backgroundColor: const Color(0xFFf5e9d8),
+            title: Text(l.nogoAdd, style: const TextStyle(color: Colors.black87)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(l.nogoRadius(radius),
-                    style: const TextStyle(color: Colors.white70)),
+                    style: const TextStyle(color: Colors.black54)),
                 Slider(
                   value: radius.toDouble(),
                   min: 50,
@@ -2773,12 +2773,12 @@ class _MapScreenState extends State<MapScreen> {
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(null),
                 child: Text(l.nogoConfirmCancel,
-                    style: const TextStyle(color: Colors.white60)),
+                    style: const TextStyle(color: Colors.black54)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFef5350),
-                  foregroundColor: Colors.white,
+                  foregroundColor: const Color(0xFFf5e9d8),
                 ),
                 onPressed: () => Navigator.of(ctx).pop(radius),
                 child: Text(l.nogoConfirmAdd),
@@ -2850,20 +2850,20 @@ class _MapScreenState extends State<MapScreen> {
           text: l.savedRouteDefaultName(now.day, now.month),
         );
         return AlertDialog(
-          backgroundColor: const Color(0xFF1a1a2e),
-          title: Text(l.savedRouteSaveDialogTitle, style: const TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFFf5e9d8),
+          title: Text(l.savedRouteSaveDialogTitle, style: const TextStyle(color: Colors.black87)),
           content: TextField(
             controller: controller,
             autofocus: true,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.black87),
             decoration: InputDecoration(
               hintText: l.savedRouteSavePrompt,
-              hintStyle: const TextStyle(color: Colors.white38),
+              hintStyle: const TextStyle(color: Colors.black38),
               enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFc89868)),
+                borderSide: BorderSide(color: Color(0xFF6a4a28)),
               ),
               focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFc89868), width: 2),
+                borderSide: BorderSide(color: Color(0xFF6a4a28), width: 2),
               ),
             ),
           ),
@@ -2874,7 +2874,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: Text(l.commonSave, style: const TextStyle(color: Color(0xFFc89868))),
+              child: Text(l.commonSave, style: const TextStyle(color: Color(0xFF6a4a28))),
             ),
           ],
         );
@@ -2964,7 +2964,7 @@ class _MapScreenState extends State<MapScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFffb74d),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: Colors.black87, width: 2),
               boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
             ),
             child: Center(

@@ -12,7 +12,7 @@ Future<void> showWeatherSheet(
 }) {
   return showModalBottomSheet(
     context: context,
-    backgroundColor: const Color(0xFF1a1a2e),
+    backgroundColor: const Color(0xFFf5e9d8),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -87,8 +87,8 @@ class _WeatherSheetState extends State<_WeatherSheet> {
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: now.add(const Duration(days: 14)),
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(primary: Color(0xFFc89868)),
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(primary: Color(0xFF6a4a28)),
         ),
         child: child ?? const SizedBox.shrink(),
       ),
@@ -98,8 +98,8 @@ class _WeatherSheetState extends State<_WeatherSheet> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(_departure),
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(primary: Color(0xFFc89868)),
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(primary: Color(0xFF6a4a28)),
         ),
         child: child ?? const SizedBox.shrink(),
       ),
@@ -128,7 +128,7 @@ class _WeatherSheetState extends State<_WeatherSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: Colors.black26,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -139,19 +139,19 @@ class _WeatherSheetState extends State<_WeatherSheet> {
                   Expanded(
                     child: Text(l.weatherTitle,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                        style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                   TextButton.icon(
-                    icon: const Icon(Icons.schedule, size: 16, color: Color(0xFFc89868)),
+                    icon: const Icon(Icons.schedule, size: 16, color: Color(0xFF6a4a28)),
                     label: Text(
                       _formatDeparture(l, _departure),
-                      style: const TextStyle(color: Color(0xFFc89868)),
+                      style: const TextStyle(color: Color(0xFF6a4a28)),
                     ),
                     onPressed: _pickDeparture,
                   ),
                 ],
               ),
-              const Divider(color: Colors.white24, height: 16),
+              const Divider(color: Colors.black26, height: 16),
               Expanded(child: _buildBody(scrollController, l)),
             ],
           ),
@@ -162,21 +162,21 @@ class _WeatherSheetState extends State<_WeatherSheet> {
 
   Widget _buildBody(ScrollController sc, AppLocalizations l) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFc89868)));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF6a4a28)));
     }
     if (_error != null) {
-      return Center(child: Text(_error!, style: const TextStyle(color: Colors.white70)));
+      return Center(child: Text(_error!, style: const TextStyle(color: Colors.black54)));
     }
     final samples = _samples;
     if (samples == null || samples.isEmpty) {
       return Center(
-        child: Text(l.weatherEmpty, style: const TextStyle(color: Colors.white54)),
+        child: Text(l.weatherEmpty, style: const TextStyle(color: Colors.black54)),
       );
     }
     return ListView.separated(
       controller: sc,
       itemCount: samples.length,
-      separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
+      separatorBuilder: (_, __) => const Divider(color: Colors.black12, height: 1),
       itemBuilder: (ctx, i) => _row(samples[i]),
     );
   }
@@ -196,8 +196,8 @@ class _WeatherSheetState extends State<_WeatherSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('${s.distanceKm.toStringAsFixed(0)} km',
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-                Text(time, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500)),
+                Text(time, style: const TextStyle(color: Colors.black54, fontSize: 11)),
               ],
             ),
           ),
@@ -207,17 +207,17 @@ class _WeatherSheetState extends State<_WeatherSheet> {
           SizedBox(
             width: 54,
             child: Text(temp,
-                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                style: const TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.w600)),
           ),
           if (s.windDirDeg != null)
             Transform.rotate(
               angle: (s.windDirDeg! + 180) * pi / 180, // arrow shows wind direction (where it's going toward)
-              child: const Icon(Icons.arrow_upward, size: 18, color: Color(0xFFc89868)),
+              child: const Icon(Icons.arrow_upward, size: 18, color: Color(0xFF6a4a28)),
             ),
           const SizedBox(width: 4),
           SizedBox(
             width: 64,
-            child: Text(wind, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            child: Text(wind, style: const TextStyle(color: Colors.black54, fontSize: 13)),
           ),
           if (rain.isNotEmpty)
             Text(rain, style: const TextStyle(color: Color(0xFF81D4FA), fontSize: 13)),

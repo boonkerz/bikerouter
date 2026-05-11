@@ -50,15 +50,15 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF0f0f1e),
+      backgroundColor: const Color(0xFFebd9bd),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1a2e),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFf5e9d8),
+        foregroundColor: Colors.black87,
         title: Text(l.savedRoutesTitle),
         elevation: 0,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFc89868)))
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6a4a28)))
           : _routes.isEmpty
               ? _emptyState(l)
               : ListView.builder(
@@ -76,11 +76,11 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bookmark_border, color: Colors.white30, size: 64),
+            const Icon(Icons.bookmark_border, color: Colors.black38, size: 64),
             const SizedBox(height: 16),
             Text(
               l.savedRoutesEmpty,
-              style: const TextStyle(color: Colors.white70, fontSize: 16),
+              style: const TextStyle(color: Colors.black54, fontSize: 16),
             ),
           ],
         ),
@@ -98,16 +98,16 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
         color: Colors.red.shade800,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: const Icon(Icons.delete, color: Color(0xFFf5e9d8)),
       ),
       confirmDismiss: (_) async {
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1a1a2e),
-            title: Text(l.savedRoutesDeleteConfirm, style: const TextStyle(color: Colors.white)),
+            backgroundColor: const Color(0xFFf5e9d8),
+            title: Text(l.savedRoutesDeleteConfirm, style: const TextStyle(color: Colors.black87)),
             content: Text('„${r.name}"',
-                style: const TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black54)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -125,15 +125,15 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFF1a1a2e),
+          color: const Color(0xFFf5e9d8),
           borderRadius: BorderRadius.circular(10),
         ),
         child: ListTile(
           leading: Icon(
             r.isRoundtrip ? Icons.loop : Icons.timeline,
-            color: const Color(0xFFc89868),
+            color: const Color(0xFF6a4a28),
           ),
-          title: Text(r.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          title: Text(r.name, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Column(
@@ -141,16 +141,16 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
               children: [
                 Text(
                   '${r.distanceKm.toStringAsFixed(1)} km · ${_formatDuration(r.durationSeconds)} · ${r.ascent} hm',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
                 Text(
                   '$profileName · ${_formatDate(r.createdAt)}',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
+                  style: TextStyle(color: Colors.black.withValues(alpha: 0.5), fontSize: 11),
                 ),
               ],
             ),
           ),
-          trailing: const Icon(Icons.chevron_right, color: Colors.white30),
+          trailing: const Icon(Icons.chevron_right, color: Colors.black38),
           onTap: () => Navigator.pop(context, r),
         ),
       ),
