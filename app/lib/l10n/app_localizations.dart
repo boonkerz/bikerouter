@@ -1676,6 +1676,12 @@ abstract class AppLocalizations {
   /// **'verbleibend'**
   String get navigateRemaining;
 
+  /// No description provided for @navigateEta.
+  ///
+  /// In de, this message translates to:
+  /// **'Ankunft'**
+  String get navigateEta;
+
   /// No description provided for @navigateRerouting.
   ///
   /// In de, this message translates to:

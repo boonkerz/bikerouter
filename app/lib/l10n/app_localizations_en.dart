@@ -847,6 +847,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigateRemaining => 'remaining';
 
   @override
+  String get navigateEta => 'ETA';
+
+  @override
   String get navigateRerouting => 'Re-routing…';
 
   @override

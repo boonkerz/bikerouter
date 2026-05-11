@@ -47,6 +47,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
   bool _rerouting = false;
   bool _arrived = false;
   DateTime? _lastReroute;
+  // Smoothing to keep the map from twitching on every GPS sample.
+  double? _smoothedHeading;
+  double _lastRecenterLat = 0;
+  double _lastRecenterLon = 0;
+  double _lastAppliedRotation = 0;
 
   @override
   void initState() {
@@ -160,9 +165,55 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   void _recenter() {
     if (_pos == null) return;
+    // Heading from GPS is noisy below walking speed; only refresh when we're
+    // actually moving, and EMA-smooth what we keep.
+    if (_headingUp && _pos!.speed >= 1.5) {
+      final raw = _pos!.heading;
+      if (_smoothedHeading == null) {
+        _smoothedHeading = raw;
+      } else {
+        // Circular EMA via shortest-angle delta.
+        var delta = raw - _smoothedHeading!;
+        while (delta > 180) {
+          delta -= 360;
+        }
+        while (delta < -180) {
+          delta += 360;
+        }
+        _smoothedHeading = (_smoothedHeading! + delta * 0.25) % 360;
+      }
+    }
+    final rotation = _headingUp ? -(_smoothedHeading ?? 0) : 0.0;
+    final movedM = _haversineM(
+        _lastRecenterLat, _lastRecenterLon, _pos!.latitude, _pos!.longitude);
+    final rotChanged = (rotation - _lastAppliedRotation).abs() > 6;
+    if (movedM < 8 && !rotChanged && _lastRecenterLat != 0) return;
+    _lastRecenterLat = _pos!.latitude;
+    _lastRecenterLon = _pos!.longitude;
+    _lastAppliedRotation = rotation;
     final pt = LatLng(_pos!.latitude, _pos!.longitude);
-    final rotation = _headingUp ? -(_pos!.heading) : 0.0;
     _mapController.moveAndRotate(pt, 17, rotation);
+  }
+
+  Duration _remainingDuration() {
+    final r = _route;
+    if (r == null) return Duration.zero;
+    final remainingM = _remainingDistanceM();
+    final totalM = r.distance * 1000;
+    if (totalM <= 0 || r.time <= 0) return Duration.zero;
+    // Prefer live speed when we're actually moving above noise.
+    final liveSpeed = _pos?.speed ?? 0;
+    if (liveSpeed >= 2.0) {
+      return Duration(seconds: (remainingM / liveSpeed).round());
+    }
+    final routeSpeed = totalM / r.time;
+    return Duration(seconds: (remainingM / routeSpeed).round());
+  }
+
+  String _formatEta() {
+    final d = _remainingDuration();
+    final eta = DateTime.now().add(d);
+    return '${eta.hour.toString().padLeft(2, '0')}:${eta.minute.toString().padLeft(2, '0')}';
   }
 
   TurnHint? get _nextHint {
@@ -275,7 +326,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 child: Row(
                   children: [
                     Icon(_iconForCmd(hint?.cmd),
-                        color: Colors.black87, size: 44),
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        size: 44),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -285,16 +337,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
                             hint == null
                                 ? l.navigateContinue
                                 : '${_formatDistance(hintDist)} ${_textForCmd(hint.cmd, l)}',
-                            style: const TextStyle(
-                              color: Colors.black87,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           if (_rerouting)
                             Text(l.navigateRerouting,
-                                style: const TextStyle(
-                                    color: Colors.black54, fontSize: 12)),
+                                style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                                    fontSize: 12)),
                         ],
                       ),
                     ),
@@ -354,6 +407,23 @@ class _NavigationScreenState extends State<NavigationScreen> {
                         ],
                       ),
                     ),
+                    if (!_arrived) ...[
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            _formatEta(),
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(l.navigateEta,
+                              style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+                    ],
                     FilledButton.tonalIcon(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close),

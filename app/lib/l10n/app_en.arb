@@ -314,6 +314,7 @@
   "navigateRoundabout": "take exit {n} at the roundabout",
   "@navigateRoundabout": { "placeholders": { "n": { "type": "int" } } },
   "navigateRemaining": "remaining",
+  "navigateEta": "ETA",
   "navigateRerouting": "Re-routing…",
   "navigateArrived": "Arrived",
   "navigateStop": "Stop",

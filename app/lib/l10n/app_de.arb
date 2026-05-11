@@ -314,6 +314,7 @@
   "navigateRoundabout": "{n}. Ausfahrt im Kreisverkehr",
   "@navigateRoundabout": { "placeholders": { "n": { "type": "int" } } },
   "navigateRemaining": "verbleibend",
+  "navigateEta": "Ankunft",
   "navigateRerouting": "Neu berechnen…",
   "navigateArrived": "Angekommen",
   "navigateStop": "Stopp",

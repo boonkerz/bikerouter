@@ -846,6 +846,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navigateRemaining => 'verbleibend';
 
   @override
+  String get navigateEta => 'Ankunft';
+
+  @override
   String get navigateRerouting => 'Neu berechnen…';
 
   @override
