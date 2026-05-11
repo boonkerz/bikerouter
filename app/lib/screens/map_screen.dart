@@ -36,6 +36,7 @@ import '../services/route_info_service.dart';
 import '../widgets/elevation_chart.dart';
 import '../services/stage_planner.dart';
 import '../widgets/accommodation_sheet.dart';
+import '../widgets/route_poi_search_sheet.dart';
 import '../widgets/stages_sheet.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/weather_sheet.dart';
@@ -650,6 +651,15 @@ class _MapScreenState extends State<MapScreen> {
                               const Icon(Icons.block, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
                               Text(l.menuNogos, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'poi_search',
+                            enabled: _route != null,
+                            child: Row(children: [
+                              const Icon(Icons.search, color: Color(0xFF6a4a28), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuSearchAlongRoute, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           const PopupMenuDivider(),
@@ -2849,12 +2859,36 @@ class _MapScreenState extends State<MapScreen> {
       case 'nogos':
         await _showNogosSheet();
         break;
+      case 'poi_search':
+        await _showPoiSearchSheet();
+        break;
       case 'settings':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const SettingsScreen()),
         );
         break;
     }
+  }
+
+  Future<void> _showPoiSearchSheet() async {
+    final route = _route;
+    if (route == null) return;
+    final picks = await showRoutePoiSearchSheet(
+      context,
+      coordinates: route.coordinates,
+    );
+    if (picks == null || picks.isEmpty) return;
+    setState(() {
+      for (final hit in picks) {
+        _pois.add(RoutePoi(
+          id: '${hit.osmType}-${hit.osmId}',
+          lat: hit.lat,
+          lon: hit.lon,
+          category: hit.category,
+          name: hit.name,
+        ));
+      }
+    });
   }
 
   Future<void> _showNogosSheet() async {

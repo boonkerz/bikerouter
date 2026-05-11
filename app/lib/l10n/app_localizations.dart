@@ -2204,6 +2204,18 @@ abstract class AppLocalizations {
   /// **'Einkauf'**
   String get poiCatShop;
 
+  /// No description provided for @poiCatFuel.
+  ///
+  /// In de, this message translates to:
+  /// **'Tankstelle'**
+  String get poiCatFuel;
+
+  /// No description provided for @poiCatSights.
+  ///
+  /// In de, this message translates to:
+  /// **'Sehenswürdigkeiten'**
+  String get poiCatSights;
+
   /// No description provided for @poiCatScenic.
   ///
   /// In de, this message translates to:
@@ -2227,6 +2239,48 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Sonstiges'**
   String get poiCatOther;
+
+  /// No description provided for @routePoiSearchTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf der Route suchen'**
+  String get routePoiSearchTitle;
+
+  /// No description provided for @routePoiSearchEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Nichts entlang der Route gefunden'**
+  String get routePoiSearchEmpty;
+
+  /// No description provided for @routePoiSearchPickCategories.
+  ///
+  /// In de, this message translates to:
+  /// **'Kategorien wählen'**
+  String get routePoiSearchPickCategories;
+
+  /// No description provided for @routePoiSearchAt.
+  ///
+  /// In de, this message translates to:
+  /// **'bei {km} km'**
+  String routePoiSearchAt(String km);
+
+  /// No description provided for @routePoiSearchSide.
+  ///
+  /// In de, this message translates to:
+  /// **'{m} m abseits'**
+  String routePoiSearchSide(int m);
+
+  /// No description provided for @routePoiSearchAdd.
+  ///
+  /// In de, this message translates to:
+  /// **'Zur Route'**
+  String get routePoiSearchAdd;
+
+  /// No description provided for @menuSearchAlongRoute.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf der Route suchen'**
+  String get menuSearchAlongRoute;
 
   /// No description provided for @defaultWaypoint.
   ///

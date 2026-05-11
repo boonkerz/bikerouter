@@ -35,6 +35,22 @@ enum PoiCategory {
     gpxSym: 'Shopping Center',
     gpxType: 'shop',
   ),
+  fuel(
+    id: 'fuel',
+    label: 'Tankstelle',
+    icon: Icons.local_gas_station,
+    color: Color(0xFFffa726),
+    gpxSym: 'Gas Station',
+    gpxType: 'fuel',
+  ),
+  sights(
+    id: 'sights',
+    label: 'Sehenswürdigkeiten',
+    icon: Icons.account_balance,
+    color: Color(0xFFab47bc),
+    gpxSym: 'Museum',
+    gpxType: 'sights',
+  ),
   scenic(
     id: 'scenic',
     label: 'Aussicht',
@@ -99,6 +115,10 @@ enum PoiCategory {
         return l.poiCatWater;
       case PoiCategory.shop:
         return l.poiCatShop;
+      case PoiCategory.fuel:
+        return l.poiCatFuel;
+      case PoiCategory.sights:
+        return l.poiCatSights;
       case PoiCategory.scenic:
         return l.poiCatScenic;
       case PoiCategory.camping:

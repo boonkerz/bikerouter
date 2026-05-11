@@ -1127,6 +1127,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get poiCatShop => 'Einkauf';
 
   @override
+  String get poiCatFuel => 'Tankstelle';
+
+  @override
+  String get poiCatSights => 'Sehenswürdigkeiten';
+
+  @override
   String get poiCatScenic => 'Aussicht';
 
   @override
@@ -1137,6 +1143,31 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get poiCatOther => 'Sonstiges';
+
+  @override
+  String get routePoiSearchTitle => 'Auf der Route suchen';
+
+  @override
+  String get routePoiSearchEmpty => 'Nichts entlang der Route gefunden';
+
+  @override
+  String get routePoiSearchPickCategories => 'Kategorien wählen';
+
+  @override
+  String routePoiSearchAt(String km) {
+    return 'bei $km km';
+  }
+
+  @override
+  String routePoiSearchSide(int m) {
+    return '$m m abseits';
+  }
+
+  @override
+  String get routePoiSearchAdd => 'Zur Route';
+
+  @override
+  String get menuSearchAlongRoute => 'Auf der Route suchen';
 
   @override
   String get defaultWaypoint => 'Zielpunkt';
