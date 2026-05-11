@@ -1162,7 +1162,7 @@ class _MapScreenState extends State<MapScreen> {
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.black : Colors.black54,
+            color: active ? const Color(0xFFf5e9d8) : Colors.black54,
             fontSize: 13,
             fontWeight: active ? FontWeight.w600 : FontWeight.normal,
           ),

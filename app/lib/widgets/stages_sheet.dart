@@ -181,7 +181,7 @@ class _SheetState extends State<_Sheet> {
             ),
             child: Center(
               child: Text('${s.index}',
-                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(color: Color(0xFFf5e9d8), fontWeight: FontWeight.w700)),
             ),
           ),
           const SizedBox(width: 12),
