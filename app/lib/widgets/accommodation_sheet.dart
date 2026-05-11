@@ -120,7 +120,7 @@ class _SheetState extends State<_Sheet> {
                     max: 20,
                     divisions: 19,
                     label: '${_radiusKm.round()} km',
-                    activeColor: const Color(0xFF8aa5c8),
+                    activeColor: const Color(0xFFc89868),
                     onChanged: (v) => setState(() => _radiusKm = v),
                     onChangeEnd: (_) => _fetch(),
                   ),
@@ -142,7 +142,7 @@ class _SheetState extends State<_Sheet> {
 
   Widget _buildList(ScrollController sc, AppLocalizations l) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF8aa5c8)));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFFc89868)));
     }
     if (_error != null) {
       return Center(child: Text(_error!, style: const TextStyle(color: Colors.white70)));
@@ -177,7 +177,7 @@ class _SheetState extends State<_Sheet> {
           ),
           trailing: a.website != null
               ? IconButton(
-                  icon: const Icon(Icons.open_in_new, size: 18, color: Color(0xFF8aa5c8)),
+                  icon: const Icon(Icons.open_in_new, size: 18, color: Color(0xFFc89868)),
                   onPressed: () => _openUrl(a.website!),
                 )
               : null,

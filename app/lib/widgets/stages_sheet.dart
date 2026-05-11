@@ -114,7 +114,7 @@ class _SheetState extends State<_Sheet> {
                     max: 150,
                     divisions: 26,
                     label: '${_targetKm.round()} km',
-                    activeColor: const Color(0xFF8aa5c8),
+                    activeColor: const Color(0xFFc89868),
                     onChanged: (v) => setState(() => _targetKm = v),
                     onChangeEnd: (_) => _fetch(),
                   ),
@@ -134,7 +134,7 @@ class _SheetState extends State<_Sheet> {
                 child: FilledButton.icon(
                   icon: const Icon(Icons.check, size: 18),
                   label: Text(l.stagesShowOnMap),
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF8aa5c8)),
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFc89868)),
                   onPressed: () => Navigator.pop(context, StagesResult(_stages!, _targetKm)),
                 ),
               ),
@@ -146,7 +146,7 @@ class _SheetState extends State<_Sheet> {
 
   Widget _buildList(ScrollController sc, AppLocalizations l) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF8aa5c8)));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFFc89868)));
     }
     final stages = _stages;
     if (stages == null || stages.isEmpty) {
@@ -173,7 +173,7 @@ class _SheetState extends State<_Sheet> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: const Color(0xFF8aa5c8),
+              color: const Color(0xFFc89868),
               shape: BoxShape.circle,
             ),
             child: Center(

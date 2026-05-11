@@ -95,7 +95,7 @@ class SettingsScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFF1a1a2e),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF8aa5c8).withValues(alpha: 0.3)),
+                border: Border.all(color: const Color(0xFFc89868).withValues(alpha: 0.3)),
               ),
               child: Text(
                 l.settingsAbout,
@@ -114,7 +114,7 @@ class SettingsScreen extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: const TextStyle(
-          color: Color(0xFF8aa5c8),
+          color: Color(0xFFc89868),
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 1.2,
@@ -130,7 +130,7 @@ class SettingsScreen extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF8aa5c8)),
+      leading: Icon(icon, color: const Color(0xFFc89868)),
       title: Text(title, style: const TextStyle(color: Colors.white)),
       subtitle: subtitle != null
           ? Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12))

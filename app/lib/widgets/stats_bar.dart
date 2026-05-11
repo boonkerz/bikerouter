@@ -96,8 +96,8 @@ class _ActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = action.active ? Colors.black : const Color(0xFF8aa5c8);
-    final bg = action.active ? const Color(0xFF8aa5c8) : Colors.transparent;
+    final color = action.active ? Colors.black : const Color(0xFFc89868);
+    final bg = action.active ? const Color(0xFFc89868) : Colors.transparent;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Material(
@@ -148,7 +148,7 @@ class _Stat extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            color: Color(0xFF8aa5c8),
+            color: Color(0xFFc89868),
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),

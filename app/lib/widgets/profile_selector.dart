@@ -98,7 +98,7 @@ class ProfileSelector extends StatelessWidget {
                             },
                           ),
                           selected: p.id == selectedProfile,
-                          selectedTileColor: const Color(0xFF8aa5c8).withValues(alpha: 0.1),
+                          selectedTileColor: const Color(0xFFc89868).withValues(alpha: 0.1),
                           shape:
                               RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           onTap: () {
@@ -144,7 +144,7 @@ class ProfileSelector extends StatelessWidget {
                   min: 5,
                   max: 40,
                   divisions: 35,
-                  activeColor: const Color(0xFF8aa5c8),
+                  activeColor: const Color(0xFFc89868),
                   inactiveColor: Colors.white24,
                   onChanged: (v) => setDialogState(() => value = v.round()),
                 ),
@@ -167,7 +167,7 @@ class ProfileSelector extends StatelessWidget {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8aa5c8),
+                  backgroundColor: const Color(0xFFc89868),
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () async {

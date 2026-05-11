@@ -58,7 +58,7 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
         elevation: 0,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF8aa5c8)))
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFc89868)))
           : _routes.isEmpty
               ? _emptyState(l)
               : ListView.builder(
@@ -131,7 +131,7 @@ class _SavedRoutesScreenState extends State<SavedRoutesScreen> {
         child: ListTile(
           leading: Icon(
             r.isRoundtrip ? Icons.loop : Icons.timeline,
-            color: const Color(0xFF8aa5c8),
+            color: const Color(0xFFc89868),
           ),
           title: Text(r.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           subtitle: Padding(

@@ -469,7 +469,7 @@ class _ModeButton extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF8aa5c8).withValues(alpha: 0.2) : Colors.transparent,
+          color: active ? const Color(0xFFc89868).withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -478,14 +478,14 @@ class _ModeButton extends StatelessWidget {
             Icon(
               icon,
               size: 14,
-              color: active ? const Color(0xFF8aa5c8) : Colors.white.withValues(alpha: 0.6),
+              color: active ? const Color(0xFFc89868) : Colors.white.withValues(alpha: 0.6),
             ),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11,
-                color: active ? const Color(0xFF8aa5c8) : Colors.white.withValues(alpha: 0.75),
+                color: active ? const Color(0xFFc89868) : Colors.white.withValues(alpha: 0.75),
                 fontWeight: active ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -864,10 +864,10 @@ class _ProfilePainter extends CustomPainter {
     final clamped = pct.clamp(-12.0, 12.0);
     if (clamped >= 0) {
       final t = (clamped / 12.0).clamp(0.0, 1.0);
-      return Color.lerp(const Color(0xFF8aa5c8), const Color(0xFFD32F2F), t)!;
+      return Color.lerp(const Color(0xFFc89868), const Color(0xFFD32F2F), t)!;
     } else {
       final t = (-clamped / 12.0).clamp(0.0, 1.0);
-      return Color.lerp(const Color(0xFF8aa5c8), const Color(0xFF2E7D32), t)!;
+      return Color.lerp(const Color(0xFFc89868), const Color(0xFF2E7D32), t)!;
     }
   }
 
@@ -926,7 +926,7 @@ class _ProfilePainter extends CustomPainter {
     canvas.drawCircle(
       Offset(x, y),
       3,
-      Paint()..color = const Color(0xFF8aa5c8),
+      Paint()..color = const Color(0xFFc89868),
     );
 
     // Tooltip
