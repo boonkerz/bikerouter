@@ -15,6 +15,7 @@ assign avoid_toll       = false  # %avoid_toll% | Avoid paid roads | boolean
 assign avoid_motorways  = false  # %avoid_motorways% | Avoid motorways | boolean
 assign avoid_unpaved    = false  # %avoid_unpaved% | Avoid unpaved roads | boolean
 assign add_beeline      = false  # %add_beeline% | Beeline to nearest road | boolean
+assign shortest_route   = false  # %shortest_route% | Prefer shortest route | boolean
 assign vmax             = 130    # %vmax% | Max planning speed (km/h) | number
 assign totalweight      = 1640   # %totalweight% | Total weight (kg) | number
 
@@ -53,6 +54,7 @@ assign costfactor
        else if and avoid_motorways highway=motorway|motorway_link then 10000
        else if and avoid_toll      toll=yes then 10000
        else if and avoid_unpaved   is_unpaved then 10000
+       else if shortest_route then 1.0
        else if highway=motorway|motorway_link  then 1.0
        else if highway=trunk|trunk_link        then 1.1
        else if highway=primary|primary_link    then 1.7

@@ -322,6 +322,9 @@
   "altRoutePrimary": "Main",
   "altRouteVariant": "Variant {n}",
   "@altRouteVariant": { "placeholders": { "n": { "type": "int" } } },
+  "altRouteCalculating": "calculating…",
+  "altRouteShortest": "Shortest route",
+  "altRouteAvoidMotorways": "Avoid motorways",
   "@garminDeviceOffline": { "placeholders": { "device": { "type": "String" } } },
 
   "mapStyleTitle": "Map style",

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,8 +59,14 @@ class _MapScreenState extends State<MapScreen> {
   List<LatLng> _routePoints = [];
   // Up-to-two alternative routes alongside the active one. Empty in
   // roundtrip mode (BRouter's roundtrip engine doesn't accept alternatives).
-  List<RouteResult> _alternativeRoutes = const [];
+  List<_RouteAlternative> _alternativeRoutes = const [];
+  _RouteAlternativeKind _activeRouteKind = _RouteAlternativeKind.primary;
+  int _activeRouteVariantIdx = 0;
   bool _loading = false;
+  int? _loadingAlternativeIdx;
+  bool _loadingShortestCarRoute = false;
+  bool _loadingAvoidMotorwaysCarRoute = false;
+  int _routeRequestId = 0;
   String _profile = 'fastbike';
   MapStyle _mapStyle = mapStyles[0];
   bool _roundtripMode = false;
@@ -273,7 +280,7 @@ class _MapScreenState extends State<MapScreen> {
                         polylines: [
                           for (final alt in _alternativeRoutes)
                             Polyline(
-                              points: alt.coordinates
+                              points: alt.route.coordinates
                                   .map((c) => LatLng(c[1], c[0]))
                                   .toList(growable: false),
                               color: Colors.grey.withValues(alpha: 0.65),
@@ -375,7 +382,7 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
               ),),
-              if (_route != null && _alternativeRoutes.isNotEmpty)
+              if (_showAlternativesBar)
                 _buildAlternativesBar(),
               if (_route != null)
                 StatsBar(
@@ -519,7 +526,7 @@ class _MapScreenState extends State<MapScreen> {
                         ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
                         : 94)
                     : 0) +
-                (_alternativeRoutes.isNotEmpty ? 56 : 0) +
+                (_showAlternativesBar ? 56 : 0) +
                 bottomPadding +
                 12,
             child: Column(
@@ -557,7 +564,7 @@ class _MapScreenState extends State<MapScreen> {
                         ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
                         : 94)
                     : 0) +
-                (_alternativeRoutes.isNotEmpty ? 56 : 0) +
+                (_showAlternativesBar ? 56 : 0) +
                 bottomPadding +
                 12,
             child: Column(
@@ -2382,12 +2389,22 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  bool get _showAlternativesBar => _route != null && !_roundtripMode;
+
   Future<void> _calculateRoute() async {
     if (_loading || _waypoints.length < 2) return;
-    setState(() => _loading = true);
+    final requestId = ++_routeRequestId;
+    setState(() {
+      _loading = true;
+      _loadingAlternativeIdx = null;
+      _loadingShortestCarRoute = false;
+      _loadingAvoidMotorwaysCarRoute = false;
+    });
 
     try {
       final pts = _waypoints.map((w) => [w.longitude, w.latitude]).toList();
+      final profile = _profile;
+      final nogos = List<NogoArea>.from(_nogos);
       // In roundtrip mode with via-points, close the loop back to start
       if (_roundtripMode && pts.length >= 2) {
         pts.add(pts.first);
@@ -2395,29 +2412,133 @@ class _MapScreenState extends State<MapScreen> {
       if (_roundtripMode) {
         final result = await BRouterService.calculateRoute(
           waypoints: pts,
-          profile: _profile,
-          nogos: _nogos,
+          profile: profile,
+          nogos: nogos,
         );
+        if (!mounted || requestId != _routeRequestId) return;
         _displayRoute(result, alternatives: const []);
       } else {
-        final results = await BRouterService.calculateRoutesWithAlternatives(
+        final result = await BRouterService.calculateRoute(
           waypoints: pts,
-          profile: _profile,
-          nogos: _nogos,
+          profile: profile,
+          nogos: nogos,
         );
-        _displayRoute(results.first, alternatives: results.skip(1).toList());
+        if (!mounted || requestId != _routeRequestId) return;
+        _displayRoute(result, alternatives: const []);
+        unawaited(_loadRouteAlternatives(
+          requestId: requestId,
+          waypoints: pts,
+          profile: profile,
+          nogos: nogos,
+        ));
       }
     } catch (e) {
-      if (mounted) _showError(AppLocalizations.of(context).routingFailed(e.toString()));
+      if (mounted && requestId == _routeRequestId) {
+        _showError(AppLocalizations.of(context).routingFailed(e.toString()));
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && requestId == _routeRequestId) {
+        setState(() => _loading = false);
+      }
     }
+  }
+
+  Future<void> _loadRouteAlternatives({
+    required int requestId,
+    required List<List<double>> waypoints,
+    required String profile,
+    required List<NogoArea> nogos,
+  }) async {
+    for (final idx in const [1, 2]) {
+      if (!mounted || requestId != _routeRequestId) return;
+      setState(() {
+        _loadingAlternativeIdx = idx;
+        _loadingShortestCarRoute = false;
+        _loadingAvoidMotorwaysCarRoute = false;
+      });
+      try {
+        final alt = await BRouterService.calculateRoute(
+          waypoints: waypoints,
+          profile: profile,
+          alternativeIdx: idx,
+          nogos: nogos,
+        );
+        if (!mounted || requestId != _routeRequestId) return;
+        _appendAlternativeRoute(_RouteAlternative.variant(alt, idx));
+      } catch (_) {
+        // Alternatives are optional; keep the already displayed primary route.
+      }
+    }
+    if (profile == 'car' || profile == 'car-trailer') {
+      if (!mounted || requestId != _routeRequestId) return;
+      setState(() {
+        _loadingAlternativeIdx = null;
+        _loadingShortestCarRoute = true;
+        _loadingAvoidMotorwaysCarRoute = false;
+      });
+      try {
+        final shortest = await BRouterService.calculateRoute(
+          waypoints: waypoints,
+          profile: profile,
+          shortestCarRoute: true,
+          nogos: nogos,
+        );
+        if (!mounted || requestId != _routeRequestId) return;
+        _appendAlternativeRoute(_RouteAlternative.shortest(shortest));
+      } catch (_) {
+        // The shortest car route is optional; keep the available routes.
+      }
+      if (!mounted || requestId != _routeRequestId) return;
+      setState(() {
+        _loadingShortestCarRoute = false;
+        _loadingAvoidMotorwaysCarRoute = true;
+      });
+      try {
+        final avoidMotorways = await BRouterService.calculateRoute(
+          waypoints: waypoints,
+          profile: profile,
+          avoidMotorwaysCarRoute: true,
+          nogos: nogos,
+        );
+        if (!mounted || requestId != _routeRequestId) return;
+        _appendAlternativeRoute(_RouteAlternative.avoidMotorways(avoidMotorways));
+      } catch (_) {
+        // Avoid-motorway car routing is optional; keep the available routes.
+      }
+    }
+    if (mounted && requestId == _routeRequestId) {
+      setState(() {
+        _loadingAlternativeIdx = null;
+        _loadingShortestCarRoute = false;
+        _loadingAvoidMotorwaysCarRoute = false;
+      });
+    }
+  }
+
+  void _appendAlternativeRoute(_RouteAlternative alternative) {
+    final existing = [
+      _route,
+      ..._alternativeRoutes.map((alt) => alt.route),
+    ].whereType<RouteResult>();
+    final duplicate = existing.any((r) =>
+        r.distance > 0 &&
+        ((alternative.route.distance - r.distance).abs() / r.distance) < 0.01);
+    if (duplicate) return;
+    setState(() {
+      _alternativeRoutes = [..._alternativeRoutes, alternative];
+    });
   }
 
   Future<void> _calculateRoundtrip(RoundtripRequest req) async {
     if (_loading || _waypoints.isEmpty) return;
+    ++_routeRequestId;
     _lastRoundtripRequest = req;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _loadingAlternativeIdx = null;
+      _loadingShortestCarRoute = false;
+      _loadingAvoidMotorwaysCarRoute = false;
+    });
 
     try {
       final start = _waypoints.first;
@@ -2452,7 +2573,6 @@ class _MapScreenState extends State<MapScreen> {
   Widget _buildAlternativesBar() {
     final l = AppLocalizations.of(context);
     final speed = ProfileSpeedPrefs.speedFor(_profile);
-    final all = [_route!, ..._alternativeRoutes];
     return Container(
       color: const Color(0xFFf5e9d8),
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -2460,9 +2580,28 @@ class _MapScreenState extends State<MapScreen> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            for (int i = 0; i < all.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              _altChip(i, all[i], i == 0, speed, l),
+            _altChip(0, _route!, _activeRouteLabel(l), true, speed),
+            for (int i = 0; i < _alternativeRoutes.length; i++) ...[
+              const SizedBox(width: 8),
+              _altChip(
+                i + 1,
+                _alternativeRoutes[i].route,
+                _alternativeRoutes[i].label(l),
+                false,
+                speed,
+              ),
+            ],
+            if (_loadingAlternativeIdx != null) ...[
+              const SizedBox(width: 8),
+              _altLoadingChip(l.altRouteVariant(_loadingAlternativeIdx!), l),
+            ],
+            if (_loadingShortestCarRoute) ...[
+              const SizedBox(width: 8),
+              _altLoadingChip(l.altRouteShortest, l),
+            ],
+            if (_loadingAvoidMotorwaysCarRoute) ...[
+              const SizedBox(width: 8),
+              _altLoadingChip(l.altRouteAvoidMotorways, l),
             ],
           ],
         ),
@@ -2470,21 +2609,31 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  String _activeRouteLabel(AppLocalizations l) {
+    return _RouteAlternative._(
+      _route!,
+      _activeRouteKind,
+      _activeRouteVariantIdx,
+    ).label(l);
+  }
+
   Widget _altChip(
     int idx,
     RouteResult r,
+    String label,
     bool active,
     int userSpeedKmh,
-    AppLocalizations l,
   ) {
     final km = r.distance.toStringAsFixed(r.distance < 100 ? 1 : 0);
     final mins = ((r.distance / userSpeedKmh) * 60).round();
     final timeStr = mins < 60
         ? '$mins min'
         : '${(mins / 60).floor()}h ${(mins % 60).toString().padLeft(2, '0')}';
-    final label = idx == 0 ? l.altRoutePrimary : l.altRouteVariant(idx);
+    final bg = active ? const Color(0xFF6a4a28) : const Color(0xFFd8c2a4);
+    final fg = active ? Colors.white : Colors.black87;
+    final subFg = active ? Colors.white.withValues(alpha: 0.86) : Colors.black87;
     return Material(
-      color: active ? const Color(0xFF1565c0) : const Color(0xFF2a2a44),
+      color: bg,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -2497,12 +2646,12 @@ class _MapScreenState extends State<MapScreen> {
             children: [
               Text(label,
                   style: TextStyle(
-                    color: Colors.black87,
+                    color: fg,
                     fontSize: 11,
                     fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                   )),
               Text('$km km · $timeStr',
-                  style: const TextStyle(color: Colors.black87, fontSize: 13)),
+                  style: TextStyle(color: subFg, fontSize: 13)),
             ],
           ),
         ),
@@ -2510,11 +2659,55 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Widget _altLoadingChip(String label, AppLocalizations l) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFeadcc8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFc9aa80)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: const Color(0xFF6a4a28).withValues(alpha: 0.75),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                l.altRouteCalculating,
+                style: const TextStyle(color: Colors.black54, fontSize: 13),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _activateAlternative(int idx) {
     if (idx <= 0 || idx > _alternativeRoutes.length) return;
-    final newPrimary = _alternativeRoutes[idx - 1];
-    final newAlts = <RouteResult>[
-      _route!,
+    final selected = _alternativeRoutes[idx - 1];
+    final newPrimary = selected.route;
+    final newAlts = <_RouteAlternative>[
+      _RouteAlternative._(_route!, _activeRouteKind, _activeRouteVariantIdx),
       ..._alternativeRoutes.sublist(0, idx - 1),
       ..._alternativeRoutes.sublist(idx),
     ];
@@ -2522,13 +2715,18 @@ class _MapScreenState extends State<MapScreen> {
       _route = newPrimary;
       _routePoints =
           newPrimary.coordinates.map((c) => LatLng(c[1], c[0])).toList();
+      _activeRouteKind = selected.kind;
+      _activeRouteVariantIdx = selected.variantIdx;
       _alternativeRoutes = newAlts;
+      _loadingAlternativeIdx = null;
+      _loadingShortestCarRoute = false;
+      _loadingAvoidMotorwaysCarRoute = false;
       _highlightIndex = null;
     });
   }
 
   void _displayRoute(RouteResult result,
-      {List<RouteResult> alternatives = const []}) {
+      {List<_RouteAlternative> alternatives = const []}) {
     final points = result.coordinates
         .map((c) => LatLng(c[1], c[0]))
         .toList();
@@ -2546,7 +2744,12 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _route = result;
       _routePoints = points;
+      _activeRouteKind = _RouteAlternativeKind.primary;
+      _activeRouteVariantIdx = 0;
       _alternativeRoutes = alternatives;
+      _loadingAlternativeIdx = null;
+      _loadingShortestCarRoute = false;
+      _loadingAvoidMotorwaysCarRoute = false;
       _showElevation = true;
       _highlightIndex = null;
       _sights = [];
@@ -3353,15 +3556,23 @@ class _MapScreenState extends State<MapScreen> {
     if (_waypoints.length >= 2) {
       _recalculate();
     } else {
+      ++_routeRequestId;
       setState(() {
         _route = null;
         _routePoints = [];
+        _activeRouteKind = _RouteAlternativeKind.primary;
+        _activeRouteVariantIdx = 0;
+        _alternativeRoutes = const [];
+        _loadingAlternativeIdx = null;
+        _loadingShortestCarRoute = false;
+        _loadingAvoidMotorwaysCarRoute = false;
         _highlightIndex = null;
       });
     }
   }
 
   void _clearAll() {
+    ++_routeRequestId;
     _waypoints.clear();
     _anchorIndices.clear();
     _pois.clear();
@@ -3369,8 +3580,46 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _route = null;
       _routePoints = [];
+      _activeRouteKind = _RouteAlternativeKind.primary;
+      _activeRouteVariantIdx = 0;
+      _alternativeRoutes = const [];
+      _loadingAlternativeIdx = null;
+      _loadingShortestCarRoute = false;
+      _loadingAvoidMotorwaysCarRoute = false;
       _highlightIndex = null;
     });
+  }
+}
+
+enum _RouteAlternativeKind { primary, variant, shortest, avoidMotorways }
+
+class _RouteAlternative {
+  final RouteResult route;
+  final _RouteAlternativeKind kind;
+  final int variantIdx;
+
+  const _RouteAlternative._(this.route, this.kind, this.variantIdx);
+
+  const _RouteAlternative.variant(RouteResult route, int variantIdx)
+      : this._(route, _RouteAlternativeKind.variant, variantIdx);
+
+  const _RouteAlternative.shortest(RouteResult route)
+      : this._(route, _RouteAlternativeKind.shortest, 0);
+
+  const _RouteAlternative.avoidMotorways(RouteResult route)
+      : this._(route, _RouteAlternativeKind.avoidMotorways, 0);
+
+  String label(AppLocalizations l) {
+    switch (kind) {
+      case _RouteAlternativeKind.primary:
+        return l.altRoutePrimary;
+      case _RouteAlternativeKind.variant:
+        return l.altRouteVariant(variantIdx);
+      case _RouteAlternativeKind.shortest:
+        return l.altRouteShortest;
+      case _RouteAlternativeKind.avoidMotorways:
+        return l.altRouteAvoidMotorways;
+    }
   }
 }
 

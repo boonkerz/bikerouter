@@ -869,6 +869,15 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get altRouteCalculating => 'wird berechnet…';
+
+  @override
+  String get altRouteShortest => 'Kürzeste Route';
+
+  @override
+  String get altRouteAvoidMotorways => 'Autobahn vermeiden';
+
+  @override
   String get mapStyleTitle => 'Kartenstil';
 
   @override

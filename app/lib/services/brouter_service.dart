@@ -22,18 +22,26 @@ class BRouterService {
   /// costfactor, no kinematic eco-bias, so long routes stay on the
   /// autobahn instead of taking Bundesstrasse shortcuts the way the
   /// stock car-vario does).
-  static String _profileParam(String profile) {
+  static String _profileParam(
+    String profile, {
+    bool shortestCarRoute = false,
+    bool avoidMotorwaysCarRoute = false,
+  }) {
     if (profile == 'car' || profile == 'car-trailer') {
       final vmax = ProfileSpeedPrefs.speedFor(profile);
       final totalweight = profile == 'car-trailer' ? 2640 : 1640;
       final avoidUnpaved = profile == 'car-trailer' ? 1 : 0;
+      final shortestRoute = shortestCarRoute ? 1 : 0;
+      final avoidMotorways = avoidMotorwaysCarRoute ? 1 : 0;
       // add_beeline lets BRouter draw a beeline from the user's clicked
       // waypoint to the nearest car-accessible road. Without it, taps that
       // land on bike paths or footways trigger "target island failed".
       return 'profile=wegwiesel-car'
           '&profile:vmax=$vmax'
           '&profile:totalweight=$totalweight'
+          '&profile:avoid_motorways=$avoidMotorways'
           '&profile:avoid_unpaved=$avoidUnpaved'
+          '&profile:shortest_route=$shortestRoute'
           '&profile:add_beeline=1';
     }
     return 'profile=$profile';
@@ -64,6 +72,8 @@ class BRouterService {
     required List<List<double>> waypoints,
     required String profile,
     int alternativeIdx = 0,
+    bool shortestCarRoute = false,
+    bool avoidMotorwaysCarRoute = false,
     List<NogoArea> nogos = const [],
   }) async {
     final wps = await _snapForCar(waypoints, profile);
@@ -71,6 +81,8 @@ class BRouterService {
       wps: wps,
       profile: profile,
       alternativeIdx: alternativeIdx,
+      shortestCarRoute: shortestCarRoute,
+      avoidMotorwaysCarRoute: avoidMotorwaysCarRoute,
       nogos: nogos,
     );
   }
@@ -109,11 +121,17 @@ class BRouterService {
     required List<List<double>> wps,
     required String profile,
     required int alternativeIdx,
+    bool shortestCarRoute = false,
+    bool avoidMotorwaysCarRoute = false,
     required List<NogoArea> nogos,
   }) async {
     final lonlats = wps.map((w) => '${w[0]},${w[1]}').join('|');
     final uri = Uri.parse('$baseUrl?lonlats=$lonlats'
-        '&${_profileParam(profile)}'
+        '&${_profileParam(
+          profile,
+          shortestCarRoute: shortestCarRoute,
+          avoidMotorwaysCarRoute: avoidMotorwaysCarRoute,
+        )}'
         '&alternativeidx=$alternativeIdx'
         '&format=geojson'
         '&timode=3'

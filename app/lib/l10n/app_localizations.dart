@@ -1718,6 +1718,24 @@ abstract class AppLocalizations {
   /// **'Variante {n}'**
   String altRouteVariant(int n);
 
+  /// No description provided for @altRouteCalculating.
+  ///
+  /// In de, this message translates to:
+  /// **'wird berechnet…'**
+  String get altRouteCalculating;
+
+  /// No description provided for @altRouteShortest.
+  ///
+  /// In de, this message translates to:
+  /// **'Kürzeste Route'**
+  String get altRouteShortest;
+
+  /// No description provided for @altRouteAvoidMotorways.
+  ///
+  /// In de, this message translates to:
+  /// **'Autobahn vermeiden'**
+  String get altRouteAvoidMotorways;
+
   /// No description provided for @mapStyleTitle.
   ///
   /// In de, this message translates to:

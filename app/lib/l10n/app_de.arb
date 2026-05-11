@@ -322,6 +322,9 @@
   "altRoutePrimary": "Hauptroute",
   "altRouteVariant": "Variante {n}",
   "@altRouteVariant": { "placeholders": { "n": { "type": "int" } } },
+  "altRouteCalculating": "wird berechnet…",
+  "altRouteShortest": "Kürzeste Route",
+  "altRouteAvoidMotorways": "Autobahn vermeiden",
   "@garminDeviceOffline": { "placeholders": { "device": { "type": "String" } } },
 
   "mapStyleTitle": "Kartenstil",

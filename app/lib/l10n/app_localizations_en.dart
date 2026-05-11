@@ -870,6 +870,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get altRouteCalculating => 'calculating…';
+
+  @override
+  String get altRouteShortest => 'Shortest route';
+
+  @override
+  String get altRouteAvoidMotorways => 'Avoid motorways';
+
+  @override
   String get mapStyleTitle => 'Map style';
 
   @override
