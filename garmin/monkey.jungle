@@ -2,3 +2,19 @@ project.manifest = manifest.xml
 base.sourcePath = source
 base.resourcePath = resources
 base.lang.eng = resources-eng
+
+# Per-device launcher icons sized to each Edge family's expected resolution.
+# Each device overrides the default 60x60 in resources/drawables/.
+edge530.resourcePath = $(edge530.resourcePath);resources-35x35
+edge540.resourcePath = $(edge540.resourcePath);resources-35x35
+edge830.resourcePath = $(edge830.resourcePath);resources-35x35
+edge840.resourcePath = $(edge840.resourcePath);resources-35x35
+edge1030.resourcePath = $(edge1030.resourcePath);resources-36x36
+edge1030plus.resourcePath = $(edge1030plus.resourcePath);resources-36x36
+edge1030bontrager.resourcePath = $(edge1030bontrager.resourcePath);resources-36x36
+edgeexplore2.resourcePath = $(edgeexplore2.resourcePath);resources-36x36
+edgemtb.resourcePath = $(edgemtb.resourcePath);resources-36x36
+edge1040.resourcePath = $(edge1040.resourcePath);resources-40x40
+edge550.resourcePath = $(edge550.resourcePath);resources-56x56
+edge850.resourcePath = $(edge850.resourcePath);resources-56x56
+edge1050.resourcePath = $(edge1050.resourcePath);resources-68x68
