@@ -23,6 +23,14 @@ wegwiesel.app {
 		reverse_proxy share:8080
 	}
 
+	# Live tracking
+	handle /api/track* {
+		reverse_proxy tracking:8080
+	}
+	handle /track/* {
+		reverse_proxy tracking:8080
+	}
+
 	# Flutter Web App
 	handle {
 		root * /srv/web

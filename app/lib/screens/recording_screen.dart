@@ -1,14 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/map_style.dart';
 import '../models/recorded_ride.dart';
 import '../services/gpx_export.dart';
+import '../services/live_tracking_service.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_storage.dart';
 
@@ -70,11 +73,77 @@ class _RecordingScreenState extends State<RecordingScreen> {
     final defaultName = _defaultName(l);
     final name = await _askName(defaultName);
     if (name == null) return;
+    await LiveTrackingService.instance.stop();
     final ride = await RideRecorder.instance.stop(name: name);
     if (ride == null || !mounted) return;
     await RideStorage.save(ride);
     if (!mounted) return;
     await _showSummary(ride);
+  }
+
+  Future<void> _toggleLiveTracking() async {
+    final l = AppLocalizations.of(context);
+    final svc = LiveTrackingService.instance;
+    if (svc.isActive) {
+      await svc.stop();
+      if (!mounted) return;
+      setState(() {});
+      return;
+    }
+    final session = await svc.start();
+    if (!mounted) return;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.liveTrackingError)),
+      );
+      return;
+    }
+    setState(() {});
+    await _showShareLink(session.viewerUrl);
+  }
+
+  Future<void> _showShareLink(String url) async {
+    final l = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.liveTrackingTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.liveTrackingExplain),
+            const SizedBox(height: 12),
+            SelectableText(
+              url,
+              style: const TextStyle(
+                color: Color(0xFF6a4a28),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.copy),
+            label: Text(l.liveTrackingCopy),
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: url));
+              if (ctx.mounted) Navigator.of(ctx).pop();
+            },
+          ),
+          FilledButton.icon(
+            icon: const Icon(Icons.share),
+            label: Text(l.liveTrackingShare),
+            onPressed: () async {
+              await SharePlus.instance
+                  .share(ShareParams(text: '${l.liveTrackingShareBody} $url'));
+              if (ctx.mounted) Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Future<String?> _askName(String suggestion) async {
@@ -302,40 +371,68 @@ class _RecordingScreenState extends State<RecordingScreen> {
         onPressed: _start,
       );
     }
-    return Row(
+    final liveActive = LiveTrackingService.instance.isActive;
+    return Column(
       children: [
-        Expanded(
-          child: rec.state == RecorderState.recording
-              ? OutlinedButton.icon(
-                  icon: const Icon(Icons.pause),
-                  label: Text(l.recordingPause),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    foregroundColor: const Color(0xFF6a4a28),
-                  ),
-                  onPressed: rec.pause,
-                )
-              : OutlinedButton.icon(
-                  icon: const Icon(Icons.play_arrow),
-                  label: Text(l.recordingResume),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    foregroundColor: const Color(0xFF6a4a28),
-                  ),
-                  onPressed: rec.resume,
-                ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: FilledButton.icon(
-            icon: const Icon(Icons.stop),
-            label: Text(l.recordingStop),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              backgroundColor: const Color(0xFFc62828),
-              foregroundColor: Colors.white,
+        Row(
+          children: [
+            Expanded(
+              child: rec.state == RecorderState.recording
+                  ? OutlinedButton.icon(
+                      icon: const Icon(Icons.pause),
+                      label: Text(l.recordingPause),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        foregroundColor: const Color(0xFF6a4a28),
+                      ),
+                      onPressed: rec.pause,
+                    )
+                  : OutlinedButton.icon(
+                      icon: const Icon(Icons.play_arrow),
+                      label: Text(l.recordingResume),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        foregroundColor: const Color(0xFF6a4a28),
+                      ),
+                      onPressed: rec.resume,
+                    ),
             ),
-            onPressed: _stop,
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                icon: const Icon(Icons.stop),
+                label: Text(l.recordingStop),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  backgroundColor: const Color(0xFFc62828),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _stop,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            icon: Icon(liveActive
+                ? Icons.podcasts
+                : Icons.podcasts_outlined),
+            label: Text(liveActive
+                ? l.liveTrackingActive
+                : l.liveTrackingStart),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: liveActive
+                  ? const Color(0xFFc62828)
+                  : const Color(0xFF6a4a28),
+              side: BorderSide(
+                color: liveActive
+                    ? const Color(0xFFc62828)
+                    : const Color(0xFF6a4a28),
+              ),
+            ),
+            onPressed: _toggleLiveTracking,
           ),
         ),
       ],

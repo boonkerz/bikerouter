@@ -48,6 +48,12 @@ ssh root@$SERVER "mkdir -p $REMOTE_PATH/share-data && chown 65532:65532 $REMOTE_
 echo "Rebuilding share container..."
 ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml up -d --build share"
 
+echo "Syncing tracking service..."
+rsync -avz --delete tracking/ root@$SERVER:$REMOTE_PATH/tracking/
+
+echo "Rebuilding tracking container..."
+ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml up -d --build tracking"
+
 echo "Reloading Caddy..."
 ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml up -d caddy && docker compose -f docker-compose.prod.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
 

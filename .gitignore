@@ -38,3 +38,7 @@ Thumbs.db
 
 # Environment
 .env
+
+# Go build outputs (services build inside Docker)
+tracking/wegwiesel-tracking
+share/wegwiesel-share

@@ -2966,6 +2966,54 @@ abstract class AppLocalizations {
   /// **'Löschen'**
   String get recordedRideDelete;
 
+  /// No description provided for @liveTrackingStart.
+  ///
+  /// In de, this message translates to:
+  /// **'Live-Position teilen'**
+  String get liveTrackingStart;
+
+  /// No description provided for @liveTrackingActive.
+  ///
+  /// In de, this message translates to:
+  /// **'Live-Position aktiv (tippen zum Beenden)'**
+  String get liveTrackingActive;
+
+  /// No description provided for @liveTrackingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Live-Tracking'**
+  String get liveTrackingTitle;
+
+  /// No description provided for @liveTrackingExplain.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Link zeigt deine aktuelle Position auf einer Karte und läuft nach 12 Stunden automatisch ab.'**
+  String get liveTrackingExplain;
+
+  /// No description provided for @liveTrackingShare.
+  ///
+  /// In de, this message translates to:
+  /// **'Link teilen'**
+  String get liveTrackingShare;
+
+  /// No description provided for @liveTrackingCopy.
+  ///
+  /// In de, this message translates to:
+  /// **'Link kopieren'**
+  String get liveTrackingCopy;
+
+  /// No description provided for @liveTrackingShareBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Verfolge meine Fahrt live:'**
+  String get liveTrackingShareBody;
+
+  /// No description provided for @liveTrackingError.
+  ///
+  /// In de, this message translates to:
+  /// **'Live-Tracking konnte nicht gestartet werden'**
+  String get liveTrackingError;
+
   /// No description provided for @profileSpeedEdit.
   ///
   /// In de, this message translates to:

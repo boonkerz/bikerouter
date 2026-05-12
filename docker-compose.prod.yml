@@ -55,6 +55,15 @@ services:
     expose:
       - "8080"
 
+  tracking:
+    build:
+      context: ./tracking
+    environment:
+      LISTEN_ADDR: ":8080"
+    restart: unless-stopped
+    expose:
+      - "8080"
+
   caddy:
     image: caddy:2-alpine
     ports:
@@ -71,6 +80,7 @@ services:
       - overpass
       - feedback
       - share
+      - tracking
 
 volumes:
   caddy_data:

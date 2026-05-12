@@ -5,6 +5,26 @@
 
 ---
 
+## v1.9.0 (DE) — „Onboard Companion"
+**Die App wird zum Begleiter auf der Fahrt.**
+
+• Sprach-Navigation: Turn-by-Turn wird laut angesagt (deutsch + englisch), in 500 m / 200 m / Jetzt-Phasen
+• Fahrt aufzeichnen: GPS-Tracking im Hintergrund mit Live-Stats (Distanz, Tempo, Höhenmeter, Kalorien), Pause/Resume, GPX-Export am Ende
+• Live-Position teilen: 12 h gültiger Link, Empfänger sieht deine aktuelle Position auf einer Karte — ohne Account, ohne Tracking-Cookies
+• E-Bike-Profil mit pedelec-getuneten Reise-Zeiten + neue POI-Kategorie „Ladestation"
+• Tour-URL importieren: Komoot-Tour-Link einfügen, GPX wird direkt geladen — oder beliebige andere öffentliche .gpx-URL
+
+## v1.9.0 (EN) — "Onboard Companion"
+**The app becomes your ride companion.**
+
+• Voice navigation: spoken turn-by-turn (German + English) at 500 m / 200 m / now phases
+• Record your ride: background GPS with live stats (distance, speed, ascent, calories), pause/resume, GPX export when done
+• Share your live position: 12-hour link, recipients see your current location on a map — no account, no tracking cookies
+• E-bike profile with pedelec-tuned travel times and a new "Charging station" POI category
+• Import tour from URL: paste a Komoot tour link to load the GPX directly — or any other public .gpx URL
+
+---
+
 ## v1.8.0 KUMULATIV seit v1.4 (DE) — für App Store Release-Notes
 **Großes Update mit neuem Design und vielen neuen Funktionen!**
 

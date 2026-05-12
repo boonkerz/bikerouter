@@ -574,6 +574,15 @@
   "recordedRidesEmpty": "Noch keine Fahrten aufgezeichnet",
   "recordedRideDelete": "Löschen",
 
+  "liveTrackingStart": "Live-Position teilen",
+  "liveTrackingActive": "Live-Position aktiv (tippen zum Beenden)",
+  "liveTrackingTitle": "Live-Tracking",
+  "liveTrackingExplain": "Dieser Link zeigt deine aktuelle Position auf einer Karte und läuft nach 12 Stunden automatisch ab.",
+  "liveTrackingShare": "Link teilen",
+  "liveTrackingCopy": "Link kopieren",
+  "liveTrackingShareBody": "Verfolge meine Fahrt live:",
+  "liveTrackingError": "Live-Tracking konnte nicht gestartet werden",
+
   "profileSpeedEdit": "Geschwindigkeit anpassen",
   "profileSpeedDefault": "Standard: {kmh} km/h",
   "@profileSpeedDefault": { "placeholders": { "kmh": { "type": "int" } } },

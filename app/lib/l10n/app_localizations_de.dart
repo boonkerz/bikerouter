@@ -1528,6 +1528,31 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recordedRideDelete => 'Löschen';
 
   @override
+  String get liveTrackingStart => 'Live-Position teilen';
+
+  @override
+  String get liveTrackingActive => 'Live-Position aktiv (tippen zum Beenden)';
+
+  @override
+  String get liveTrackingTitle => 'Live-Tracking';
+
+  @override
+  String get liveTrackingExplain =>
+      'Dieser Link zeigt deine aktuelle Position auf einer Karte und läuft nach 12 Stunden automatisch ab.';
+
+  @override
+  String get liveTrackingShare => 'Link teilen';
+
+  @override
+  String get liveTrackingCopy => 'Link kopieren';
+
+  @override
+  String get liveTrackingShareBody => 'Verfolge meine Fahrt live:';
+
+  @override
+  String get liveTrackingError => 'Live-Tracking konnte nicht gestartet werden';
+
+  @override
   String get profileSpeedEdit => 'Geschwindigkeit anpassen';
 
   @override

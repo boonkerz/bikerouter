@@ -1529,6 +1529,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordedRideDelete => 'Delete';
 
   @override
+  String get liveTrackingStart => 'Share live position';
+
+  @override
+  String get liveTrackingActive => 'Live position shared (tap to stop)';
+
+  @override
+  String get liveTrackingTitle => 'Live tracking';
+
+  @override
+  String get liveTrackingExplain =>
+      'This link shows your current position on a map and expires automatically after 12 hours.';
+
+  @override
+  String get liveTrackingShare => 'Share link';
+
+  @override
+  String get liveTrackingCopy => 'Copy link';
+
+  @override
+  String get liveTrackingShareBody => 'Follow my ride live:';
+
+  @override
+  String get liveTrackingError => 'Could not start live tracking';
+
+  @override
   String get profileSpeedEdit => 'Adjust speed';
 
   @override

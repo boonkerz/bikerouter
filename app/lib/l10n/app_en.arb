@@ -572,6 +572,15 @@
   "recordedRidesTitle": "Recorded rides",
   "recordedRidesEmpty": "No rides recorded yet",
   "recordedRideDelete": "Delete",
+
+  "liveTrackingStart": "Share live position",
+  "liveTrackingActive": "Live position shared (tap to stop)",
+  "liveTrackingTitle": "Live tracking",
+  "liveTrackingExplain": "This link shows your current position on a map and expires automatically after 12 hours.",
+  "liveTrackingShare": "Share link",
+  "liveTrackingCopy": "Copy link",
+  "liveTrackingShareBody": "Follow my ride live:",
+  "liveTrackingError": "Could not start live tracking",
   "menuNogos": "No-go areas",
 
   "profileSpeedEdit": "Adjust speed",
