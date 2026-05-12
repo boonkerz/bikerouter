@@ -10,6 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../services/gpx_export.dart';
 import '../services/gpx_import.dart';
+import '../services/route_url_import.dart';
+import '../widgets/url_import_dialog.dart';
 
 import '../models/map_style.dart';
 import '../models/nogo_area.dart';
@@ -643,6 +645,14 @@ class _MapScreenState extends State<MapScreen> {
                               const Icon(Icons.upload_file_outlined, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
                               Text(l.menuImportGpx, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'import_url',
+                            child: Row(children: [
+                              const Icon(Icons.cloud_download_outlined, color: Color(0xFF6a4a28), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuImportUrl, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
@@ -2856,6 +2866,9 @@ class _MapScreenState extends State<MapScreen> {
       case 'import_gpx':
         await _importGpx();
         break;
+      case 'import_url':
+        await _importUrl();
+        break;
       case 'nogos':
         await _showNogosSheet();
         break;
@@ -3073,6 +3086,78 @@ class _MapScreenState extends State<MapScreen> {
       _showError(e.code == 'empty' ? l.gpxImportEmpty : l.gpxImportFailed(e.toString()));
     } catch (e) {
       if (mounted) _showError(AppLocalizations.of(context).gpxImportFailed(e.toString()));
+    }
+  }
+
+  Future<void> _importUrl() async {
+    final l = AppLocalizations.of(context);
+    final url = await showUrlImportDialog(context);
+    if (url == null || url.isEmpty) return;
+    if (!mounted) return;
+
+    // Spinner while we fetch — the GPX endpoint can take a few seconds.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Expanded(child: Text(l.urlImportLoading)),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final fetched = await RouteUrlImport.fetch(url);
+      final result = GpxImport.parse(fetched.bytes);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // close spinner
+      _displayRoute(result);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l.gpxImportSuccess(
+            result.coordinates.length,
+            result.distance.toStringAsFixed(1),
+          )),
+        ),
+      );
+    } on RouteUrlImportException catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      _showError(_urlImportMessage(l, e));
+    } on GpxImportException catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      _showError(e.code == 'empty' ? l.gpxImportEmpty : l.gpxImportFailed(e.toString()));
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      _showError(l.gpxImportFailed(e.toString()));
+    }
+  }
+
+  String _urlImportMessage(AppLocalizations l, RouteUrlImportException e) {
+    switch (e.code) {
+      case 'empty_url':
+        return l.urlImportErrEmpty;
+      case 'invalid_url':
+        return l.urlImportErrInvalid;
+      case 'network':
+        return l.urlImportErrNetwork;
+      case 'forbidden':
+        return l.urlImportErrForbidden;
+      case 'not_found':
+        return l.urlImportErrNotFound;
+      case 'not_gpx':
+      case 'empty_body':
+        return l.urlImportErrNotGpx;
+      case 'strava_login_required':
+        return l.urlImportErrStravaLogin;
+      default:
+        return l.gpxImportFailed(e.code);
     }
   }
 

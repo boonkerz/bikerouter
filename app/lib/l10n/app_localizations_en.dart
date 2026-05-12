@@ -1368,6 +1368,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpxImportEmpty => 'No track points found in the file';
 
   @override
+  String get urlImportTitle => 'Import tour URL';
+
+  @override
+  String get urlImportHint => 'Komoot link or direct GPX URL';
+
+  @override
+  String get urlImportFetch => 'Fetch';
+
+  @override
+  String get urlImportCancel => 'Cancel';
+
+  @override
+  String get urlImportLoading => 'Fetching tour…';
+
+  @override
+  String get urlImportErrEmpty => 'Please enter a URL';
+
+  @override
+  String get urlImportErrInvalid => 'URL is not valid';
+
+  @override
+  String get urlImportErrNetwork => 'Network error';
+
+  @override
+  String get urlImportErrForbidden => 'Tour is private or requires login';
+
+  @override
+  String get urlImportErrNotFound => 'Tour not found';
+
+  @override
+  String get urlImportErrNotGpx => 'URL did not return GPX data';
+
+  @override
+  String get urlImportErrStravaLogin =>
+      'Strava routes can\'t be imported directly because they require login — please export the GPX manually and open it via \"Import GPX\"';
+
+  @override
   String get nogoTitle => 'No-go areas';
 
   @override
@@ -1395,6 +1432,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuImportGpx => 'Import GPX';
+
+  @override
+  String get menuImportUrl => 'Import tour URL';
 
   @override
   String get menuNogos => 'No-go areas';

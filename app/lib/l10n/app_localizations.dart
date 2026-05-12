@@ -2654,6 +2654,78 @@ abstract class AppLocalizations {
   /// **'Keine Trackpunkte in der Datei gefunden'**
   String get gpxImportEmpty;
 
+  /// No description provided for @urlImportTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Tour-URL importieren'**
+  String get urlImportTitle;
+
+  /// No description provided for @urlImportHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Komoot-Link oder direkter GPX-Link'**
+  String get urlImportHint;
+
+  /// No description provided for @urlImportFetch.
+  ///
+  /// In de, this message translates to:
+  /// **'Laden'**
+  String get urlImportFetch;
+
+  /// No description provided for @urlImportCancel.
+  ///
+  /// In de, this message translates to:
+  /// **'Abbrechen'**
+  String get urlImportCancel;
+
+  /// No description provided for @urlImportLoading.
+  ///
+  /// In de, this message translates to:
+  /// **'Tour wird geladen…'**
+  String get urlImportLoading;
+
+  /// No description provided for @urlImportErrEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte URL eingeben'**
+  String get urlImportErrEmpty;
+
+  /// No description provided for @urlImportErrInvalid.
+  ///
+  /// In de, this message translates to:
+  /// **'URL ist ungültig'**
+  String get urlImportErrInvalid;
+
+  /// No description provided for @urlImportErrNetwork.
+  ///
+  /// In de, this message translates to:
+  /// **'Netzwerkfehler'**
+  String get urlImportErrNetwork;
+
+  /// No description provided for @urlImportErrForbidden.
+  ///
+  /// In de, this message translates to:
+  /// **'Tour ist privat oder benötigt Login'**
+  String get urlImportErrForbidden;
+
+  /// No description provided for @urlImportErrNotFound.
+  ///
+  /// In de, this message translates to:
+  /// **'Tour nicht gefunden'**
+  String get urlImportErrNotFound;
+
+  /// No description provided for @urlImportErrNotGpx.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine GPX-Daten unter der URL'**
+  String get urlImportErrNotGpx;
+
+  /// No description provided for @urlImportErrStravaLogin.
+  ///
+  /// In de, this message translates to:
+  /// **'Strava-Routen können wegen Login-Pflicht nicht direkt importiert werden — bitte GPX manuell exportieren und über „GPX importieren\" öffnen'**
+  String get urlImportErrStravaLogin;
+
   /// No description provided for @nogoTitle.
   ///
   /// In de, this message translates to:
@@ -2707,6 +2779,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'GPX importieren'**
   String get menuImportGpx;
+
+  /// No description provided for @menuImportUrl.
+  ///
+  /// In de, this message translates to:
+  /// **'Tour-URL importieren'**
+  String get menuImportUrl;
 
   /// No description provided for @menuNogos.
   ///
