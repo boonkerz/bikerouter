@@ -864,6 +864,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navigateHeadingUp => 'In Fahrtrichtung';
 
   @override
+  String get navigateVoiceOn => 'Sprachansage an';
+
+  @override
+  String get navigateVoiceOff => 'Sprachansage aus';
+
+  @override
+  String voiceInMeters(int n) {
+    return 'In $n Metern';
+  }
+
+  @override
+  String get voiceNow => 'Jetzt';
+
+  @override
+  String get voiceRerouting => 'Route wird neu berechnet';
+
+  @override
+  String get voiceArrived => 'Sie haben Ihr Ziel erreicht';
+
+  @override
   String get altRoutePrimary => 'Hauptroute';
 
   @override

@@ -1712,6 +1712,42 @@ abstract class AppLocalizations {
   /// **'In Fahrtrichtung'**
   String get navigateHeadingUp;
 
+  /// No description provided for @navigateVoiceOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Sprachansage an'**
+  String get navigateVoiceOn;
+
+  /// No description provided for @navigateVoiceOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Sprachansage aus'**
+  String get navigateVoiceOff;
+
+  /// No description provided for @voiceInMeters.
+  ///
+  /// In de, this message translates to:
+  /// **'In {n} Metern'**
+  String voiceInMeters(int n);
+
+  /// No description provided for @voiceNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt'**
+  String get voiceNow;
+
+  /// No description provided for @voiceRerouting.
+  ///
+  /// In de, this message translates to:
+  /// **'Route wird neu berechnet'**
+  String get voiceRerouting;
+
+  /// No description provided for @voiceArrived.
+  ///
+  /// In de, this message translates to:
+  /// **'Sie haben Ihr Ziel erreicht'**
+  String get voiceArrived;
+
   /// No description provided for @altRoutePrimary.
   ///
   /// In de, this message translates to:

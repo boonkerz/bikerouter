@@ -52,6 +52,7 @@ dependencies:
   garmin_connect:
     path: packages/garmin_connect
   wakelock_plus: ^1.2.8
+  flutter_tts: ^4.2.0
 
 dev_dependencies:
   flutter_test:

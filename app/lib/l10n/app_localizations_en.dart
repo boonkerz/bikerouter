@@ -865,6 +865,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigateHeadingUp => 'Heading up';
 
   @override
+  String get navigateVoiceOn => 'Voice on';
+
+  @override
+  String get navigateVoiceOff => 'Voice off';
+
+  @override
+  String voiceInMeters(int n) {
+    return 'In $n meters';
+  }
+
+  @override
+  String get voiceNow => 'Now';
+
+  @override
+  String get voiceRerouting => 'Recalculating route';
+
+  @override
+  String get voiceArrived => 'You have arrived at your destination';
+
+  @override
   String get altRoutePrimary => 'Main';
 
   @override

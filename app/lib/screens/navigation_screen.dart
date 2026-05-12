@@ -13,6 +13,7 @@ import '../models/nogo_area.dart';
 import '../models/route_result.dart';
 import '../models/turn_hint.dart';
 import '../services/brouter_service.dart';
+import '../services/navigation_voice_service.dart';
 
 const double _offRouteThresholdM = 50.0;
 const double _arrivalThresholdM = 30.0;
@@ -52,6 +53,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
   double _lastRecenterLat = 0;
   double _lastRecenterLon = 0;
   double _lastAppliedRotation = 0;
+  // Voice tracking: which (hintCoordIdx, phase) keys have already been
+  // announced this session. Re-routes reset the set by clearing it in
+  // _maybeReroute when a fresh route is installed.
+  final Set<String> _spokenPhases = {};
+  bool _voiceMuted = false;
 
   @override
   void initState() {
@@ -59,11 +65,20 @@ class _NavigationScreenState extends State<NavigationScreen> {
     _route = widget.route;
     WakelockPlus.enable();
     _startGps();
+    _initVoice();
+  }
+
+  Future<void> _initVoice() async {
+    final tag = WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag();
+    await NavigationVoiceService.instance.init(tag);
+    if (!mounted) return;
+    setState(() => _voiceMuted = NavigationVoiceService.instance.muted);
   }
 
   @override
   void dispose() {
     _gpsSub?.cancel();
+    NavigationVoiceService.instance.stop();
     WakelockPlus.disable();
     super.dispose();
   }
@@ -88,12 +103,47 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   void _onPosition(Position pos) {
     if (!mounted || _route == null) return;
+    final wasArrived = _arrived;
     _pos = pos;
     _coordIdx = _nearestCoordIdx(pos.latitude, pos.longitude);
     _checkArrival();
     _maybeReroute();
     _recenter();
+    _speakTurnIfNeeded();
+    if (!wasArrived && _arrived) {
+      final l = AppLocalizations.of(context);
+      NavigationVoiceService.instance.speak(l.voiceArrived);
+    }
     setState(() {});
+  }
+
+  void _speakTurnIfNeeded() {
+    if (_voiceMuted || _arrived) return;
+    final hint = _nextHint;
+    if (hint == null) return;
+    final l = AppLocalizations.of(context);
+    final distM = _distanceToNextHintM();
+    // Pick the current "phase" — the closest threshold that the distance has
+    // crossed. A given (hint, phase) pair is only spoken once.
+    int? phase;
+    if (distM <= 40) {
+      phase = 0; // "now"
+    } else if (distM <= 220) {
+      phase = 200;
+    } else if (distM <= 520) {
+      phase = 500;
+    }
+    if (phase == null) return;
+    final key = '${hint.coordIndex}:$phase';
+    if (!_spokenPhases.add(key)) return;
+    final action = _textForCmd(hint.cmd, l);
+    final String spoken;
+    if (phase == 0) {
+      spoken = '${l.voiceNow} $action';
+    } else {
+      spoken = '${l.voiceInMeters(phase)} $action';
+    }
+    NavigationVoiceService.instance.speak(spoken);
   }
 
   int _nearestCoordIdx(double lat, double lon) {
@@ -141,6 +191,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
     }
     _rerouting = true;
     _lastReroute = now;
+    if (mounted) {
+      final l = AppLocalizations.of(context);
+      NavigationVoiceService.instance.speak(l.voiceRerouting);
+    }
     try {
       final wpsLonLat = <List<double>>[
         [_pos!.longitude, _pos!.latitude],
@@ -155,6 +209,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
       setState(() {
         _route = newRoute;
         _coordIdx = 0;
+        _spokenPhases.clear();
       });
     } catch (_) {
       // swallow; user stays on the visual route until next attempt
@@ -357,20 +412,37 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ),
           ),
 
-          // Right: rotation toggle
+          // Right: rotation toggle + voice mute
           Positioned(
             top: 100, right: 12,
             child: SafeArea(
-              child: FloatingActionButton.small(
-                heroTag: 'nav_rotate',
-                onPressed: () {
-                  setState(() => _headingUp = !_headingUp);
-                  _recenter();
-                },
-                tooltip: _headingUp ? l.navigateNorthUp : l.navigateHeadingUp,
-                child: Icon(_headingUp
-                    ? Icons.explore_outlined
-                    : Icons.navigation_outlined),
+              child: Column(
+                children: [
+                  FloatingActionButton.small(
+                    heroTag: 'nav_rotate',
+                    onPressed: () {
+                      setState(() => _headingUp = !_headingUp);
+                      _recenter();
+                    },
+                    tooltip: _headingUp ? l.navigateNorthUp : l.navigateHeadingUp,
+                    child: Icon(_headingUp
+                        ? Icons.explore_outlined
+                        : Icons.navigation_outlined),
+                  ),
+                  const SizedBox(height: 8),
+                  FloatingActionButton.small(
+                    heroTag: 'nav_voice',
+                    onPressed: () async {
+                      await NavigationVoiceService.instance.toggleMuted();
+                      if (!mounted) return;
+                      setState(() => _voiceMuted = NavigationVoiceService.instance.muted);
+                    },
+                    tooltip: _voiceMuted ? l.navigateVoiceOff : l.navigateVoiceOn,
+                    child: Icon(_voiceMuted
+                        ? Icons.volume_off
+                        : Icons.volume_up),
+                  ),
+                ],
               ),
             ),
           ),
