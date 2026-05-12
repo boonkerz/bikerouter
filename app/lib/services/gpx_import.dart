@@ -1,26 +1,16 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:xml/xml.dart';
 
 import '../models/route_result.dart';
 import '../models/route_segment.dart';
+import 'gpx_picker.dart';
 
 class GpxImport {
   /// Open the platform file picker for a .gpx file and return its bytes,
   /// or null if the user cancelled.
-  static Future<({String name, Uint8List bytes})?> pick() async {
-    const typeGroup = XTypeGroup(
-      label: 'GPX',
-      extensions: ['gpx'],
-      mimeTypes: ['application/gpx+xml', 'application/xml', 'text/xml'],
-    );
-    final XFile? file = await openFile(acceptedTypeGroups: [typeGroup]);
-    if (file == null) return null;
-    final bytes = await file.readAsBytes();
-    return (name: file.name, bytes: bytes);
-  }
+  static Future<({String name, Uint8List bytes})?> pick() => pickGpxFile();
 
   /// Parse GPX track XML into a RouteResult-like structure. Concatenates
   /// every `trkseg` in every `trk` into a single coordinate sequence.
