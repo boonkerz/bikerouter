@@ -19,6 +19,13 @@ scp docker-compose.prod.yml root@$SERVER:$REMOTE_PATH/docker-compose.prod.yml
 scp Caddyfile root@$SERVER:$REMOTE_PATH/Caddyfile
 scp Dockerfile.brouter root@$SERVER:$REMOTE_PATH/Dockerfile.brouter
 
+echo "Syncing BRouter custom profiles..."
+ssh root@$SERVER "mkdir -p $REMOTE_PATH/customprofiles"
+rsync -avz --delete customprofiles/ root@$SERVER:$REMOTE_PATH/customprofiles/
+
+echo "Restarting BRouter so entrypoint picks up new custom profiles..."
+ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml restart brouter"
+
 echo "Syncing feedback service..."
 rsync -avz --delete \
   --exclude='*.db' --exclude='*.db-*' \

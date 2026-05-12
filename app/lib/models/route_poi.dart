@@ -43,6 +43,14 @@ enum PoiCategory {
     gpxSym: 'Gas Station',
     gpxType: 'fuel',
   ),
+  charging(
+    id: 'charging',
+    label: 'Ladestation',
+    icon: Icons.electrical_services,
+    color: Color(0xFF66bb6a),
+    gpxSym: 'Charging Station',
+    gpxType: 'charging',
+  ),
   sights(
     id: 'sights',
     label: 'Sehenswürdigkeiten',
@@ -117,6 +125,8 @@ enum PoiCategory {
         return l.poiCatShop;
       case PoiCategory.fuel:
         return l.poiCatFuel;
+      case PoiCategory.charging:
+        return l.poiCatCharging;
       case PoiCategory.sights:
         return l.poiCatSights;
       case PoiCategory.scenic:

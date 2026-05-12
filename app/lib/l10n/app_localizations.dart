@@ -524,6 +524,12 @@ abstract class AppLocalizations {
   /// **'Auto'**
   String get profileCategoryCar;
 
+  /// No description provided for @profileCategoryEbike.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Bike'**
+  String get profileCategoryEbike;
+
   /// No description provided for @profileCategoryOther.
   ///
   /// In de, this message translates to:
@@ -619,6 +625,18 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Auto mit Anhänger'**
   String get profileCarTrailer;
+
+  /// No description provided for @profileEbike.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Bike'**
+  String get profileEbike;
+
+  /// No description provided for @profileEbikeMtb.
+  ///
+  /// In de, this message translates to:
+  /// **'E-MTB'**
+  String get profileEbikeMtb;
 
   /// No description provided for @roundtripTitle.
   ///
@@ -2245,6 +2263,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Tankstelle'**
   String get poiCatFuel;
+
+  /// No description provided for @poiCatCharging.
+  ///
+  /// In de, this message translates to:
+  /// **'Ladestation'**
+  String get poiCatCharging;
 
   /// No description provided for @poiCatSights.
   ///

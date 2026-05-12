@@ -226,6 +226,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get profileCategoryCar => 'Auto';
 
   @override
+  String get profileCategoryEbike => 'E-Bike';
+
+  @override
   String get profileCategoryOther => 'Sonstige';
 
   @override
@@ -272,6 +275,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get profileCarTrailer => 'Auto mit Anhänger';
+
+  @override
+  String get profileEbike => 'E-Bike';
+
+  @override
+  String get profileEbikeMtb => 'E-MTB';
 
   @override
   String get roundtripTitle => 'Rundtour';
@@ -1148,6 +1157,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get poiCatFuel => 'Tankstelle';
+
+  @override
+  String get poiCatCharging => 'Ladestation';
 
   @override
   String get poiCatSights => 'Sehenswürdigkeiten';

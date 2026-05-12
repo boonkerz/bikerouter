@@ -6,6 +6,7 @@ import '../services/route_poi_search_service.dart';
 
 const List<PoiCategory> _availableCategories = [
   PoiCategory.fuel,
+  PoiCategory.charging,
   PoiCategory.shop,
   PoiCategory.sights,
   PoiCategory.food,

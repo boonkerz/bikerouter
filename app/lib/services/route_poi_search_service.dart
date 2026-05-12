@@ -37,6 +37,7 @@ class RoutePoiSearchService {
 
   static const Map<PoiCategory, List<String>> _filters = {
     PoiCategory.fuel: ['[amenity=fuel]'],
+    PoiCategory.charging: ['[amenity=charging_station]'],
     PoiCategory.shop: [
       '[shop~"^(supermarket|convenience|bakery|butcher|greengrocer|department_store|mall)\$"]',
     ],
@@ -183,6 +184,7 @@ class RoutePoiSearchService {
   static PoiCategory? _classify(Map<String, String> tags) {
     final amenity = tags['amenity'];
     if (amenity == 'fuel') return PoiCategory.fuel;
+    if (amenity == 'charging_station') return PoiCategory.charging;
     if (amenity == 'drinking_water') return PoiCategory.water;
     if (amenity == 'restaurant' ||
         amenity == 'cafe' ||
@@ -231,6 +233,7 @@ class RoutePoiSearchService {
   static String _primaryTagKey(PoiCategory cat) {
     switch (cat) {
       case PoiCategory.fuel:
+      case PoiCategory.charging:
       case PoiCategory.water:
       case PoiCategory.food:
         return 'amenity';
