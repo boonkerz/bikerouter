@@ -11,8 +11,12 @@ class RouteUrlImportException implements Exception {
 }
 
 class RouteUrlImport {
-  static final RegExp _komootTour =
-      RegExp(r'komoot\.(?:com|de|fr|es|it|nl|pl)/tour/(\d+)', caseSensitive: false);
+  // Komoot supports per-locale subpaths like /de-de/tour/, /en-us/tour/, etc.
+  // The locale segment is optional — both komoot.com/tour/N and
+  // komoot.com/de-de/tour/N point at the same public tour.
+  static final RegExp _komootTour = RegExp(
+      r'komoot\.(?:com|de|fr|es|it|nl|pl)(?:/[a-z]{2}-[a-z]{2})?/tour/(\d+)',
+      caseSensitive: false);
   static final RegExp _stravaActivity =
       RegExp(r'strava\.com/activities/(\d+)', caseSensitive: false);
   static final RegExp _stravaRoute =
