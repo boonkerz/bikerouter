@@ -66,7 +66,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionFeedback => 'Feedback';
 
   @override
+  String get settingsSectionPersonal => 'Personal';
+
+  @override
   String get settingsSectionAbout => 'About';
+
+  @override
+  String get settingsBodyWeight => 'Body weight';
+
+  @override
+  String get settingsBodyWeightEdit => 'Set body weight';
 
   @override
   String get settingsImpressum => 'Imprint';
@@ -1438,6 +1447,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuNogos => 'No-go areas';
+
+  @override
+  String get menuRecording => 'Record ride';
+
+  @override
+  String get menuRecordedRides => 'Recorded rides';
+
+  @override
+  String get recordingTitle => 'Recording';
+
+  @override
+  String get recordingStart => 'Start';
+
+  @override
+  String get recordingPause => 'Pause';
+
+  @override
+  String get recordingResume => 'Resume';
+
+  @override
+  String get recordingStop => 'Stop';
+
+  @override
+  String get recordingPermissionDenied => 'Location permission required';
+
+  @override
+  String get recordingDistance => 'Distance';
+
+  @override
+  String get recordingDuration => 'Time';
+
+  @override
+  String get recordingAvgSpeed => 'Avg speed';
+
+  @override
+  String get recordingMaxSpeed => 'Max speed';
+
+  @override
+  String get recordingAscent => 'Ascent';
+
+  @override
+  String get recordingDescent => 'Descent';
+
+  @override
+  String get recordingKcal => 'Calories';
+
+  @override
+  String get recordingSaveTitle => 'Save recording';
+
+  @override
+  String get recordingSaveHint => 'Ride name';
+
+  @override
+  String get recordingSave => 'Save';
+
+  @override
+  String recordingDefaultName(String date, String time) {
+    return 'Ride $date $time';
+  }
+
+  @override
+  String get recordingSummaryTitle => 'Recording finished';
+
+  @override
+  String get recordingCloseSummary => 'Close';
+
+  @override
+  String get recordingExportGpx => 'Share as GPX';
+
+  @override
+  String get recordingActive => 'Recording in progress';
+
+  @override
+  String get recordedRidesTitle => 'Recorded rides';
+
+  @override
+  String get recordedRidesEmpty => 'No rides recorded yet';
+
+  @override
+  String get recordedRideDelete => 'Delete';
 
   @override
   String get profileSpeedEdit => 'Adjust speed';

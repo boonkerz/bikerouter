@@ -2,9 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
+import '../services/body_weight_prefs.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  int _weightKg = BodyWeightPrefs.defaultKg;
+
+  @override
+  void initState() {
+    super.initState();
+    BodyWeightPrefs.get().then((kg) {
+      if (mounted) setState(() => _weightKg = kg);
+    });
+  }
+
+  Future<void> _editWeight() async {
+    final l = AppLocalizations.of(context);
+    final ctrl = TextEditingController(text: _weightKg.toString());
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.settingsBodyWeightEdit),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(suffix: Text('kg')),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l.urlImportCancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final v = int.tryParse(ctrl.text.trim());
+              if (v != null && v >= 30 && v <= 200) Navigator.of(ctx).pop(v);
+            },
+            child: Text(l.recordingSave),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      await BodyWeightPrefs.set(result);
+      if (mounted) setState(() => _weightKg = result);
+    }
+  }
 
   static const _baseUrl = 'https://wegwiesel.app';
   static const _impressumUrl = '$_baseUrl/legal/impressum.html';
@@ -63,6 +113,13 @@ class SettingsScreen extends StatelessWidget {
             title: l.settingsContactMail,
             subtitle: _supportEmail,
             onTap: _openMail,
+          ),
+          _sectionHeader(l.settingsSectionPersonal),
+          _tile(
+            icon: Icons.monitor_weight_outlined,
+            title: l.settingsBodyWeight,
+            subtitle: '$_weightKg kg',
+            onTap: _editWeight,
           ),
           _sectionHeader(l.settingsSectionAbout),
           FutureBuilder<PackageInfo>(

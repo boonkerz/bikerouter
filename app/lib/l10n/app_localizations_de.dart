@@ -66,7 +66,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsSectionFeedback => 'Feedback';
 
   @override
+  String get settingsSectionPersonal => 'Persönlich';
+
+  @override
   String get settingsSectionAbout => 'Über';
+
+  @override
+  String get settingsBodyWeight => 'Körpergewicht';
+
+  @override
+  String get settingsBodyWeightEdit => 'Körpergewicht setzen';
 
   @override
   String get settingsImpressum => 'Impressum';
@@ -1437,6 +1446,86 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get menuNogos => 'Sperrzonen';
+
+  @override
+  String get menuRecording => 'Fahrt aufzeichnen';
+
+  @override
+  String get menuRecordedRides => 'Aufzeichnungen';
+
+  @override
+  String get recordingTitle => 'Aufzeichnung';
+
+  @override
+  String get recordingStart => 'Start';
+
+  @override
+  String get recordingPause => 'Pause';
+
+  @override
+  String get recordingResume => 'Weiter';
+
+  @override
+  String get recordingStop => 'Stop';
+
+  @override
+  String get recordingPermissionDenied => 'Standortfreigabe wird benötigt';
+
+  @override
+  String get recordingDistance => 'Distanz';
+
+  @override
+  String get recordingDuration => 'Zeit';
+
+  @override
+  String get recordingAvgSpeed => '⌀ Tempo';
+
+  @override
+  String get recordingMaxSpeed => 'Max Tempo';
+
+  @override
+  String get recordingAscent => 'Aufstieg';
+
+  @override
+  String get recordingDescent => 'Abstieg';
+
+  @override
+  String get recordingKcal => 'Kalorien';
+
+  @override
+  String get recordingSaveTitle => 'Aufzeichnung speichern';
+
+  @override
+  String get recordingSaveHint => 'Name der Fahrt';
+
+  @override
+  String get recordingSave => 'Speichern';
+
+  @override
+  String recordingDefaultName(String date, String time) {
+    return 'Fahrt $date $time';
+  }
+
+  @override
+  String get recordingSummaryTitle => 'Aufzeichnung abgeschlossen';
+
+  @override
+  String get recordingCloseSummary => 'Schließen';
+
+  @override
+  String get recordingExportGpx => 'Als GPX teilen';
+
+  @override
+  String get recordingActive => 'Aufzeichnung läuft';
+
+  @override
+  String get recordedRidesTitle => 'Aufgezeichnete Fahrten';
+
+  @override
+  String get recordedRidesEmpty => 'Noch keine Fahrten aufgezeichnet';
+
+  @override
+  String get recordedRideDelete => 'Löschen';
 
   @override
   String get profileSpeedEdit => 'Geschwindigkeit anpassen';

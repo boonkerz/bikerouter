@@ -14,6 +14,8 @@ import '../models/route_result.dart';
 import '../models/turn_hint.dart';
 import '../services/brouter_service.dart';
 import '../services/navigation_voice_service.dart';
+import '../services/ride_recorder.dart';
+import '../services/ride_storage.dart';
 
 const double _offRouteThresholdM = 50.0;
 const double _arrivalThresholdM = 30.0;
@@ -441,6 +443,37 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     child: Icon(_voiceMuted
                         ? Icons.volume_off
                         : Icons.volume_up),
+                  ),
+                  const SizedBox(height: 8),
+                  ListenableBuilder(
+                    listenable: RideRecorder.instance,
+                    builder: (ctx, _) {
+                      final rec = RideRecorder.instance;
+                      return FloatingActionButton.small(
+                        heroTag: 'nav_rec',
+                        backgroundColor: rec.isActive
+                            ? const Color(0xFFc62828)
+                            : null,
+                        foregroundColor: rec.isActive ? Colors.white : null,
+                        onPressed: () async {
+                          if (rec.isActive) {
+                            final name =
+                                'Navigation ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}';
+                            final ride = await rec.stop(name: name);
+                            if (ride != null) {
+                              await RideStorage.save(ride);
+                            }
+                          } else {
+                            await rec.start();
+                          }
+                          if (mounted) setState(() {});
+                        },
+                        tooltip: rec.isActive ? l.recordingStop : l.recordingStart,
+                        child: Icon(rec.isActive
+                            ? Icons.stop
+                            : Icons.fiber_manual_record),
+                      );
+                    },
                   ),
                 ],
               ),

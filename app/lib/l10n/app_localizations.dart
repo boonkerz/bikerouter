@@ -212,11 +212,29 @@ abstract class AppLocalizations {
   /// **'Feedback'**
   String get settingsSectionFeedback;
 
+  /// No description provided for @settingsSectionPersonal.
+  ///
+  /// In de, this message translates to:
+  /// **'Persönlich'**
+  String get settingsSectionPersonal;
+
   /// No description provided for @settingsSectionAbout.
   ///
   /// In de, this message translates to:
   /// **'Über'**
   String get settingsSectionAbout;
+
+  /// No description provided for @settingsBodyWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Körpergewicht'**
+  String get settingsBodyWeight;
+
+  /// No description provided for @settingsBodyWeightEdit.
+  ///
+  /// In de, this message translates to:
+  /// **'Körpergewicht setzen'**
+  String get settingsBodyWeightEdit;
 
   /// No description provided for @settingsImpressum.
   ///
@@ -2791,6 +2809,162 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Sperrzonen'**
   String get menuNogos;
+
+  /// No description provided for @menuRecording.
+  ///
+  /// In de, this message translates to:
+  /// **'Fahrt aufzeichnen'**
+  String get menuRecording;
+
+  /// No description provided for @menuRecordedRides.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufzeichnungen'**
+  String get menuRecordedRides;
+
+  /// No description provided for @recordingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufzeichnung'**
+  String get recordingTitle;
+
+  /// No description provided for @recordingStart.
+  ///
+  /// In de, this message translates to:
+  /// **'Start'**
+  String get recordingStart;
+
+  /// No description provided for @recordingPause.
+  ///
+  /// In de, this message translates to:
+  /// **'Pause'**
+  String get recordingPause;
+
+  /// No description provided for @recordingResume.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get recordingResume;
+
+  /// No description provided for @recordingStop.
+  ///
+  /// In de, this message translates to:
+  /// **'Stop'**
+  String get recordingStop;
+
+  /// No description provided for @recordingPermissionDenied.
+  ///
+  /// In de, this message translates to:
+  /// **'Standortfreigabe wird benötigt'**
+  String get recordingPermissionDenied;
+
+  /// No description provided for @recordingDistance.
+  ///
+  /// In de, this message translates to:
+  /// **'Distanz'**
+  String get recordingDistance;
+
+  /// No description provided for @recordingDuration.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeit'**
+  String get recordingDuration;
+
+  /// No description provided for @recordingAvgSpeed.
+  ///
+  /// In de, this message translates to:
+  /// **'⌀ Tempo'**
+  String get recordingAvgSpeed;
+
+  /// No description provided for @recordingMaxSpeed.
+  ///
+  /// In de, this message translates to:
+  /// **'Max Tempo'**
+  String get recordingMaxSpeed;
+
+  /// No description provided for @recordingAscent.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufstieg'**
+  String get recordingAscent;
+
+  /// No description provided for @recordingDescent.
+  ///
+  /// In de, this message translates to:
+  /// **'Abstieg'**
+  String get recordingDescent;
+
+  /// No description provided for @recordingKcal.
+  ///
+  /// In de, this message translates to:
+  /// **'Kalorien'**
+  String get recordingKcal;
+
+  /// No description provided for @recordingSaveTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufzeichnung speichern'**
+  String get recordingSaveTitle;
+
+  /// No description provided for @recordingSaveHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Name der Fahrt'**
+  String get recordingSaveHint;
+
+  /// No description provided for @recordingSave.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern'**
+  String get recordingSave;
+
+  /// No description provided for @recordingDefaultName.
+  ///
+  /// In de, this message translates to:
+  /// **'Fahrt {date} {time}'**
+  String recordingDefaultName(String date, String time);
+
+  /// No description provided for @recordingSummaryTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufzeichnung abgeschlossen'**
+  String get recordingSummaryTitle;
+
+  /// No description provided for @recordingCloseSummary.
+  ///
+  /// In de, this message translates to:
+  /// **'Schließen'**
+  String get recordingCloseSummary;
+
+  /// No description provided for @recordingExportGpx.
+  ///
+  /// In de, this message translates to:
+  /// **'Als GPX teilen'**
+  String get recordingExportGpx;
+
+  /// No description provided for @recordingActive.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufzeichnung läuft'**
+  String get recordingActive;
+
+  /// No description provided for @recordedRidesTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufgezeichnete Fahrten'**
+  String get recordedRidesTitle;
+
+  /// No description provided for @recordedRidesEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Fahrten aufgezeichnet'**
+  String get recordedRidesEmpty;
+
+  /// No description provided for @recordedRideDelete.
+  ///
+  /// In de, this message translates to:
+  /// **'Löschen'**
+  String get recordedRideDelete;
 
   /// No description provided for @profileSpeedEdit.
   ///

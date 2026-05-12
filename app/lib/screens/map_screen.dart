@@ -12,6 +12,8 @@ import '../services/gpx_export.dart';
 import '../services/gpx_import.dart';
 import '../services/route_url_import.dart';
 import '../widgets/url_import_dialog.dart';
+import 'recording_screen.dart';
+import 'recorded_rides_screen.dart';
 
 import '../models/map_style.dart';
 import '../models/nogo_area.dart';
@@ -653,6 +655,23 @@ class _MapScreenState extends State<MapScreen> {
                               const Icon(Icons.cloud_download_outlined, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
                               Text(l.menuImportUrl, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
+                            value: 'recording',
+                            child: Row(children: [
+                              const Icon(Icons.fiber_manual_record, color: Color(0xFFc62828), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuRecording, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'recorded',
+                            child: Row(children: [
+                              const Icon(Icons.history, color: Color(0xFF6a4a28), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuRecordedRides, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
@@ -2868,6 +2887,18 @@ class _MapScreenState extends State<MapScreen> {
         break;
       case 'import_url':
         await _importUrl();
+        break;
+      case 'recording':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => RecordingScreen(mapStyle: _mapStyle),
+          ),
+        );
+        break;
+      case 'recorded':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RecordedRidesScreen()),
+        );
         break;
       case 'nogos':
         await _showNogosSheet();
