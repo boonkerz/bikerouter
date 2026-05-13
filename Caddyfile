@@ -9,6 +9,12 @@ wegwiesel.app {
 		reverse_proxy overpass:80
 	}
 
+	# Offline routing segment files
+	handle_path /segments/* {
+		root * /srv/segments
+		file_server
+	}
+
 	# Feedback Service
 	redir /feedback /feedback/ 301
 	handle /api/feedback* {

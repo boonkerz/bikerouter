@@ -72,6 +72,7 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - /opt/wegwiesel/app:/srv/web:ro
+      - /opt/wegwiesel/segments4:/srv/segments:ro
       - caddy_data:/data
       - caddy_config:/config
     restart: unless-stopped

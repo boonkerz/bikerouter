@@ -6,7 +6,7 @@ Roadmap für v2.0. Phasen 1-2 sind in `main` committed, der Rest steht aus.
 - [x] `OfflineRouter` abstrakte Schnittstelle
 - [x] `Lookups` Parser für `lookups.dat` (Text)
 - [x] `Rd5Reader` mit Header- / Sub-Tile-Index-Parsing
-- [ ] Region-Download-Service (.rd5-Segmente von `wegwiesel.app`)
+- [x] Region-Download-Service (.rd5-Segmente von `wegwiesel.app`)
 - [x] Pure-Dart-Routingkern: Graph-Modell, Trekking-Profil, A*-Suche,
   GeoJSON/`RouteResult`-Ausgabe
 
