@@ -16,7 +16,9 @@ import '../widgets/gpx_import_mode_dialog.dart';
 import 'recording_screen.dart';
 import 'recorded_rides_screen.dart';
 import 'library_screen.dart';
+import 'offline_maps_screen.dart';
 import '../services/library_service.dart';
+import '../services/wegwiesel_tile_cache_provider.dart';
 import '../widgets/publish_route_dialog.dart';
 
 import '../models/map_style.dart';
@@ -241,6 +243,9 @@ class _MapScreenState extends State<MapScreen> {
                       urlTemplate: _mapStyle.urlTemplate,
                       maxZoom: _mapStyle.maxZoom.toDouble(),
                       userAgentPackageName: 'app.wegwiesel',
+                      tileProvider: NetworkTileProvider(
+                        cachingProvider: WegwieselTileCacheProvider.instance,
+                      ),
                     ),
                     if (_mapStyle.labelsOverlay != null)
                       TileLayer(
@@ -693,6 +698,14 @@ class _MapScreenState extends State<MapScreen> {
                               const Icon(Icons.public, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
                               Text(l.menuPublishRoute, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'offline_maps',
+                            child: Row(children: [
+                              const Icon(Icons.cloud_off_outlined, color: Color(0xFF6a4a28), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuOfflineMaps, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
@@ -2926,6 +2939,16 @@ class _MapScreenState extends State<MapScreen> {
         break;
       case 'publish':
         await _publishCurrentRoute();
+        break;
+      case 'offline_maps':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => OfflineMapsScreen(
+              initialStyle: _mapStyle,
+              initialViewport: _mapController.camera.visibleBounds,
+            ),
+          ),
+        );
         break;
       case 'nogos':
         await _showNogosSheet();

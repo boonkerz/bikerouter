@@ -1485,6 +1485,69 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuPublishRoute => 'Route veröffentlichen';
 
   @override
+  String get menuOfflineMaps => 'Offline-Karten';
+
+  @override
+  String get offlineMapsTitle => 'Offline-Karten';
+
+  @override
+  String get offlineMapsCurrentSection => 'Cache';
+
+  @override
+  String get offlineMapsDownloadSection => 'Herunterladen';
+
+  @override
+  String get offlineMapsProgressSection => 'Download läuft';
+
+  @override
+  String get offlineMapsUsed => 'Belegt';
+
+  @override
+  String get offlineMapsLimit => 'Speicher-Limit';
+
+  @override
+  String get offlineMapsClearTitle => 'Cache leeren';
+
+  @override
+  String get offlineMapsClearSubtitle => 'Alle gecachten Kacheln entfernen';
+
+  @override
+  String get offlineMapsClearBody =>
+      'Alle gespeicherten Kartenkacheln werden gelöscht. Sie werden bei der nächsten Online-Nutzung neu geladen.';
+
+  @override
+  String get offlineMapsDownloadCurrent => 'Aktuellen Ausschnitt herunterladen';
+
+  @override
+  String get offlineMapsDownloadCurrentSub =>
+      'Karten-Kacheln Zoom 8–15 für den sichtbaren Bereich vorab laden';
+
+  @override
+  String get offlineMapsNoViewport =>
+      'Bitte zuerst den gewünschten Kartenausschnitt auf der Karte einstellen';
+
+  @override
+  String get offlineMapsConfirmTitle => 'Region herunterladen?';
+
+  @override
+  String offlineMapsConfirmBody(int mb) {
+    return 'Geschätzte Größe: ca. $mb MB. Während des Downloads bitte die App offen lassen.';
+  }
+
+  @override
+  String get offlineMapsStart => 'Starten';
+
+  @override
+  String offlineMapsProgressLine(int done, int total) {
+    return '$done von $total Kacheln';
+  }
+
+  @override
+  String offlineMapsProgressDone(int total) {
+    return '$total Kacheln offline verfügbar';
+  }
+
+  @override
   String get libraryTitle => 'Routen entdecken';
 
   @override

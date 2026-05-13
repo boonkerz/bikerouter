@@ -1486,6 +1486,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuPublishRoute => 'Publish route';
 
   @override
+  String get menuOfflineMaps => 'Offline maps';
+
+  @override
+  String get offlineMapsTitle => 'Offline maps';
+
+  @override
+  String get offlineMapsCurrentSection => 'Cache';
+
+  @override
+  String get offlineMapsDownloadSection => 'Download';
+
+  @override
+  String get offlineMapsProgressSection => 'Download running';
+
+  @override
+  String get offlineMapsUsed => 'Used';
+
+  @override
+  String get offlineMapsLimit => 'Storage limit';
+
+  @override
+  String get offlineMapsClearTitle => 'Clear cache';
+
+  @override
+  String get offlineMapsClearSubtitle => 'Remove all cached tiles';
+
+  @override
+  String get offlineMapsClearBody =>
+      'All stored map tiles will be deleted. They will be re-fetched the next time you go online.';
+
+  @override
+  String get offlineMapsDownloadCurrent => 'Download current view';
+
+  @override
+  String get offlineMapsDownloadCurrentSub =>
+      'Pre-load zoom 8–15 tiles for the visible area';
+
+  @override
+  String get offlineMapsNoViewport =>
+      'First adjust the map to the area you want to download';
+
+  @override
+  String get offlineMapsConfirmTitle => 'Download region?';
+
+  @override
+  String offlineMapsConfirmBody(int mb) {
+    return 'Estimated size: about $mb MB. Please keep the app open during the download.';
+  }
+
+  @override
+  String get offlineMapsStart => 'Start';
+
+  @override
+  String offlineMapsProgressLine(int done, int total) {
+    return '$done of $total tiles';
+  }
+
+  @override
+  String offlineMapsProgressDone(int total) {
+    return '$total tiles available offline';
+  }
+
+  @override
   String get libraryTitle => 'Discover routes';
 
   @override

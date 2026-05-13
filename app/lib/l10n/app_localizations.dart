@@ -2876,6 +2876,114 @@ abstract class AppLocalizations {
   /// **'Route veröffentlichen'**
   String get menuPublishRoute;
 
+  /// No description provided for @menuOfflineMaps.
+  ///
+  /// In de, this message translates to:
+  /// **'Offline-Karten'**
+  String get menuOfflineMaps;
+
+  /// No description provided for @offlineMapsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Offline-Karten'**
+  String get offlineMapsTitle;
+
+  /// No description provided for @offlineMapsCurrentSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Cache'**
+  String get offlineMapsCurrentSection;
+
+  /// No description provided for @offlineMapsDownloadSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Herunterladen'**
+  String get offlineMapsDownloadSection;
+
+  /// No description provided for @offlineMapsProgressSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Download läuft'**
+  String get offlineMapsProgressSection;
+
+  /// No description provided for @offlineMapsUsed.
+  ///
+  /// In de, this message translates to:
+  /// **'Belegt'**
+  String get offlineMapsUsed;
+
+  /// No description provided for @offlineMapsLimit.
+  ///
+  /// In de, this message translates to:
+  /// **'Speicher-Limit'**
+  String get offlineMapsLimit;
+
+  /// No description provided for @offlineMapsClearTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Cache leeren'**
+  String get offlineMapsClearTitle;
+
+  /// No description provided for @offlineMapsClearSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle gecachten Kacheln entfernen'**
+  String get offlineMapsClearSubtitle;
+
+  /// No description provided for @offlineMapsClearBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle gespeicherten Kartenkacheln werden gelöscht. Sie werden bei der nächsten Online-Nutzung neu geladen.'**
+  String get offlineMapsClearBody;
+
+  /// No description provided for @offlineMapsDownloadCurrent.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktuellen Ausschnitt herunterladen'**
+  String get offlineMapsDownloadCurrent;
+
+  /// No description provided for @offlineMapsDownloadCurrentSub.
+  ///
+  /// In de, this message translates to:
+  /// **'Karten-Kacheln Zoom 8–15 für den sichtbaren Bereich vorab laden'**
+  String get offlineMapsDownloadCurrentSub;
+
+  /// No description provided for @offlineMapsNoViewport.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte zuerst den gewünschten Kartenausschnitt auf der Karte einstellen'**
+  String get offlineMapsNoViewport;
+
+  /// No description provided for @offlineMapsConfirmTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Region herunterladen?'**
+  String get offlineMapsConfirmTitle;
+
+  /// No description provided for @offlineMapsConfirmBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Geschätzte Größe: ca. {mb} MB. Während des Downloads bitte die App offen lassen.'**
+  String offlineMapsConfirmBody(int mb);
+
+  /// No description provided for @offlineMapsStart.
+  ///
+  /// In de, this message translates to:
+  /// **'Starten'**
+  String get offlineMapsStart;
+
+  /// No description provided for @offlineMapsProgressLine.
+  ///
+  /// In de, this message translates to:
+  /// **'{done} von {total} Kacheln'**
+  String offlineMapsProgressLine(int done, int total);
+
+  /// No description provided for @offlineMapsProgressDone.
+  ///
+  /// In de, this message translates to:
+  /// **'{total} Kacheln offline verfügbar'**
+  String offlineMapsProgressDone(int total);
+
   /// No description provided for @libraryTitle.
   ///
   /// In de, this message translates to:
