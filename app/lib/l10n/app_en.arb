@@ -512,6 +512,7 @@
   "routeOverlayHiking": "Hiking trails",
   "routeOverlayMtb": "MTB routes",
   "routeOverlayHillshade": "Hillshade",
+  "routeOverlayHeatmap": "Wegwiesel heatmap",
 
   "gpxImportTitle": "Import GPX track",
   "gpxImportButton": "Choose GPX file",

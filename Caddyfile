@@ -25,6 +25,9 @@ wegwiesel.app {
 	handle /api/library* {
 		reverse_proxy share:8080
 	}
+	handle /api/heatmap* {
+		reverse_proxy share:8080
+	}
 
 	# Live tracking
 	handle /api/track* {

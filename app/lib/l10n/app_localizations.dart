@@ -2642,6 +2642,12 @@ abstract class AppLocalizations {
   /// **'Höhenschummerung'**
   String get routeOverlayHillshade;
 
+  /// No description provided for @routeOverlayHeatmap.
+  ///
+  /// In de, this message translates to:
+  /// **'Wegwiesel-Heatmap'**
+  String get routeOverlayHeatmap;
+
   /// No description provided for @gpxImportTitle.
   ///
   /// In de, this message translates to:

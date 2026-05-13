@@ -30,6 +30,24 @@ Hauptdomain: https://wegwiesel.app · Bundle: `com.thomaspeterson.bikerouter` ·
 
 ---
 
+## v1.10 „Discover" (✓ in Arbeit / ausgeliefert)
+
+Discover-Welle bringt die App auf das nächste Niveau ohne große Architektur-Eingriffe:
+
+### v1.10 Feature 1 — Public Route Library ✓
+- Share-Service erweitert um `published/title/description/profile/center_lat/lon/published_at` + `edit_token`
+- Endpoints: `PATCH /api/share/{code}` (publish/edit), `DELETE /api/share/{code}` (mit token), `GET /api/library` (paginated, Filter: profile/distance/bbox/search)
+- Published shares überleben die 7-Tage-TTL
+- App: GarminShareService liefert jetzt `editToken`, `EditTokenStore` persistiert lokal. Menü „Routen entdecken" → `LibraryScreen` mit Chip-Filtern, „Route veröffentlichen" → Dialog → Upload + PATCH
+- Caddyfile: `/api/library*` → share-Container
+
+### v1.10 Feature 2 — Wegwiesel-Heatmap-Overlay
+- Tabelle `tile_counters (z, x, y, count)` in share.db
+- Aggregator: bei jedem Publish wird die GPX-Geometrie zu Zoom-12-Tiles dedupliziert + Counter inkrementiert
+- Renderer: `/api/heatmap/{z}/{x}/{y}.png` rendert 256×256 PNG mit Rot-Alpha = `log2(count+1) × 40`
+- App: neuer RouteOverlay-Eintrag „🔥 Wegwiesel-Heatmap", Toggle in der bestehenden Overlay-Liste
+- Privacy: nur veröffentlichte Routen tragen bei, keine Personen-Tags, keine Zeit-Stamps in den Counters
+
 ## v2.0 „Off the grid" (Nächste Welle — ca. 3–4 Wochen)
 
 **Ziel:** Der größte USP-Block. Komoot Premium kann Offline-Maps, Wegwiesel macht es kostenlos und privacy-freundlich.

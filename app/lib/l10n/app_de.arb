@@ -512,6 +512,7 @@
   "routeOverlayHiking": "Wanderwege",
   "routeOverlayMtb": "MTB-Routen",
   "routeOverlayHillshade": "Höhenschummerung",
+  "routeOverlayHeatmap": "Wegwiesel-Heatmap",
 
   "gpxImportTitle": "GPX-Track importieren",
   "gpxImportButton": "GPX-Datei wählen",

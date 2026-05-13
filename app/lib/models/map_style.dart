@@ -58,6 +58,8 @@ class RouteOverlay {
         return l.routeOverlayMtb;
       case 'hillshade':
         return l.routeOverlayHillshade;
+      case 'heatmap':
+        return l.routeOverlayHeatmap;
       default:
         return name;
     }
@@ -88,6 +90,12 @@ const routeOverlays = [
     name: 'Höhenschummerung',
     icon: '🏔️',
     urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',
+  ),
+  RouteOverlay(
+    id: 'heatmap',
+    name: 'Wegwiesel-Heatmap',
+    icon: '🔥',
+    urlTemplate: 'https://wegwiesel.app/api/heatmap/{z}/{x}/{y}.png',
   ),
 ];
 

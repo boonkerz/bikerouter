@@ -5,6 +5,24 @@
 
 ---
 
+## v1.10.0 (DE) — „Discover"
+**Routen entdecken und teilen — mit Heatmap, wo die Community fährt.**
+
+• Öffentliche Routen-Bibliothek: Eigene Touren mit einem Tipp veröffentlichen (Titel + Beschreibung, kein Account)
+• „Routen entdecken"-Bildschirm: filter nach Distanz, in deiner Nähe, Titel-Suche, ein Tipp lädt die Strecke
+• Wegwiesel-Heatmap: roter Overlay-Layer zeigt, wo Wegwiesel-User Routen geplant haben — schaltbar im Karten-Stil-Picker
+• Privacy bleibt Privacy: keine Personen-Tags, kein User-Tracking, nur dein Gerät kann eigene Veröffentlichungen wieder zurückziehen
+
+## v1.10.0 (EN) — "Discover"
+**Discover and share routes — with a heatmap of where the community rides.**
+
+• Public route library: publish your tours with one tap (title + description, no account)
+• "Discover routes" screen: filter by distance, near me, title search, tap to load
+• Wegwiesel heatmap: red overlay shows where Wegwiesel users have planned routes — toggle in the map style picker
+• Privacy stays privacy: no user tags, no tracking, only your device can take down your own publications
+
+---
+
 ## v1.9.0 (DE) — „Onboard Companion"
 **Die App wird zum Begleiter auf der Fahrt.**
 

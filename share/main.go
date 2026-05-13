@@ -57,6 +57,7 @@ func main() {
 	mux.HandleFunc("PATCH /api/share/{code}", publishShare)
 	mux.HandleFunc("DELETE /api/share/{code}", deleteShare)
 	mux.HandleFunc("GET /api/library", listLibrary)
+	mux.HandleFunc("GET /api/heatmap/{z}/{x}/{y}", serveHeatmapTile)
 
 	log.Printf("share service on %s", addr)
 	if err := http.ListenAndServe(addr, withCORS(mux)); err != nil {
@@ -94,6 +95,13 @@ func initSchema() error {
 		`ALTER TABLE shares ADD COLUMN center_lon REAL NOT NULL DEFAULT 0`,
 		`ALTER TABLE shares ADD COLUMN published_at TEXT NOT NULL DEFAULT ''`,
 		`CREATE INDEX IF NOT EXISTS idx_shares_published ON shares(published, approved, published_at)`,
+		`CREATE TABLE IF NOT EXISTS tile_counters (
+			z INTEGER NOT NULL,
+			x INTEGER NOT NULL,
+			y INTEGER NOT NULL,
+			count INTEGER NOT NULL DEFAULT 0,
+			PRIMARY KEY (z, x, y)
+		)`,
 	}
 	for _, q := range addColumns {
 		if _, err := db.Exec(q); err != nil {
@@ -418,6 +426,18 @@ func publishShare(w http.ResponseWriter, r *http.Request) {
 		httpErr(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	// If this PATCH set published=true, feed the route geometry into the
+	// heatmap counters. Best-effort — failure here doesn't fail the request.
+	if in.Published != nil && *in.Published {
+		var gpx []byte
+		if err := db.QueryRow(`SELECT gpx FROM shares WHERE code = ?`, code).Scan(&gpx); err == nil && len(gpx) > 0 {
+			if err := aggregateRouteIntoHeatmap(gpx); err != nil {
+				log.Printf("heatmap aggregate failed for %s: %v", code, err)
+			}
+		}
+	}
+
 	writeJSON(w, map[string]any{"ok": true})
 }
 

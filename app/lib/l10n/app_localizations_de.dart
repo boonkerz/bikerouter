@@ -1357,6 +1357,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get routeOverlayHillshade => 'Höhenschummerung';
 
   @override
+  String get routeOverlayHeatmap => 'Wegwiesel-Heatmap';
+
+  @override
   String get gpxImportTitle => 'GPX-Track importieren';
 
   @override
