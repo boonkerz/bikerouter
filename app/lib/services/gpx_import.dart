@@ -67,6 +67,32 @@ class GpxImport {
     );
   }
 
+  /// Reduce a high-density track (Komoot exports often have 500+ points per
+  /// 50 km) to a handful of via-waypoints that BRouter can re-route through.
+  /// Always keeps start and end. Targets one waypoint every `stepKm`,
+  /// capped at `maxPoints` total (BRouter slows down beyond ~30 vias).
+  static List<List<double>> sampleWaypoints(
+    List<List<double>> coords, {
+    double stepKm = 5,
+    int maxPoints = 25,
+  }) {
+    if (coords.length <= 2) {
+      return List<List<double>>.from(coords);
+    }
+    final result = <List<double>>[coords.first];
+    double accumKm = 0;
+    for (int i = 1; i < coords.length - 1; i++) {
+      accumKm += _haversineKm(coords[i - 1], coords[i]);
+      if (accumKm >= stepKm) {
+        result.add(coords[i]);
+        accumKm = 0;
+        if (result.length >= maxPoints - 1) break;
+      }
+    }
+    result.add(coords.last);
+    return result;
+  }
+
   static double _haversineKm(List<double> a, List<double> b) {
     const r = 6371.0;
     final dLat = (b[1] - a[1]) * pi / 180;

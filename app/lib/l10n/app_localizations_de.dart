@@ -1376,6 +1376,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gpxImportEmpty => 'Keine Trackpunkte in der Datei gefunden';
 
   @override
+  String get gpxModeTitle => 'Wie soll der Track importiert werden?';
+
+  @override
+  String gpxModeSummary(int points, String km) {
+    return '$points Punkte · $km km';
+  }
+
+  @override
+  String get gpxModeRerouteTitle => 'Mit deinem Profil nachrouten';
+
+  @override
+  String get gpxModeRerouteBody =>
+      'Wegwiesel berechnet die Strecke mit dem aktuell gewählten Profil. Du bekommst Belag-Anzeige, Höhenprofil-Farben, Turn-by-Turn-Navigation und Sprachausgabe. Strecke kann leicht abweichen.';
+
+  @override
+  String get gpxModeTrackTitle => 'Track 1:1 übernehmen';
+
+  @override
+  String get gpxModeTrackBody =>
+      'Original-Geometrie unverändert anzeigen. Keine Belag-Info, keine Sprach-Navigation — gut wenn die Tour exakt so gefahren werden soll.';
+
+  @override
   String get urlImportTitle => 'Tour-URL importieren';
 
   @override

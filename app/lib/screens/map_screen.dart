@@ -12,6 +12,7 @@ import '../services/gpx_export.dart';
 import '../services/gpx_import.dart';
 import '../services/route_url_import.dart';
 import '../widgets/url_import_dialog.dart';
+import '../widgets/gpx_import_mode_dialog.dart';
 import 'recording_screen.dart';
 import 'recorded_rides_screen.dart';
 
@@ -3100,17 +3101,8 @@ class _MapScreenState extends State<MapScreen> {
       final picked = await GpxImport.pick();
       if (picked == null) return;
       final result = GpxImport.parse(picked.bytes);
-      _displayRoute(result);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).gpxImportSuccess(
-              result.coordinates.length,
-              result.distance.toStringAsFixed(1),
-            )),
-          ),
-        );
-      }
+      if (!mounted) return;
+      await _handleImportedGpx(result);
     } on GpxImportException catch (e) {
       if (!mounted) return;
       final l = AppLocalizations.of(context);
@@ -3118,6 +3110,37 @@ class _MapScreenState extends State<MapScreen> {
     } catch (e) {
       if (mounted) _showError(AppLocalizations.of(context).gpxImportFailed(e.toString()));
     }
+  }
+
+  Future<void> _handleImportedGpx(RouteResult parsed) async {
+    final mode = await askGpxImportMode(
+      context,
+      pointCount: parsed.coordinates.length,
+      distanceKm: parsed.distance,
+    );
+    if (mode == null || !mounted) return;
+    final l = AppLocalizations.of(context);
+
+    if (mode == GpxImportMode.track) {
+      _displayRoute(parsed);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.gpxImportSuccess(
+          parsed.coordinates.length,
+          parsed.distance.toStringAsFixed(1),
+        ))),
+      );
+      return;
+    }
+
+    // Re-route via BRouter using the user's current profile.
+    final samples = GpxImport.sampleWaypoints(parsed.coordinates);
+    setState(() {
+      _waypoints
+        ..clear()
+        ..addAll(samples.map((c) => LatLng(c[1], c[0])));
+      _roundtripMode = false;
+    });
+    await _calculateRoute();
   }
 
   Future<void> _importUrl() async {
@@ -3146,15 +3169,7 @@ class _MapScreenState extends State<MapScreen> {
       final result = GpxImport.parse(fetched.bytes);
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop(); // close spinner
-      _displayRoute(result);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l.gpxImportSuccess(
-            result.coordinates.length,
-            result.distance.toStringAsFixed(1),
-          )),
-        ),
-      );
+      await _handleImportedGpx(result);
     } on RouteUrlImportException catch (e) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();

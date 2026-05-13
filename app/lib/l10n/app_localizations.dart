@@ -2672,6 +2672,42 @@ abstract class AppLocalizations {
   /// **'Keine Trackpunkte in der Datei gefunden'**
   String get gpxImportEmpty;
 
+  /// No description provided for @gpxModeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie soll der Track importiert werden?'**
+  String get gpxModeTitle;
+
+  /// No description provided for @gpxModeSummary.
+  ///
+  /// In de, this message translates to:
+  /// **'{points} Punkte · {km} km'**
+  String gpxModeSummary(int points, String km);
+
+  /// No description provided for @gpxModeRerouteTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit deinem Profil nachrouten'**
+  String get gpxModeRerouteTitle;
+
+  /// No description provided for @gpxModeRerouteBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Wegwiesel berechnet die Strecke mit dem aktuell gewählten Profil. Du bekommst Belag-Anzeige, Höhenprofil-Farben, Turn-by-Turn-Navigation und Sprachausgabe. Strecke kann leicht abweichen.'**
+  String get gpxModeRerouteBody;
+
+  /// No description provided for @gpxModeTrackTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Track 1:1 übernehmen'**
+  String get gpxModeTrackTitle;
+
+  /// No description provided for @gpxModeTrackBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Original-Geometrie unverändert anzeigen. Keine Belag-Info, keine Sprach-Navigation — gut wenn die Tour exakt so gefahren werden soll.'**
+  String get gpxModeTrackBody;
+
   /// No description provided for @urlImportTitle.
   ///
   /// In de, this message translates to:
