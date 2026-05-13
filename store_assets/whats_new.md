@@ -5,6 +5,20 @@
 
 ---
 
+## v2.0.0 (DE) — "Off the grid"
+**Vorarbeit für echtes Offline-Routing.**
+
+• Pure-Dart-Routingkern mit Trekking-MVP, lokalem Graph-Modell und A*-Suche
+• Die App kann einen lokalen Offline-Router nutzen und fällt bei unvollständigen lokalen Daten sauber auf den BRouter-Server zurück
+
+## v2.0.0 (EN) — "Off the grid"
+**Groundwork for real offline routing.**
+
+• Pure-Dart routing core with a trekking MVP, local graph model and A* search
+• The app can use a local offline router and still falls back cleanly to the BRouter server when local data is incomplete
+
+---
+
 ## v1.11.0 (DE) — „Offline-Karten"
 **Wegwiesel funktioniert jetzt auch im Funkloch.**
 

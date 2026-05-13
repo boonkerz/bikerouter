@@ -7,6 +7,8 @@ Roadmap für v2.0. Phasen 1-2 sind in `main` committed, der Rest steht aus.
 - [x] `Lookups` Parser für `lookups.dat` (Text)
 - [x] `Rd5Reader` mit Header- / Sub-Tile-Index-Parsing
 - [ ] Region-Download-Service (.rd5-Segmente von `wegwiesel.app`)
+- [x] Pure-Dart-Routingkern: Graph-Modell, Trekking-Profil, A*-Suche,
+  GeoJSON/`RouteResult`-Ausgabe
 
 ## Phase 2 — RD5 Decoder
 Die binären Sub-Tiles enthalten Huffman-codierte Bitstreams mit Knoten und ausgehenden Ways. Die Kern-Logik aus BRouter Java übersetzt:
@@ -30,10 +32,11 @@ Option B — Ein einziges Profil hardcoden (Trekking): ~1 Tag
 Empfohlen B für v2.0.0, A für v2.0.x wenn andere Profile gewünscht.
 
 ## Phase 4 — A*-Suche
-- Bidirektionale A* mit Haversine als Heuristik
-- Priority Queue (`SplayTreeMap` als Stand-in für Heap, oder `package:collection`)
-- Knoten-Cache mit LRU (Sub-Tiles werden on-demand decodiert und gehalten)
-- Profile-Filter pro Edge-Traversal
+- [x] MVP: vorwärts gerichtete A*-Suche mit Haversine-Heuristik
+- [x] Priority Queue auf Basis von `SplayTreeMap`
+- [x] Hardcodiertes `trekking`-Kostenmodell als erstes Offline-Profil
+- [ ] Knoten-Cache mit LRU (Sub-Tiles werden on-demand decodiert und gehalten)
+- [ ] Bidirektionale Suche für große Regionen
 
 ## Phase 5 — Region-Download + Integration
 - Neuer Endpoint `https://wegwiesel.app/segments/<filename>.rd5` via Caddy → segments4-Volume

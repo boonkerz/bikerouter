@@ -6,11 +6,13 @@ import '../models/nogo_area.dart';
 import '../models/route_result.dart';
 import 'profile_speed_prefs.dart';
 import 'road_snap_service.dart';
+import 'offline_routing/offline_router.dart';
 
 class BRouterService {
   static String baseUrl = kIsWeb
       ? '/brouter'
       : 'https://wegwiesel.app/brouter';
+  static OfflineRouter? offlineRouter;
 
   static String _nogosParam(List<NogoArea> nogos) {
     if (nogos.isEmpty) return '';
@@ -77,6 +79,27 @@ class BRouterService {
     List<NogoArea> nogos = const [],
   }) async {
     final wps = await _snapForCar(waypoints, profile);
+    if (alternativeIdx == 0 &&
+        !shortestCarRoute &&
+        !avoidMotorwaysCarRoute &&
+        nogos.isEmpty &&
+        wps.length >= 2) {
+      final offline = offlineRouter;
+      if (offline != null &&
+          await offline.canRoute(
+            startLon: wps.first[0],
+            startLat: wps.first[1],
+            endLon: wps.last[0],
+            endLat: wps.last[1],
+          )) {
+        try {
+          return await offline.calculate(waypoints: wps, profile: profile);
+        } on OfflineRoutingException {
+          // Local data can be incomplete even when both endpoints snap to the
+          // graph. Fall back to the server route for the production app.
+        }
+      }
+    }
     return _fetchOne(
       wps: wps,
       profile: profile,
