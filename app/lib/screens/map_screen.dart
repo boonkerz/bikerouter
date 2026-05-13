@@ -29,6 +29,7 @@ import '../models/route_result.dart';
 import '../models/route_segment.dart';
 import '../models/route_poi.dart';
 import '../models/saved_route.dart';
+import '../models/turn_hint.dart';
 import 'package:garmin_connect/garmin_connect.dart';
 import 'navigation_screen.dart';
 import '../services/brouter_service.dart';
@@ -3383,6 +3384,30 @@ class _MapScreenState extends State<MapScreen> {
     );
     if (name == null || name.isEmpty) return;
 
+    // Flatten coordinates and turn hints so the route can be replayed
+    // offline without another BRouter round trip.
+    final flat = <double>[];
+    for (final c in _route!.coordinates) {
+      flat.add(c[0]);
+      flat.add(c[1]);
+      flat.add(c.length >= 3 ? c[2] : 0);
+    }
+    final hintRows = _route!.turnHints
+        .map((h) => <double>[
+              h.coordIndex.toDouble(),
+              h.cmd.index.toDouble(),
+              h.exitNumber.toDouble(),
+              h.distanceToNextM,
+              h.angle,
+            ])
+        .toList();
+    final cached = CachedRoute(
+      flatCoords: flat,
+      ascent: _route!.ascent,
+      descent: _route!.descent,
+      turnHints: hintRows,
+    );
+
     final saved = SavedRoute(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
@@ -3396,6 +3421,7 @@ class _MapScreenState extends State<MapScreen> {
       rtDistanceKm: _roundtripMode ? _rtDistanceKm : null,
       rtDirection: _roundtripMode ? _rtDirection : null,
       pois: List.of(_pois),
+      cached: cached,
     );
     await RouteStorage.save(saved);
     if (!mounted) return;
@@ -3420,6 +3446,30 @@ class _MapScreenState extends State<MapScreen> {
     });
     for (final wp in _waypoints) {
       _resolveWaypointName(wp);
+    }
+
+    // Prefer the cached snapshot if present so the saved route is
+    // immediately viewable / navigable offline. Re-routing through BRouter
+    // is still available via the explicit "recalc" UI when online.
+    if (r.cached != null) {
+      final c = r.cached!;
+      _displayRoute(RouteResult(
+        geojson: const {},
+        distance: r.distanceKm,
+        ascent: c.ascent,
+        descent: c.descent,
+        time: r.durationSeconds.toDouble(),
+        coordinates: c.coordinates,
+        segments: const <RouteSegment>[],
+        turnHints: c.turnHints.map((row) => TurnHint(
+              coordIndex: row[0].toInt(),
+              cmd: TurnCmd.fromCode(row[1].toInt()),
+              exitNumber: row[2].toInt(),
+              distanceToNextM: row[3],
+              angle: row[4],
+            )).toList(),
+      ));
+      return;
     }
     if (_waypoints.length >= 2) {
       await _calculateRoute();
