@@ -18,8 +18,11 @@ wegwiesel.app {
 		reverse_proxy feedback:8080
 	}
 
-	# Share Service (Garmin sync codes)
+	# Share Service (Garmin sync codes + public route library)
 	handle /api/share* {
+		reverse_proxy share:8080
+	}
+	handle /api/library* {
 		reverse_proxy share:8080
 	}
 

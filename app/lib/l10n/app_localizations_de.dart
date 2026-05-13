@@ -1476,6 +1476,79 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuRecordedRides => 'Aufzeichnungen';
 
   @override
+  String get menuLibrary => 'Routen entdecken';
+
+  @override
+  String get menuPublishRoute => 'Route veröffentlichen';
+
+  @override
+  String get libraryTitle => 'Routen entdecken';
+
+  @override
+  String get libraryEmpty => 'Noch keine öffentlichen Routen in diesem Filter';
+
+  @override
+  String get libraryFilterAll => 'Alle';
+
+  @override
+  String get libraryFilterNear => 'In meiner Nähe';
+
+  @override
+  String get libraryFilterShort => 'kurz (< 30 km)';
+
+  @override
+  String get libraryFilterMedium => 'mittel (30–80 km)';
+
+  @override
+  String get libraryFilterLong => 'lang (> 80 km)';
+
+  @override
+  String get libraryItemBy => 'von Wegwiesel-User';
+
+  @override
+  String get librarySearchHint => 'Titel oder Beschreibung suchen…';
+
+  @override
+  String get libraryLoadFailed => 'Konnte Bibliothek nicht laden';
+
+  @override
+  String get libraryOpenFailed => 'Route konnte nicht geladen werden';
+
+  @override
+  String get publishTitle => 'Route veröffentlichen';
+
+  @override
+  String get publishExplain =>
+      'Deine Route wird mit Titel und Beschreibung öffentlich sichtbar. Keine Account-Bindung, kein Tracking — nur du kannst sie über die Wegwiesel-App auf diesem Gerät wieder zurückziehen.';
+
+  @override
+  String get publishNameLabel => 'Titel';
+
+  @override
+  String get publishNameHint => 'z.B. Rheinradweg von Mainz nach Koblenz';
+
+  @override
+  String get publishDescriptionLabel => 'Beschreibung';
+
+  @override
+  String get publishDescriptionHint => 'Was macht diese Route besonders?';
+
+  @override
+  String get publishConfirm => 'Veröffentlichen';
+
+  @override
+  String get publishSuccess => 'Route ist jetzt öffentlich';
+
+  @override
+  String get publishFailed => 'Veröffentlichen fehlgeschlagen';
+
+  @override
+  String get publishUnpublish => 'Aus der Bibliothek entfernen';
+
+  @override
+  String get publishUnpublished => 'Route entfernt';
+
+  @override
   String get recordingTitle => 'Aufzeichnung';
 
   @override

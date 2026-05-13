@@ -15,6 +15,9 @@ import '../widgets/url_import_dialog.dart';
 import '../widgets/gpx_import_mode_dialog.dart';
 import 'recording_screen.dart';
 import 'recorded_rides_screen.dart';
+import 'library_screen.dart';
+import '../services/library_service.dart';
+import '../widgets/publish_route_dialog.dart';
 
 import '../models/map_style.dart';
 import '../models/nogo_area.dart';
@@ -673,6 +676,23 @@ class _MapScreenState extends State<MapScreen> {
                               const Icon(Icons.history, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
                               Text(l.menuRecordedRides, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'library',
+                            child: Row(children: [
+                              const Icon(Icons.travel_explore, color: Color(0xFF6a4a28), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuLibrary, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'publish',
+                            enabled: _route != null,
+                            child: Row(children: [
+                              const Icon(Icons.public, color: Color(0xFF6a4a28), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuPublishRoute, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
@@ -2901,6 +2921,12 @@ class _MapScreenState extends State<MapScreen> {
           MaterialPageRoute(builder: (_) => const RecordedRidesScreen()),
         );
         break;
+      case 'library':
+        await _openLibrary();
+        break;
+      case 'publish':
+        await _publishCurrentRoute();
+        break;
       case 'nogos':
         await _showNogosSheet();
         break;
@@ -3141,6 +3167,90 @@ class _MapScreenState extends State<MapScreen> {
       _roundtripMode = false;
     });
     await _calculateRoute();
+  }
+
+  Future<void> _openLibrary() async {
+    final picked = await Navigator.of(context).push<RouteResult>(
+      MaterialPageRoute(builder: (_) => const LibraryScreen()),
+    );
+    if (picked != null && mounted) {
+      // Library items arrive as parsed GPX → run them through the same
+      // import-mode dialog so the user can choose re-route vs. as-is.
+      await _handleImportedGpx(picked);
+    }
+  }
+
+  Future<void> _publishCurrentRoute() async {
+    if (_route == null) return;
+    final l = AppLocalizations.of(context);
+
+    final draft = await showPublishRouteDialog(
+      context,
+      suggestedTitle: _roundtripMode
+          ? l.roundtripTourName(_rtDistanceKm)
+          : l.defaultTourName,
+    );
+    if (draft == null || !mounted) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: Color(0xFF6a4a28)),
+      ),
+    );
+
+    try {
+      final gpx = GpxBuilder.build(
+        route: _route!,
+        trackName: draft.title,
+        pois: _pois,
+      );
+      final upload = await GarminShareService.upload(
+        name: draft.title,
+        gpx: gpx,
+        distanceMeters: (_route!.distance * 1000).round(),
+      );
+      final editToken = upload.editToken;
+      if (editToken == null) {
+        throw Exception('server returned no edit token');
+      }
+      await EditTokenStore.save(upload.code, editToken);
+
+      // Centroid of the route polyline for region filtering.
+      final coords = _route!.coordinates;
+      double sumLat = 0;
+      double sumLon = 0;
+      for (final c in coords) {
+        sumLon += c[0];
+        sumLat += c[1];
+      }
+      final centerLat = sumLat / coords.length;
+      final centerLon = sumLon / coords.length;
+
+      final ok = await LibraryService.publish(
+        code: upload.code,
+        editToken: editToken,
+        title: draft.title,
+        description: draft.description,
+        profile: _profile,
+        distanceM: (_route!.distance * 1000).round(),
+        ascent: _route!.ascent.round(),
+        centerLat: centerLat,
+        centerLon: centerLon,
+      );
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // close spinner
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? l.publishSuccess : l.publishFailed)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.publishFailed)),
+      );
+    }
   }
 
   Future<void> _importUrl() async {

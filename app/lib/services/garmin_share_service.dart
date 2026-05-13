@@ -6,11 +6,13 @@ class GarminShareResult {
   final String code;
   final DateTime expiresAt;
   final String gpxUrl;
+  final String? editToken;
 
   const GarminShareResult({
     required this.code,
     required this.expiresAt,
     required this.gpxUrl,
+    this.editToken,
   });
 }
 
@@ -44,6 +46,7 @@ class GarminShareService {
       code: code,
       expiresAt: expiresAt,
       gpxUrl: '$base/api/share/$code/course.gpx',
+      editToken: json['editToken'] as String?,
     );
   }
 }

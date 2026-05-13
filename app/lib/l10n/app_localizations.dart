@@ -2858,6 +2858,150 @@ abstract class AppLocalizations {
   /// **'Aufzeichnungen'**
   String get menuRecordedRides;
 
+  /// No description provided for @menuLibrary.
+  ///
+  /// In de, this message translates to:
+  /// **'Routen entdecken'**
+  String get menuLibrary;
+
+  /// No description provided for @menuPublishRoute.
+  ///
+  /// In de, this message translates to:
+  /// **'Route veröffentlichen'**
+  String get menuPublishRoute;
+
+  /// No description provided for @libraryTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Routen entdecken'**
+  String get libraryTitle;
+
+  /// No description provided for @libraryEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine öffentlichen Routen in diesem Filter'**
+  String get libraryEmpty;
+
+  /// No description provided for @libraryFilterAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle'**
+  String get libraryFilterAll;
+
+  /// No description provided for @libraryFilterNear.
+  ///
+  /// In de, this message translates to:
+  /// **'In meiner Nähe'**
+  String get libraryFilterNear;
+
+  /// No description provided for @libraryFilterShort.
+  ///
+  /// In de, this message translates to:
+  /// **'kurz (< 30 km)'**
+  String get libraryFilterShort;
+
+  /// No description provided for @libraryFilterMedium.
+  ///
+  /// In de, this message translates to:
+  /// **'mittel (30–80 km)'**
+  String get libraryFilterMedium;
+
+  /// No description provided for @libraryFilterLong.
+  ///
+  /// In de, this message translates to:
+  /// **'lang (> 80 km)'**
+  String get libraryFilterLong;
+
+  /// No description provided for @libraryItemBy.
+  ///
+  /// In de, this message translates to:
+  /// **'von Wegwiesel-User'**
+  String get libraryItemBy;
+
+  /// No description provided for @librarySearchHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel oder Beschreibung suchen…'**
+  String get librarySearchHint;
+
+  /// No description provided for @libraryLoadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Konnte Bibliothek nicht laden'**
+  String get libraryLoadFailed;
+
+  /// No description provided for @libraryOpenFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Route konnte nicht geladen werden'**
+  String get libraryOpenFailed;
+
+  /// No description provided for @publishTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Route veröffentlichen'**
+  String get publishTitle;
+
+  /// No description provided for @publishExplain.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Route wird mit Titel und Beschreibung öffentlich sichtbar. Keine Account-Bindung, kein Tracking — nur du kannst sie über die Wegwiesel-App auf diesem Gerät wieder zurückziehen.'**
+  String get publishExplain;
+
+  /// No description provided for @publishNameLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel'**
+  String get publishNameLabel;
+
+  /// No description provided for @publishNameHint.
+  ///
+  /// In de, this message translates to:
+  /// **'z.B. Rheinradweg von Mainz nach Koblenz'**
+  String get publishNameHint;
+
+  /// No description provided for @publishDescriptionLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Beschreibung'**
+  String get publishDescriptionLabel;
+
+  /// No description provided for @publishDescriptionHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Was macht diese Route besonders?'**
+  String get publishDescriptionHint;
+
+  /// No description provided for @publishConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Veröffentlichen'**
+  String get publishConfirm;
+
+  /// No description provided for @publishSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Route ist jetzt öffentlich'**
+  String get publishSuccess;
+
+  /// No description provided for @publishFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Veröffentlichen fehlgeschlagen'**
+  String get publishFailed;
+
+  /// No description provided for @publishUnpublish.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus der Bibliothek entfernen'**
+  String get publishUnpublish;
+
+  /// No description provided for @publishUnpublished.
+  ///
+  /// In de, this message translates to:
+  /// **'Route entfernt'**
+  String get publishUnpublished;
+
   /// No description provided for @recordingTitle.
   ///
   /// In de, this message translates to:

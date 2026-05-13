@@ -1477,6 +1477,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuRecordedRides => 'Recorded rides';
 
   @override
+  String get menuLibrary => 'Discover routes';
+
+  @override
+  String get menuPublishRoute => 'Publish route';
+
+  @override
+  String get libraryTitle => 'Discover routes';
+
+  @override
+  String get libraryEmpty => 'No public routes match this filter yet';
+
+  @override
+  String get libraryFilterAll => 'All';
+
+  @override
+  String get libraryFilterNear => 'Near me';
+
+  @override
+  String get libraryFilterShort => 'short (< 30 km)';
+
+  @override
+  String get libraryFilterMedium => 'medium (30–80 km)';
+
+  @override
+  String get libraryFilterLong => 'long (> 80 km)';
+
+  @override
+  String get libraryItemBy => 'by a Wegwiesel user';
+
+  @override
+  String get librarySearchHint => 'Search title or description…';
+
+  @override
+  String get libraryLoadFailed => 'Could not load library';
+
+  @override
+  String get libraryOpenFailed => 'Could not open route';
+
+  @override
+  String get publishTitle => 'Publish route';
+
+  @override
+  String get publishExplain =>
+      'Your route becomes visible to everyone with a title and description. No account, no tracking — only you on this device can later remove it from the library.';
+
+  @override
+  String get publishNameLabel => 'Title';
+
+  @override
+  String get publishNameHint => 'e.g. Rhine cycle path Mainz to Koblenz';
+
+  @override
+  String get publishDescriptionLabel => 'Description';
+
+  @override
+  String get publishDescriptionHint => 'What makes this route special?';
+
+  @override
+  String get publishConfirm => 'Publish';
+
+  @override
+  String get publishSuccess => 'Route is now public';
+
+  @override
+  String get publishFailed => 'Publishing failed';
+
+  @override
+  String get publishUnpublish => 'Remove from library';
+
+  @override
+  String get publishUnpublished => 'Route removed';
+
+  @override
   String get recordingTitle => 'Recording';
 
   @override

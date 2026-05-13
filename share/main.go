@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -53,6 +54,9 @@ func main() {
 	mux.HandleFunc("GET /api/share/{code}", getShareMeta)
 	mux.HandleFunc("GET /api/share/{code}/course.gpx", getShareGpx)
 	mux.HandleFunc("GET /api/share/{code}/course.fit", getShareFit)
+	mux.HandleFunc("PATCH /api/share/{code}", publishShare)
+	mux.HandleFunc("DELETE /api/share/{code}", deleteShare)
+	mux.HandleFunc("GET /api/library", listLibrary)
 
 	log.Printf("share service on %s", addr)
 	if err := http.ListenAndServe(addr, withCORS(mux)); err != nil {
@@ -61,7 +65,7 @@ func main() {
 }
 
 func initSchema() error {
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS shares (
 			code        TEXT PRIMARY KEY,
 			name        TEXT NOT NULL DEFAULT '',
@@ -72,8 +76,37 @@ func initSchema() error {
 			expires_at  TEXT NOT NULL
 		);
 		CREATE INDEX IF NOT EXISTS idx_shares_expires ON shares(expires_at);
-	`)
-	return err
+	`); err != nil {
+		return err
+	}
+	// v1.10: public library columns. Older rows get sensible defaults via ADD
+	// COLUMN; ignore "duplicate column name" errors so the migration is
+	// idempotent across restarts.
+	addColumns := []string{
+		`ALTER TABLE shares ADD COLUMN edit_token TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE shares ADD COLUMN published INTEGER NOT NULL DEFAULT 0`,
+		`ALTER TABLE shares ADD COLUMN approved INTEGER NOT NULL DEFAULT 1`,
+		`ALTER TABLE shares ADD COLUMN title TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE shares ADD COLUMN description TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE shares ADD COLUMN profile TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE shares ADD COLUMN ascent INTEGER NOT NULL DEFAULT 0`,
+		`ALTER TABLE shares ADD COLUMN center_lat REAL NOT NULL DEFAULT 0`,
+		`ALTER TABLE shares ADD COLUMN center_lon REAL NOT NULL DEFAULT 0`,
+		`ALTER TABLE shares ADD COLUMN published_at TEXT NOT NULL DEFAULT ''`,
+		`CREATE INDEX IF NOT EXISTS idx_shares_published ON shares(published, approved, published_at)`,
+	}
+	for _, q := range addColumns {
+		if _, err := db.Exec(q); err != nil {
+			if strings.Contains(err.Error(), "duplicate column") {
+				continue
+			}
+			if strings.Contains(err.Error(), "already exists") {
+				continue
+			}
+			return err
+		}
+	}
+	return nil
 }
 
 func createShare(w http.ResponseWriter, r *http.Request) {
@@ -111,18 +144,20 @@ func createShare(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UTC()
 	expires := now.Add(defaultTTLDays * 24 * time.Hour)
 	creatorHash := hashIP(clientIP(r))
+	editToken := newEditToken()
 
 	for try := 0; try < 8; try++ {
 		code := newCode()
 		_, err := db.Exec(
-			`INSERT INTO shares (code, name, gpx, distance_m, creator_ip, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO shares (code, name, gpx, distance_m, creator_ip, created_at, expires_at, edit_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 			code, in.Name, []byte(in.Gpx), in.DistanceM, creatorHash,
-			now.Format(time.RFC3339), expires.Format(time.RFC3339),
+			now.Format(time.RFC3339), expires.Format(time.RFC3339), editToken,
 		)
 		if err == nil {
 			writeJSON(w, map[string]any{
 				"code":      code,
 				"expiresAt": expires.Format(time.RFC3339),
+				"editToken": editToken,
 			})
 			return
 		}
@@ -132,6 +167,14 @@ func createShare(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	httpErr(w, http.StatusInternalServerError, errors.New("could not allocate code"))
+}
+
+func newEditToken() string {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(buf)
 }
 
 func getShareMeta(w http.ResponseWriter, r *http.Request) {
@@ -263,11 +306,229 @@ func validCode(s string) bool {
 func gcExpired() {
 	t := time.NewTicker(1 * time.Hour)
 	for range t.C {
-		_, err := db.Exec(`DELETE FROM shares WHERE expires_at <= ?`, time.Now().UTC().Format(time.RFC3339))
+		// Published shares survive past their original 7-day TTL — the
+		// public library is meant to persist. Unpublished shares still GC.
+		_, err := db.Exec(
+			`DELETE FROM shares WHERE expires_at <= ? AND published = 0`,
+			time.Now().UTC().Format(time.RFC3339),
+		)
 		if err != nil {
 			log.Printf("gc error: %v", err)
 		}
 	}
+}
+
+func publishShare(w http.ResponseWriter, r *http.Request) {
+	code := normaliseCode(r.PathValue("code"))
+	if !validCode(code) {
+		httpErr(w, http.StatusBadRequest, errors.New("invalid code"))
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 16*1024)
+	var in struct {
+		EditToken   string  `json:"editToken"`
+		Published   *bool   `json:"published"`
+		Title       *string `json:"title"`
+		Description *string `json:"description"`
+		Profile     *string `json:"profile"`
+		Ascent      *int    `json:"ascent"`
+		CenterLat   *float64 `json:"centerLat"`
+		CenterLon   *float64 `json:"centerLon"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		httpErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if in.EditToken == "" {
+		httpErr(w, http.StatusUnauthorized, errors.New("edit_token required"))
+		return
+	}
+
+	var stored string
+	row := db.QueryRow(`SELECT edit_token FROM shares WHERE code = ?`, code)
+	if err := row.Scan(&stored); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			httpErr(w, http.StatusNotFound, errors.New("not found"))
+			return
+		}
+		httpErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	if stored == "" || stored != in.EditToken {
+		httpErr(w, http.StatusForbidden, errors.New("wrong edit_token"))
+		return
+	}
+
+	// Build a dynamic UPDATE only over the fields the caller actually sent.
+	sets := []string{}
+	args := []any{}
+	if in.Published != nil {
+		sets = append(sets, "published = ?")
+		v := 0
+		if *in.Published {
+			v = 1
+		}
+		args = append(args, v)
+		if *in.Published {
+			sets = append(sets, "published_at = ?")
+			args = append(args, time.Now().UTC().Format(time.RFC3339))
+		}
+	}
+	if in.Title != nil {
+		t := strings.TrimSpace(*in.Title)
+		if len(t) > 200 {
+			t = t[:200]
+		}
+		sets = append(sets, "title = ?")
+		args = append(args, t)
+	}
+	if in.Description != nil {
+		d := strings.TrimSpace(*in.Description)
+		if len(d) > 2000 {
+			d = d[:2000]
+		}
+		sets = append(sets, "description = ?")
+		args = append(args, d)
+	}
+	if in.Profile != nil {
+		p := strings.TrimSpace(*in.Profile)
+		if len(p) > 64 {
+			p = p[:64]
+		}
+		sets = append(sets, "profile = ?")
+		args = append(args, p)
+	}
+	if in.Ascent != nil {
+		sets = append(sets, "ascent = ?")
+		args = append(args, *in.Ascent)
+	}
+	if in.CenterLat != nil && in.CenterLon != nil {
+		sets = append(sets, "center_lat = ?", "center_lon = ?")
+		args = append(args, *in.CenterLat, *in.CenterLon)
+	}
+
+	if len(sets) == 0 {
+		httpErr(w, http.StatusBadRequest, errors.New("no fields to update"))
+		return
+	}
+	args = append(args, code)
+	if _, err := db.Exec(
+		"UPDATE shares SET "+strings.Join(sets, ", ")+" WHERE code = ?", args...,
+	); err != nil {
+		httpErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, map[string]any{"ok": true})
+}
+
+func deleteShare(w http.ResponseWriter, r *http.Request) {
+	code := normaliseCode(r.PathValue("code"))
+	if !validCode(code) {
+		httpErr(w, http.StatusBadRequest, errors.New("invalid code"))
+		return
+	}
+	token := r.URL.Query().Get("editToken")
+	if token == "" {
+		httpErr(w, http.StatusUnauthorized, errors.New("edit_token required"))
+		return
+	}
+	res, err := db.Exec(
+		`DELETE FROM shares WHERE code = ? AND edit_token = ?`,
+		code, token,
+	)
+	if err != nil {
+		httpErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		httpErr(w, http.StatusForbidden, errors.New("wrong edit_token or already gone"))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func listLibrary(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	profile := strings.TrimSpace(q.Get("profile"))
+	search := strings.ToLower(strings.TrimSpace(q.Get("q")))
+	minKm, _ := strconv.ParseFloat(q.Get("minKm"), 64)
+	maxKm, _ := strconv.ParseFloat(q.Get("maxKm"), 64)
+	bbox := strings.Split(q.Get("bbox"), ",") // minLat,minLon,maxLat,maxLon
+	page, _ := strconv.Atoi(q.Get("page"))
+	if page < 0 {
+		page = 0
+	}
+	const pageSize = 30
+
+	where := []string{"published = 1", "approved = 1"}
+	args := []any{}
+	if profile != "" {
+		where = append(where, "profile = ?")
+		args = append(args, profile)
+	}
+	if minKm > 0 {
+		where = append(where, "distance_m >= ?")
+		args = append(args, int64(minKm*1000))
+	}
+	if maxKm > 0 {
+		where = append(where, "distance_m <= ?")
+		args = append(args, int64(maxKm*1000))
+	}
+	if len(bbox) == 4 {
+		minLat, _ := strconv.ParseFloat(bbox[0], 64)
+		minLon, _ := strconv.ParseFloat(bbox[1], 64)
+		maxLat, _ := strconv.ParseFloat(bbox[2], 64)
+		maxLon, _ := strconv.ParseFloat(bbox[3], 64)
+		where = append(where, "center_lat BETWEEN ? AND ?", "center_lon BETWEEN ? AND ?")
+		args = append(args, minLat, maxLat, minLon, maxLon)
+	}
+	if search != "" {
+		where = append(where, "(lower(title) LIKE ? OR lower(description) LIKE ?)")
+		needle := "%" + search + "%"
+		args = append(args, needle, needle)
+	}
+	args = append(args, pageSize, page*pageSize)
+
+	rows, err := db.Query(
+		`SELECT code, title, description, profile, distance_m, ascent, center_lat, center_lon, published_at
+		 FROM shares
+		 WHERE `+strings.Join(where, " AND ")+`
+		 ORDER BY published_at DESC
+		 LIMIT ? OFFSET ?`,
+		args...,
+	)
+	if err != nil {
+		httpErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer rows.Close()
+
+	type item struct {
+		Code        string  `json:"code"`
+		Title       string  `json:"title"`
+		Description string  `json:"description"`
+		Profile     string  `json:"profile"`
+		DistanceM   int64   `json:"distanceM"`
+		Ascent      int     `json:"ascent"`
+		CenterLat   float64 `json:"centerLat"`
+		CenterLon   float64 `json:"centerLon"`
+		PublishedAt string  `json:"publishedAt"`
+	}
+	out := []item{}
+	for rows.Next() {
+		var it item
+		if err := rows.Scan(&it.Code, &it.Title, &it.Description, &it.Profile,
+			&it.DistanceM, &it.Ascent, &it.CenterLat, &it.CenterLon, &it.PublishedAt); err != nil {
+			httpErr(w, http.StatusInternalServerError, err)
+			return
+		}
+		out = append(out, it)
+	}
+	writeJSON(w, map[string]any{
+		"page":  page,
+		"items": out,
+	})
 }
 
 func hashIP(ip string) string {
@@ -310,7 +571,7 @@ func writeJSON(w http.ResponseWriter, v any) {
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
