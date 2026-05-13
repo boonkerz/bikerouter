@@ -48,7 +48,26 @@ Discover-Welle bringt die App auf das nächste Niveau ohne große Architektur-Ei
 - App: neuer RouteOverlay-Eintrag „🔥 Wegwiesel-Heatmap", Toggle in der bestehenden Overlay-Liste
 - Privacy: nur veröffentlichte Routen tragen bei, keine Personen-Tags, keine Zeit-Stamps in den Counters
 
-## v2.0 „Off the grid" (Nächste Welle — ca. 3–4 Wochen)
+## v1.11 „Offline-Karten" (✓ ausgeliefert)
+
+Zweistufiger Pfad statt Big-Bang-v2.0:
+- **v1.11** — Offline-Karten (Tile-Cache + Region-Download) + Saved-Routes offline-fähig
+- **v2.0** — echtes Offline-Routing (neue Strecken berechnen ohne Netz)
+
+### v1.11 Feature 1 — Offline-Karten ✓
+- `WegwieselTileCacheProvider` als `MapCachingProvider` für flutter_map. URL-Hash-Layout, mtime-LRU-Eviction bei Überschreiten des Limits (Default 500 MB)
+- Automatischer Cache jedes betrachteten Tiles via NetworkTileProvider-Caching
+- `RegionDownloader` lädt Bbox + Zoom 8–15 parallel vorab in den Cache
+- `OfflineMapsScreen` (Menü → „Offline-Karten") mit Cache-Anzeige, Limit-Editor, „Aktuellen Ausschnitt herunterladen"
+
+### v1.11 Feature 2 — Saved Routes offline ✓
+- `SavedRoute.cached: CachedRoute?` mit flacher `[lon, lat, ele, …]`-Coords-Liste + Turn-Hints
+- Beim Speichern wird die komplette Geometrie + alle Turn-Hints snapshotetet
+- Beim Laden wird der Cache direkt in `_displayRoute()` gepumpt, kein BRouter-Roundtrip nötig
+
+## v2.0 „Off the grid" (Verbleibend — echtes Offline-Routing, ca. 2–3 Wochen fokussiert)
+
+**Status:** noch nicht angefangen. Pure-Dart-Port der BRouter-Routing-Engine bleibt der gewählte Weg. Wegen Umfang (RD5-Reader + Profile-Interpreter + A* + Region-Download für `.rd5`-Segmente) als eigener Sprint.
 
 **Ziel:** Der größte USP-Block. Komoot Premium kann Offline-Maps, Wegwiesel macht es kostenlos und privacy-freundlich.
 

@@ -5,6 +5,22 @@
 
 ---
 
+## v1.11.0 (DE) — „Offline-Karten"
+**Wegwiesel funktioniert jetzt auch im Funkloch.**
+
+• Karten-Kacheln werden automatisch im Hintergrund gecacht — was du einmal angeschaut hast, ist offline verfügbar
+• Neue „Offline-Karten" im Menü: aktuellen Kartenausschnitt vorab herunterladen (Zoom 8–15), Speicher-Limit einstellen (Default 500 MB), Cache komplett leeren
+• Gespeicherte Routen funktionieren ohne Netzwerk: beim Speichern wird die komplette Strecke inkl. Turn-Hints lokal mit abgelegt — beim Laden ist sie sofort wieder da, auch offline
+
+## v1.11.0 (EN) — "Offline maps"
+**Wegwiesel now works in low-signal areas.**
+
+• Map tiles are automatically cached in the background — anything you've looked at is available offline
+• New "Offline maps" menu: pre-download the current viewport (zoom 8–15), configure storage limit (default 500 MB), clear the whole cache
+• Saved routes work without a network: the full geometry including turn hints is stored alongside the metadata, so loading a saved route is instant and offline-capable
+
+---
+
 ## v1.10.0 (DE) — „Discover"
 **Routen entdecken und teilen — mit Heatmap, wo die Community fährt.**
 
