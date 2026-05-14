@@ -5,17 +5,8 @@ import 'offline_router.dart';
 
 /// First-pass reader for a BRouter `.rd5` segment file.
 ///
-/// A segment covers one 5° × 5° tile, internally divided into a 32×32 grid
-/// of sub-tiles. Each sub-tile is variable-length compressed Huffman bit-
-/// stream of node and outgoing-way records.
-///
-/// This reader currently only parses the directory header (offset + length
-/// per sub-tile). Sub-tile decoding (Huffman, node payload, way payload)
-/// lands in a follow-up commit alongside the routing search.
-///
-/// File layout:
-///   - 1024 × 8 byte directory entries (length, offset)
-///   - Variable-length sub-tile blobs at the listed offsets
+/// A segment covers one 5° × 5° tile. BRouter stores a 25-entry top index
+/// for the one-degree squares first, then a per-degree micro-cache index.
 class Rd5Reader {
   /// Westernmost longitude of the 5° tile (multiple of 5).
   final int tileMinLon;
@@ -25,17 +16,20 @@ class Rd5Reader {
   final File file;
   final Uint8List _bytes;
 
-  static const int subTilesPerSide = 32;
-  static const int subTileCount = subTilesPerSide * subTilesPerSide;
+  static const int topIndexBytes = 200;
 
-  /// Per sub-tile (length in bytes, file offset).
-  final List<SubTileEntry> directory;
+  /// New `segments4` files use 32 micro-caches per degree. Older files used
+  /// 80; the app downloads current segments4 data, so 32 is the supported
+  /// MVP path.
+  final int divisor;
+  final List<int> fileIndex;
 
   Rd5Reader._(
       {required this.tileMinLon,
       required this.tileMinLat,
       required this.file,
-      required this.directory,
+      required this.divisor,
+      required this.fileIndex,
       required Uint8List bytes})
       : _bytes = bytes;
 
@@ -49,19 +43,18 @@ class Rd5Reader {
       throw OfflineRoutingException(
           'bad_name', 'unrecognised segment filename: $name');
     }
-    final view = ByteData.sublistView(bytes, 0, subTileCount * 8);
-    final directory = <SubTileEntry>[];
-    for (int i = 0; i < subTileCount; i++) {
-      final base = i * 8;
-      final size = view.getUint32(base, Endian.big);
-      final offset = view.getUint32(base + 4, Endian.big);
-      directory.add(SubTileEntry(size: size, offset: offset));
+    final view = ByteData.sublistView(bytes, 0, topIndexBytes);
+    final fileIndex = <int>[];
+    for (var i = 0; i < 25; i++) {
+      final value = view.getUint64(i * 8, Endian.big);
+      fileIndex.add(value & 0xffffffffffff);
     }
     return Rd5Reader._(
       tileMinLon: coords.minLon,
       tileMinLat: coords.minLat,
       file: f,
-      directory: directory,
+      divisor: 32,
+      fileIndex: fileIndex,
       bytes: bytes,
     );
   }
@@ -70,30 +63,82 @@ class Rd5Reader {
   int get totalBytes => _bytes.length;
 
   /// Count of sub-tiles that actually contain data (non-zero length).
-  int get populatedSubTileCount =>
-      directory.where((e) => e.size > 0).length;
+  int get populatedSubTileCount => fileIndex.where((e) => e > 0).length;
 
-  /// Returns the raw bytes for a sub-tile so the decoder commit can hook
-  /// straight in. Caller is responsible for decompression.
-  Uint8List rawSubTileBytes(int index) {
-    final entry = directory[index];
-    if (entry.size == 0) return Uint8List(0);
-    return Uint8List.sublistView(_bytes, entry.offset, entry.offset + entry.size);
+  Uint8List microCacheBytes(int lonIdx, int latIdx) {
+    final lonDegree = lonIdx ~/ divisor;
+    final latDegree = latIdx ~/ divisor;
+    final lonMod5 = lonDegree % 5;
+    final latMod5 = latDegree % 5;
+    final tileIndex = lonMod5 * 5 + latMod5;
+    if (tileIndex < 0 || tileIndex >= 25) return Uint8List(0);
+    final fileOffset = tileIndex > 0 ? fileIndex[tileIndex - 1] : topIndexBytes;
+    final nextOffset = fileIndex[tileIndex];
+    if (fileOffset == nextOffset || nextOffset <= fileOffset) {
+      return Uint8List(0);
+    }
+
+    final indexSize = divisor * divisor * 4;
+    if (fileOffset + indexSize > _bytes.length) return Uint8List(0);
+    final subIdx = (latIdx - divisor * latDegree) * divisor +
+        (lonIdx - divisor * lonDegree);
+    if (subIdx < 0 || subIdx >= divisor * divisor) return Uint8List(0);
+    final indexView = ByteData.sublistView(
+      _bytes,
+      fileOffset,
+      fileOffset + indexSize,
+    );
+    final start =
+        subIdx == 0 ? indexSize : indexView.getUint32((subIdx - 1) * 4);
+    final end = indexView.getUint32(subIdx * 4);
+    if (end <= start) return Uint8List(0);
+    final dataStart = fileOffset + start;
+    final dataEnd = fileOffset + end;
+    if (dataStart < 0 || dataEnd > _bytes.length || dataEnd <= dataStart) {
+      return Uint8List(0);
+    }
+    return Uint8List.sublistView(_bytes, dataStart, dataEnd);
   }
 
-  /// Translate a lon/lat into the matching sub-tile index, or null if it
-  /// falls outside this segment.
-  int? subTileIndexFor(double lon, double lat) {
-    final dx = lon - tileMinLon;
-    final dy = lat - tileMinLat;
-    if (dx < 0 || dx >= 5 || dy < 0 || dy >= 5) return null;
-    // Sub-tiles span 5/32 degrees ≈ 0.156°.
-    final ix = (dx / (5.0 / subTilesPerSide)).floor();
-    final iy = (dy / (5.0 / subTilesPerSide)).floor();
-    // BRouter stores rows north-to-south so the on-disk index matches the
-    // northwest corner being (0, 0).
-    final row = subTilesPerSide - 1 - iy;
-    return row * subTilesPerSide + ix;
+  Iterable<Rd5MicroCacheIndex> microCacheIndicesForBounds({
+    required double minLat,
+    required double minLon,
+    required double maxLat,
+    required double maxLon,
+  }) sync* {
+    final west = minLon < maxLon ? minLon : maxLon;
+    final east = minLon < maxLon ? maxLon : minLon;
+    final south = minLat < maxLat ? minLat : maxLat;
+    final north = minLat < maxLat ? maxLat : minLat;
+    final lonStart = _microCacheIndex(west + 180.0, divisor);
+    final lonEnd =
+        _microCacheIndex(_inclusiveUpper(east, west, divisor) + 180.0, divisor);
+    final latStart = _microCacheIndex(south + 90.0, divisor);
+    final latEnd = _microCacheIndex(
+        _inclusiveUpper(north, south, divisor) + 90.0, divisor);
+    final minLonIdx = (tileMinLon + 180) * divisor;
+    final maxLonIdx = (tileMinLon + 185) * divisor - 1;
+    final minLatIdx = (tileMinLat + 90) * divisor;
+    final maxLatIdx = (tileMinLat + 95) * divisor - 1;
+
+    for (var lonIdx = lonStart; lonIdx <= lonEnd; lonIdx++) {
+      if (lonIdx < minLonIdx || lonIdx > maxLonIdx) continue;
+      for (var latIdx = latStart; latIdx <= latEnd; latIdx++) {
+        if (latIdx < minLatIdx || latIdx > maxLatIdx) continue;
+        yield Rd5MicroCacheIndex(lonIdx, latIdx);
+      }
+    }
+  }
+
+  static int _microCacheIndex(double shiftedDegrees, int divisor) =>
+      (shiftedDegrees * divisor).floor();
+
+  static double _inclusiveUpper(double upper, double lower, int divisor) {
+    final scaled = upper * divisor;
+    if (upper > lower && (scaled - scaled.round()).abs() < 0.0000001) {
+      return upper - 0.0000001;
+    }
+    return upper;
   }
 
   static _SegCoords? _parseFilename(String name) {
@@ -106,10 +151,10 @@ class Rd5Reader {
   }
 }
 
-class SubTileEntry {
-  final int size;
-  final int offset;
-  const SubTileEntry({required this.size, required this.offset});
+class Rd5MicroCacheIndex {
+  final int lonIdx;
+  final int latIdx;
+  const Rd5MicroCacheIndex(this.lonIdx, this.latIdx);
 }
 
 class _SegCoords {

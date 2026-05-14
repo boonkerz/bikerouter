@@ -10,11 +10,11 @@ Hauptdomain: https://wegwiesel.app · Bundle: `com.thomaspeterson.bikerouter` ·
 
 | Bereich | Version | Stand |
 |---|---|---|
-| Flutter App (iOS + Android) | **1.9.0+55** | Code im Repo, Codemagic gebaut, App-Store-Submission ausstehend |
-| Web App (wegwiesel.app) | v1.9 | deployt via `scripts/deploy-web.sh` |
+| Flutter App (iOS + Android) | **2.0.0+58** | Code auf `main`, Codemagic-Push ausgelöst |
+| Web App (wegwiesel.app) | v2.0 | deployt via `scripts/deploy-web.sh` |
 | Garmin Connect IQ App (WegwieselSync) | 1.5.1 | `.iq`-Paket gebaut, Store-Submission **wartet auf Garmin-Review** |
 | BRouter Profile | inkl. `wegwiesel-ebike` | im Docker-Container deployt |
-| Server-Services | brouter + overpass + share + feedback + **tracking** (v1.9 neu) | live auf 204.168.254.31 |
+| Server-Services | brouter + overpass + share + feedback + tracking + `/segments/*.rd5` | live auf 204.168.254.31 |
 
 ---
 
@@ -30,7 +30,7 @@ Hauptdomain: https://wegwiesel.app · Bundle: `com.thomaspeterson.bikerouter` ·
 
 ---
 
-## v1.10 „Discover" (✓ in Arbeit / ausgeliefert)
+## v1.10 „Discover" (✓ ausgeliefert)
 
 Discover-Welle bringt die App auf das nächste Niveau ohne große Architektur-Eingriffe:
 
@@ -41,7 +41,7 @@ Discover-Welle bringt die App auf das nächste Niveau ohne große Architektur-Ei
 - App: GarminShareService liefert jetzt `editToken`, `EditTokenStore` persistiert lokal. Menü „Routen entdecken" → `LibraryScreen` mit Chip-Filtern, „Route veröffentlichen" → Dialog → Upload + PATCH
 - Caddyfile: `/api/library*` → share-Container
 
-### v1.10 Feature 2 — Wegwiesel-Heatmap-Overlay
+### v1.10 Feature 2 — Wegwiesel-Heatmap-Overlay ✓
 - Tabelle `tile_counters (z, x, y, count)` in share.db
 - Aggregator: bei jedem Publish wird die GPX-Geometrie zu Zoom-12-Tiles dedupliziert + Counter inkrementiert
 - Renderer: `/api/heatmap/{z}/{x}/{y}.png` rendert 256×256 PNG mit Rot-Alpha = `log2(count+1) × 40`
@@ -65,44 +65,39 @@ Zweistufiger Pfad statt Big-Bang-v2.0:
 - Beim Speichern wird die komplette Geometrie + alle Turn-Hints snapshotetet
 - Beim Laden wird der Cache direkt in `_displayRoute()` gepumpt, kein BRouter-Roundtrip nötig
 
-## v2.0 „Off the grid" (Verbleibend — echtes Offline-Routing, ca. 2–3 Wochen fokussiert)
+## v2.0 „Off the grid" (in Arbeit — echtes Offline-Routing)
 
-**Status:** noch nicht angefangen. Pure-Dart-Port der BRouter-Routing-Engine bleibt der gewählte Weg. Wegen Umfang (RD5-Reader + Profile-Interpreter + A* + Region-Download für `.rd5`-Segmente) als eigener Sprint.
+**Status:** Pure-Dart-Port ist als MVP umgesetzt. Routing-Kern, hart codiertes `trekking`-Profil, RD5-Segment-Download, Server-Auslieferung, RD5-MicroCache-Decoder, Graph-Loader und App-Initialisierung sind in `main`. Für v2.0.x bleibt die semantische Tag-Auflösung/Profile-Sprache als Qualitätsausbau.
 
 **Ziel:** Der größte USP-Block. Komoot Premium kann Offline-Maps, Wegwiesel macht es kostenlos und privacy-freundlich.
 
-### v2.0 Feature 1 — Offline-Karten (Vector Tiles)
+### v2.0 Feature 1 — Offline-Karten (Vector Tiles, optional / nach Routing)
 - **Tech:** OSM Vector Tiles via `flutter_map_vector_renderer` oder `vector_map_tiles` Package; PMTiles als Tile-Container (eine Datei pro Region)
 - **Server:** PMTiles per Caddy-Proxy aus `pbf/` ableiten (Tippecanoe + pmtiles converter), Caddy serviert die `.pmtiles` mit Range-Requests
 - **Download-UX:** Region-Picker mit Größenanzeige (Deutschland ~1.2 GB, Bayern ~250 MB), Download mit Resume + Fortschrittsbalken, lokal in App-Documents
 - **Implementations-Risiko:** PMTiles-Reader in Dart noch wenig getestet — Fallback auf Mapsforge-Format (offizielle Offline-Karten-Engine, Java port nach Flutter existiert)
+- **Aktueller Code-Stand:** Raster-Offline-Karten sind seit v1.11 vorhanden (`WegwieselTileCacheProvider`, `RegionDownloader`, `OfflineMapsScreen`). Vector-Tiles sind noch nicht implementiert und für den Offline-Routing-MVP nicht blockierend.
 - **Aufwand:** 8–10 Tage
 
 ### v2.0 Feature 2 — Offline-Routing
-- **Tech:** BRouter selbst kann offline (das ist der Originalzweck der Engine). Segment-Files (`*.rd5`) müssen lokal liegen, dann läuft BRouter rein im Speicher
-- **Architektur:** BRouter-Lib als Flutter Platform-Channel-Wrapper (iOS+Android nativ), oder geringer-Aufwand: nur Segment-Download und Server-Endpoint wechseln (App spricht trotzdem mit lokalem brouter-jar via REST über localhost) — Android: möglich, iOS: schwierig (JVM)
-- **Pragmatischer Pfad:** Pure-Dart-Port der BRouter-Kernroute (von @abrensch existiert ein Java-Code, der portierbar ist) — 2-3 Wochen Arbeit
-- **Region-Download:** gleicher Picker wie Offline-Maps, lädt die `.rd5`-Segmente der Region
-- **Aufwand:** 12–15 Tage
-
-### v2.0 Feature 3 — Wegwiesel-Heatmap-Overlay
-- **Datenquelle:** Anonyme Aggregation aller über `share/`-Service erzeugten Routen-Codes — Caddy-Logs reichen erstmal nicht, Server-seitig in `share/main.go` ein optionales Counter-Update einbauen (kein Logging der Route selbst, nur „diese Tile wurde X mal geplant")
-- **Server-Job:** monatlicher Aggregation-Cron, der die Tile-Counter-DB in Heatmap-Tiles (256×256 PNG mit Alpha) rasterisiert und unter `https://wegwiesel.app/heatmap/{z}/{x}/{y}.png` serviert
-- **App-UX:** Karten-Style-Picker bekommt einen Heatmap-Schalter (Overlay-Layer); Sichtbarkeit nur ab Zoom 8
-- **Privacy:** keine Personen-Korrelation, keine Zeit-Tags. Nur „Tile wurde N-mal von irgendwem in einer Route benutzt"
-- **Aufwand:** 4–5 Tage
-
-### v2.0 Feature 4 — Public Route Library
-- **Server:** existierender `share/`-Service erweitern um `published: BOOLEAN` Spalte; eigener `GET /api/library`-Endpoint mit Pagination, Suche nach Region/Profil/Distanz
-- **Veröffentlichen-Flow in der App:** Routen-Detail-Sheet bekommt „Öffentlich teilen"-Schalter mit Titel/Foto/Beschreibung-Felder; ohne Account, lokal generierter Edit-Token im `SharedPreferences` (User kann eigene Routen löschen/bearbeiten)
-- **Browse-UX in der App:** neuer Bildschirm „Routen entdecken" mit Filter-Chips + Karten-Vorschau pro Hit
-- **Moderation:** Server-seitig manueller Review-Queue, Toggle `approved` in der DB; Spam-Schutz via Codemagic-Verifizierungs-Token oder Rate-Limit
-- **SEO-Bonus:** Server gibt eine Sitemap mit allen public Routen aus → Google indexiert → organischer Traffic auf wegwiesel.app
-- **Aufwand:** 8 Tage
+- **Erledigt:** `OfflineRouter`-Interface, `Lookups` Parser, `Rd5Reader` Header/Subtile-Index, `BitStreamReader`
+- **Erledigt:** Pure-Dart-Graph-Modell + `GraphOfflineRouter` mit vorwärts gerichteter A*-Suche und `RouteResult`/GeoJSON-Ausgabe
+- **Erledigt:** hart codiertes `trekking`-Kostenmodell als erstes Profil
+- **Erledigt:** `BRouterService.offlineRouter` als Fallback-fähiger Hook: lokal versuchen, bei unvollständigen Daten Server nutzen
+- **Erledigt:** `Rd5SegmentDownloader` berechnet BRouter-5°-Segmentnamen, lädt `.rd5` von `https://wegwiesel.app/segments`, speichert lokal und liefert Fortschritt
+- **Erledigt:** Caddy/Compose servieren `/segments/*.rd5` aus `/opt/wegwiesel/segments4`
+- **Erledigt:** RD5-MicroCache-Decoder (`MicroCache2` → Dart): NodeData, WayLink, externe Link-Koordinaten, Geometrie-Skip
+- **Erledigt:** Graph-Loader decodiert lokale `.rd5`-Segmente für die angefragte Route on-demand in `OfflineRoutingGraph`
+- **Erledigt:** App-UI: „Routing-Region herunterladen" in `OfflineMapsScreen`, Segment-Speicher anzeigen/löschen
+- **Erledigt:** Offline-Router wird beim App-Start initialisiert, wenn lokale Segmente vorhanden sind
+- **Offen nach v2.0-MVP:** semantische Tag-Auflösung aus `lookups.dat` (`highway/surface/access`) statt generischer Fahrrad-Kanten
+- **Offen nach v2.0-MVP:** LRU-Knoten/Subtile-Cache und bidirektionale Suche für große Regionen
+- **Aufwand verbleibend für Qualitätsausbau:** ca. 4–6 Tage
 
 ### v2.0 Versions-Plan
-- v1.10.0 könnte Heatmap solo bringen (kleinster Wurf), aber besser im 2.0-Block bündeln
-- v2.0.0 = Offline-Maps + Offline-Routing + Heatmap + Library zusammen
+- v1.10.0 = Public Route Library + Heatmap (bereits umgesetzt)
+- v1.11.0 = Raster-Offline-Karten + Saved Routes offline (bereits umgesetzt)
+- v2.0.0 = Offline-Routing-MVP mit lokalem RD5-Segmentdownload und Pure-Dart-Routingkern
 - Pre-Release: Beta-Cohort über TestFlight 2 Wochen vor Submission, damit Offline-Funktion in der Praxis getestet wird
 
 ---
@@ -191,4 +186,4 @@ Ideen für später, wenn die Hauptwellen ausgerollt sind:
 
 ---
 
-*Letzte Aktualisierung: 2026-05-12 (v1.9.0+55)*
+*Letzte Aktualisierung: 2026-05-13 (v2.0.0+58, Plan mit aktuellem Code abgeglichen)*

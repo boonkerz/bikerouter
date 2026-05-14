@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/map_screen.dart';
+import 'services/offline_routing/offline_routing_bootstrap.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await OfflineRoutingBootstrap.initialize();
   runApp(const WegwieselApp());
 }
 

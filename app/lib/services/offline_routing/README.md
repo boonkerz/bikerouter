@@ -10,26 +10,26 @@ Roadmap für v2.0. Phasen 1-2 sind in `main` committed, der Rest steht aus.
 - [x] Pure-Dart-Routingkern: Graph-Modell, Trekking-Profil, A*-Suche,
   GeoJSON/`RouteResult`-Ausgabe
 
-## Phase 2 — RD5 Decoder
+## Phase 2 — RD5 Decoder ✓ MVP
 Die binären Sub-Tiles enthalten Huffman-codierte Bitstreams mit Knoten und ausgehenden Ways. Die Kern-Logik aus BRouter Java übersetzt:
 
-- `MicroCache2` (Java) → `Rd5SubTileDecoder` (Dart)
-- `StatCoderContext` → `BitStreamReader`
-- `TagValueCoder` → `TagDecoder` (nutzt `Lookups`)
-- Lat/Lon-Diff-Encoding gegen den Sub-Tile-Mittelpunkt
-- Way-Description-Wiederholung über `count` aus den Lookups (Huffman-Frequenz)
+- [x] `MicroCache2` (Java) → `Rd5MicroCacheDecoder` (Dart)
+- [x] `StatCoderContext` → `BrouterBitCoder`
+- [x] Lat/Lon-Diff-Encoding gegen den MicroCache-Mittelpunkt
+- [x] WayLink-Frames inkl. interner/externer Targets und Geometrie-Skip
+- [ ] Semantische Tag-Auflösung aus `lookups.dat` in echte `highway/surface/access`-Maps
 
 Schritt für Schritt:
-1. BitStream-Reader mit Variable-Length-Integers (`decodeNoisyNumber`, `decodeVarBits`)
-2. NodeData-Frame: lat/lon-Delta, Höhe, Knoten-ID
-3. WayLink-Frame: Ziel-NodeID-Delta, Tag-Beschreibung (Huffman-Index)
-4. Cross-Sub-Tile-Referenzen (8 Nachbar-Sub-Tiles für Knoten, die auf der Grenze sitzen)
+1. [x] BitStream-Reader mit Variable-Length-Integers (`decodeNoisyNumber`, `decodeVarBits`)
+2. [x] NodeData-Frame: lat/lon-Delta, Höhe, Knoten-ID
+3. [x] WayLink-Frame: Ziel-NodeID-Delta, Tag-Beschreibung (Huffman-Index)
+4. [x] Cross-Sub-Tile-Referenzen als externe Link-Koordinaten
 
 ## Phase 3 — Profile-Interpreter
 Option A — Eigene Mini-Sprache nachbauen (`assign`, `if`/`then`/`else`, Arithmetik): ~3 Tage
 Option B — Ein einziges Profil hardcoden (Trekking): ~1 Tag
 
-Empfohlen B für v2.0.0, A für v2.0.x wenn andere Profile gewünscht.
+Umgesetzt ist B für v2.0.0. A bleibt v2.0.x-Material.
 
 ## Phase 4 — A*-Suche
 - [x] MVP: vorwärts gerichtete A*-Suche mit Haversine-Heuristik
@@ -39,9 +39,10 @@ Empfohlen B für v2.0.0, A für v2.0.x wenn andere Profile gewünscht.
 - [ ] Bidirektionale Suche für große Regionen
 
 ## Phase 5 — Region-Download + Integration
-- Neuer Endpoint `https://wegwiesel.app/segments/<filename>.rd5` via Caddy → segments4-Volume
-- App-UI: „Routing-Region herunterladen" analog zu Offline-Karten
-- Routing-Facade in `brouter_service.dart`: bei Online → BRouter-Server, bei Offline → `OfflineRouter`
+- [x] Neuer Endpoint `https://wegwiesel.app/segments/<filename>.rd5` via Caddy → segments4-Volume
+- [x] App-UI: „Routing-Region herunterladen" analog zu Offline-Karten
+- [x] Routing-Facade in `brouter_service.dart`: lokal versuchen → bei Fehler BRouter-Server
+- [x] App-Start initialisiert `Rd5OfflineRouter`, wenn lokale Segmente vorhanden sind
 
 ## Referenzen
 - Java-Source: https://github.com/abrensch/brouter (subdir `brouter-codec/`)
