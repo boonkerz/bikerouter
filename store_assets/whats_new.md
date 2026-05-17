@@ -5,6 +5,34 @@
 
 ---
 
+## v2.1.0 (DE) — „Wandern & Bikepacking"
+**Zwei neue Welten in Wegwiesel: Wandern wird vollwertig, Mehrtagestouren werden planbar.**
+
+• Neues Lauf-Profil 🏃 und Wandern endlich ohne (beta)
+• Wander-Schwierigkeitsstufen Gemütlich/Sportlich/Bergtour, SAC-Skala T1–T6 prominent in der Routenanzeige, Wanderwege-Bevorzugen-Schalter
+• Neue POI-Kategorien für Wandern: Schutzhütte, Picknickplatz — und für Bikepacker Bahnhof als Notausstieg
+• Bikepacking-Modus im Menü: priorisiert Camping, Wasser, Schutzhütten und Bahnhöfe in der POI-Suche
+• Etappen-Planer mit Mehrwert: Starttag-Picker, Sonnenaufgang/-untergang pro Etappe, Wetter-Vorhersage am Etappentag, automatische Übernachtungs-Vorschläge (Camping/Hütte/Hostel)
+• Pausen-Empfehlung beim Wandern: ein Picknickplatz oder eine Schutzhütte pro 1,5 h Gehzeit auf der Strecke
+• Höhenmeter werden bei Wander-/Lauf-Profilen größer angezeigt
+• Rundtour-Fix: BRouter-Iteration kollabiert nicht mehr bei knappen Distanzen, Anker-Marker folgen jetzt der neuen Route bei „Andere Variante"
+• Feinere Distanz-Slider bei Wandern (1-km-Schritte 2–50 km) und Auto (10-km-Schritte 10–500 km)
+
+## v2.1.0 (EN) — "Hiking & Bikepacking"
+**Two new worlds in Wegwiesel: hiking goes mainstream, multi-day tours get planned properly.**
+
+• New running profile 🏃 and hiking finally drops the (beta)
+• Hiking difficulty presets Easy/Sporty/Mountain, prominent SAC T1–T6 grading on each route, prefer-waymarked-trails toggle
+• New POI categories for hikers: shelter and picnic — and for bikepackers a train station emergency-exit
+• Bikepacking mode in settings: prioritizes camping, water, shelters and train stations in POI search
+• Stages planner upgrade: start-date picker, sunrise/sunset per stage, weather forecast on the stage day, automatic overnight suggestions (campsite/hut/hostel)
+• Pause recommendations on hiking routes: one picnic spot or shelter every 1.5 h of walking
+• Hiking/running profiles highlight ascent prominently in the route header
+• Round trip fix: BRouter iteration no longer collapses for short distances, anchor markers now follow the new route after "Another variant"
+• Finer distance sliders for hiking (1-km steps, 2–50 km) and car (10-km steps, 10–500 km)
+
+---
+
 ## v2.0.0 (DE) — "Off the grid"
 **Vorarbeit für echtes Offline-Routing.**
 
