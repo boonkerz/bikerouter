@@ -38,6 +38,7 @@ import '../services/gpx_builder.dart';
 import '../services/nogo_storage.dart';
 import '../services/profile_speed_prefs.dart';
 import '../services/hiking_prefs.dart';
+import '../services/bikepacking_prefs.dart';
 import '../services/route_storage.dart';
 import '../services/geocoding_service.dart';
 import '../services/route_share.dart';
@@ -150,6 +151,7 @@ class _MapScreenState extends State<MapScreen> {
     });
     ProfileSpeedPrefs.load();
     HikingPrefs.load();
+    BikepackingPrefs.load();
     GarminConnect.isAvailable().then((v) {
       if (mounted) setState(() => _garminAvailable = v);
     });

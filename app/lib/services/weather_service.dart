@@ -79,6 +79,23 @@ class WeatherService {
     return results;
   }
 
+  /// Daily forecast for one point at a given calendar date. Used by the
+  /// stages planner to surface "weather on day N at the stage endpoint".
+  /// Targets local noon on [date], which is close enough to the "in-saddle"
+  /// hours for an outlook. Returns null when [date] is outside Open-Meteo's
+  /// 16-day forecast window — caller should render this as "Vorhersage nicht
+  /// verfügbar" rather than a stale guess.
+  static Future<WeatherSample?> forecastForDay({
+    required double lat,
+    required double lon,
+    required DateTime date,
+  }) {
+    final noon = DateTime(date.year, date.month, date.day, 12);
+    final daysOut = noon.difference(DateTime.now()).inDays;
+    if (daysOut > 15) return Future.value(null);
+    return _fetchPoint(lat, lon, noon, 0);
+  }
+
   static Future<WeatherSample?> _fetchPoint(
     double lat,
     double lon,

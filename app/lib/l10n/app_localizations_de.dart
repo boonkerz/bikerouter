@@ -1243,6 +1243,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get poiCatPicnic => 'Picknickplatz';
 
   @override
+  String get poiCatStation => 'Bahnhof';
+
+  @override
+  String get settingsBikepackingMode => 'Bikepacking-Modus';
+
+  @override
+  String get settingsBikepackingModeSub =>
+      'Priorisiert Camping, Wasser, Schutzhütten und Bahnhöfe in der POI-Suche';
+
+  @override
+  String get stagesStartDateLabel => 'Starttag:';
+
+  @override
+  String get stagesOvernightUnnamed => '(Unbenannte Unterkunft)';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override

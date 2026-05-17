@@ -91,6 +91,14 @@ enum PoiCategory {
     gpxSym: 'Campground',
     gpxType: 'camping',
   ),
+  station(
+    id: 'station',
+    label: 'Bahnhof',
+    icon: Icons.train,
+    color: Color(0xFF1976d2),
+    gpxSym: 'Train Station',
+    gpxType: 'station',
+  ),
   info(
     id: 'info',
     label: 'Information',
@@ -153,6 +161,8 @@ enum PoiCategory {
         return l.poiCatPicnic;
       case PoiCategory.camping:
         return l.poiCatCamping;
+      case PoiCategory.station:
+        return l.poiCatStation;
       case PoiCategory.info:
         return l.poiCatInfo;
       case PoiCategory.other:

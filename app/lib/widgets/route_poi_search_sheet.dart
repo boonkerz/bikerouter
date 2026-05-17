@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/route_poi.dart';
+import '../services/bikepacking_prefs.dart';
 import '../services/route_poi_search_service.dart';
 
 const List<PoiCategory> _availableCategories = [
@@ -12,6 +13,10 @@ const List<PoiCategory> _availableCategories = [
   PoiCategory.food,
   PoiCategory.water,
   PoiCategory.scenic,
+  PoiCategory.shelter,
+  PoiCategory.picnic,
+  PoiCategory.camping,
+  PoiCategory.station,
 ];
 
 Future<List<RoutePoiHit>?> showRoutePoiSearchSheet(
@@ -39,11 +44,15 @@ class _Sheet extends StatefulWidget {
 }
 
 class _SheetState extends State<_Sheet> {
-  final Set<PoiCategory> _selected = {
-    PoiCategory.fuel,
-    PoiCategory.shop,
-    PoiCategory.sights,
-  };
+  // Bikepacking mode prioritizes overnight + resupply categories. Otherwise
+  // we default to the common touring-cyclist set (fuel/shop/sights).
+  late final Set<PoiCategory> _selected = BikepackingPrefs.active
+      ? {...BikepackingPrefs.defaultCategories}
+      : {
+          PoiCategory.fuel,
+          PoiCategory.shop,
+          PoiCategory.sights,
+        };
   List<RoutePoiHit>? _hits;
   bool _loading = false;
   String? _error;

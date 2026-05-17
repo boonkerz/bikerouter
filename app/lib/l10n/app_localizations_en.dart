@@ -1243,6 +1243,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get poiCatPicnic => 'Picnic';
 
   @override
+  String get poiCatStation => 'Train station';
+
+  @override
+  String get settingsBikepackingMode => 'Bikepacking mode';
+
+  @override
+  String get settingsBikepackingModeSub =>
+      'Prioritizes camping, water, shelters and train stations in POI search';
+
+  @override
+  String get stagesStartDateLabel => 'Start date:';
+
+  @override
+  String get stagesOvernightUnnamed => '(Unnamed lodging)';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override

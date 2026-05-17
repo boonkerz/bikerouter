@@ -2420,6 +2420,36 @@ abstract class AppLocalizations {
   /// **'Picknickplatz'**
   String get poiCatPicnic;
 
+  /// No description provided for @poiCatStation.
+  ///
+  /// In de, this message translates to:
+  /// **'Bahnhof'**
+  String get poiCatStation;
+
+  /// No description provided for @settingsBikepackingMode.
+  ///
+  /// In de, this message translates to:
+  /// **'Bikepacking-Modus'**
+  String get settingsBikepackingMode;
+
+  /// No description provided for @settingsBikepackingModeSub.
+  ///
+  /// In de, this message translates to:
+  /// **'Priorisiert Camping, Wasser, Schutzhütten und Bahnhöfe in der POI-Suche'**
+  String get settingsBikepackingModeSub;
+
+  /// No description provided for @stagesStartDateLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Starttag:'**
+  String get stagesStartDateLabel;
+
+  /// No description provided for @stagesOvernightUnnamed.
+  ///
+  /// In de, this message translates to:
+  /// **'(Unbenannte Unterkunft)'**
+  String get stagesOvernightUnnamed;
+
   /// No description provided for @poiCatCamping.
   ///
   /// In de, this message translates to:

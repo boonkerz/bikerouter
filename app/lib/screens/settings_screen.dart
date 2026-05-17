@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
+import '../services/bikepacking_prefs.dart';
 import '../services/body_weight_prefs.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   int _weightKg = BodyWeightPrefs.defaultKg;
+  bool _bikepacking = BikepackingPrefs.active;
 
   @override
   void initState() {
@@ -120,6 +122,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: l.settingsBodyWeight,
             subtitle: '$_weightKg kg',
             onTap: _editWeight,
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.local_florist_outlined, color: Color(0xFF6a4a28)),
+            title: Text(l.settingsBikepackingMode,
+                style: const TextStyle(color: Colors.black87)),
+            subtitle: Text(l.settingsBikepackingModeSub,
+                style: const TextStyle(color: Colors.black54, fontSize: 12)),
+            value: _bikepacking,
+            activeThumbColor: const Color(0xFF6a4a28),
+            onChanged: (v) async {
+              setState(() => _bikepacking = v);
+              await BikepackingPrefs.setActive(v);
+            },
           ),
           _sectionHeader(l.settingsSectionAbout),
           FutureBuilder<PackageInfo>(

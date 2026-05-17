@@ -59,6 +59,13 @@ class RoutePoiSearchService {
     ],
     PoiCategory.picnic: ['[tourism=picnic_site]'],
     PoiCategory.camping: ['[tourism~"^(camp_site|caravan_site)\$"]'],
+    PoiCategory.station: [
+      // Mainline train stations + tram/light-rail stops + bus stations.
+      // Halt-only entries (railway=halt) are tiny request-only stops and
+      // typically what bikepackers actually rely on for a quick escape.
+      '[railway~"^(station|halt)\$"]',
+      '[public_transport=station]',
+    ],
     PoiCategory.lodging: [
       // alpine_hut/wilderness_hut are intentionally excluded — they now have
       // their own PoiCategory.shelter so hikers can pick "rest huts" without
@@ -193,6 +200,10 @@ class RoutePoiSearchService {
   }
 
   static PoiCategory? _classify(Map<String, String> tags) {
+    final railway = tags['railway'];
+    if (railway == 'station' || railway == 'halt') return PoiCategory.station;
+    if (tags['public_transport'] == 'station') return PoiCategory.station;
+
     final amenity = tags['amenity'];
     if (amenity == 'fuel') return PoiCategory.fuel;
     if (amenity == 'charging_station') return PoiCategory.charging;
@@ -262,6 +273,8 @@ class RoutePoiSearchService {
       case PoiCategory.lodging:
       case PoiCategory.info:
         return 'tourism';
+      case PoiCategory.station:
+        return 'railway';
       case PoiCategory.shelter:
         // Mixed: alpine_hut/wilderness_hut sit under tourism, while
         // amenity=shelter belongs to amenity. The legend prefers tourism

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/solar_calc.dart';
 import '../services/stage_planner.dart';
+import '../services/weather_service.dart';
 
 class StagesResult {
   final List<Stage> stages;
@@ -42,6 +44,18 @@ class _SheetState extends State<_Sheet> {
   double _targetKm = 60;
   List<Stage>? _stages;
   bool _loading = false;
+  // Start date for stage 1. Stage N runs on _startDate + (N-1) days. We
+  // strip the time-of-day because the planner doesn't model intra-day
+  // start times — sunrise/sunset are calendar-day values at the endpoint.
+  DateTime _startDate = DateTime.now();
+  // Per-stage weather sample. Populated lazily after stages load + when the
+  // start date changes; keys are stage indices.
+  final Map<int, WeatherSample?> _weather = {};
+  bool _weatherLoading = false;
+  // Per-stage suggested overnight POI (camp_site > alpine_hut > hostel >
+  // hotel). Sentinel `null` value means "looked up, none found nearby" —
+  // distinguished from "not yet looked up" via map containsKey.
+  final Map<int, OvernightAnchor?> _overnight = {};
 
   @override
   void initState() {
@@ -63,10 +77,58 @@ class _SheetState extends State<_Sheet> {
       setState(() {
         _stages = s;
         _loading = false;
+        _weather.clear();
+        _overnight.clear();
       });
+      _fetchWeather();
+      _fetchOvernights();
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
+    }
+  }
+
+  /// One Overpass call per stage endpoint, looking for the closest
+  /// camp_site/alpine_hut/hostel/hotel. Only runs on multi-day plans —
+  /// for a single-day route the destination is the user's own choice.
+  Future<void> _fetchOvernights() async {
+    final stages = _stages;
+    if (stages == null || stages.length < 2) return;
+    for (final s in stages) {
+      // The final stage is the route's actual destination — don't suggest
+      // a different overnight spot there.
+      if (s.index == stages.length) continue;
+      final anchor = await OvernightAnchorFinder.findNear(lat: s.lat, lon: s.lon);
+      if (!mounted) return;
+      setState(() => _overnight[s.index] = anchor);
+    }
+  }
+
+  /// Pulls a weather sample per stage endpoint at noon on that stage's day.
+  /// Only triggered for multi-day plans; single-day routes use the existing
+  /// route-weather flow (called from the Wetter action on the map screen).
+  Future<void> _fetchWeather() async {
+    final stages = _stages;
+    if (stages == null || stages.length < 2) return;
+    if (_weatherLoading) return;
+    setState(() => _weatherLoading = true);
+    try {
+      for (final s in stages) {
+        final stageDate = DateTime(
+          _startDate.year,
+          _startDate.month,
+          _startDate.day,
+        ).add(Duration(days: s.index - 1));
+        final sample = await WeatherService.forecastForDay(
+          lat: s.lat,
+          lon: s.lon,
+          date: stageDate,
+        );
+        if (!mounted) return;
+        setState(() => _weather[s.index] = sample);
+      }
+    } finally {
+      if (mounted) setState(() => _weatherLoading = false);
     }
   }
 
@@ -126,6 +188,39 @@ class _SheetState extends State<_Sheet> {
                 ),
               ],
             ),
+            // Start-date picker — only useful when the route splits into 2+
+            // stages, otherwise sunset on day-1 is just for "today" anyway.
+            if ((_stages?.length ?? 0) > 1) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(l.stagesStartDateLabel,
+                      style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickStartDate,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6a4a28).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF6a4a28).withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.event, size: 14, color: Color(0xFF6a4a28)),
+                            const SizedBox(width: 6),
+                            Text(_formatDate(_startDate),
+                                style: const TextStyle(color: Color(0xFF6a4a28), fontSize: 12, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const Divider(color: Colors.black26, height: 16),
             Expanded(child: _buildList(sc, l)),
             if (_stages != null && _stages!.isNotEmpty)
@@ -167,6 +262,13 @@ class _SheetState extends State<_Sheet> {
 
   Widget _row(Stage s, AppLocalizations l) {
     final title = s.townName ?? l.stagesDefault(s.index);
+    final stageCount = _stages?.length ?? 0;
+    final stageDate = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+    ).add(Duration(days: s.index - 1));
+    final solar = SolarCalc.compute(lat: s.lat, lon: s.lon, date: stageDate);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -200,11 +302,115 @@ class _SheetState extends State<_Sheet> {
                   ),
                   style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
+                if (stageCount > 1) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (solar != null)
+                        Text(
+                          '🌅 ${_formatTime(solar.sunriseLocal)}  ·  🌇 ${_formatTime(solar.sunsetLocal)}',
+                          style: const TextStyle(
+                            color: Color(0xFF6a4a28),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      if (_weather.containsKey(s.index)) ...[
+                        const SizedBox(width: 12),
+                        _weatherChip(_weather[s.index]),
+                      ],
+                    ],
+                  ),
+                  if (_overnight[s.index] != null) ...[
+                    const SizedBox(height: 4),
+                    _overnightChip(_overnight[s.index]!),
+                  ],
+                ],
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _pickStartDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate,
+      firstDate: now.subtract(const Duration(days: 1)),
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _startDate = picked;
+        _weather.clear();
+      });
+      _fetchWeather();
+    }
+  }
+
+  static String _formatTime(DateTime t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  Widget _overnightChip(OvernightAnchor a) {
+    final l = AppLocalizations.of(context);
+    String icon;
+    switch (a.type) {
+      case 'camp_site':
+        icon = '🏕️';
+        break;
+      case 'alpine_hut':
+      case 'wilderness_hut':
+        icon = '🏠';
+        break;
+      case 'hostel':
+        icon = '🛏️';
+        break;
+      default:
+        icon = '🏨';
+    }
+    final name = a.name ?? l.stagesOvernightUnnamed;
+    final distKm = (a.distanceMeters / 1000).toStringAsFixed(1);
+    return Row(
+      children: [
+        Text(icon, style: const TextStyle(fontSize: 13)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            '$name · $distKm km',
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.black87, fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _weatherChip(WeatherSample? w) {
+    if (w == null) {
+      // Date is beyond the 16-day forecast window — show a muted dash so
+      // the row stays aligned and the user can see why it's empty.
+      return const Text(
+        '–',
+        style: TextStyle(color: Colors.black38, fontSize: 12),
+      );
+    }
+    final emoji = weatherCodeEmoji(w.weatherCode);
+    final temp = w.tempC == null ? '' : ' ${w.tempC!.round()}°';
+    return Text(
+      '$emoji$temp',
+      style: const TextStyle(color: Color(0xFF6a4a28), fontSize: 12, fontWeight: FontWeight.w500),
+    );
+  }
+
+  static String _formatDate(DateTime d) {
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    return '$dd.$mm.${d.year}';
   }
 }

@@ -223,3 +223,94 @@ class _Place {
   final String type;
   _Place(this.name, this.lat, this.lon, this.type);
 }
+
+/// A suggested overnight stop near a stage endpoint. Ranked by category
+/// (camping cheaper-than-hotel for bikepackers) and then by distance.
+class OvernightAnchor {
+  /// OSM `tourism=...` value: camp_site, alpine_hut, wilderness_hut, hostel, hotel, guest_house.
+  final String type;
+  final String? name;
+  final double lat;
+  final double lon;
+  final double distanceMeters;
+
+  const OvernightAnchor({
+    required this.type,
+    required this.name,
+    required this.lat,
+    required this.lon,
+    required this.distanceMeters,
+  });
+}
+
+class OvernightAnchorFinder {
+  static const String overpassUrl = 'https://wegwiesel.app/overpass/api/interpreter';
+
+  /// Searches a single Overpass query around [lat]/[lon] for camping/hut/
+  /// hostel/hotel POIs and returns the best-ranked one (or null if none).
+  static Future<OvernightAnchor?> findNear({
+    required double lat,
+    required double lon,
+    double radiusMeters = 5000,
+  }) async {
+    final query = '''
+[out:json][timeout:20];
+(
+  node["tourism"~"^(camp_site|alpine_hut|wilderness_hut|hostel|hotel|guest_house)\$"](around:$radiusMeters,$lat,$lon);
+  way["tourism"~"^(camp_site|alpine_hut|wilderness_hut|hostel|hotel|guest_house)\$"](around:$radiusMeters,$lat,$lon);
+);
+out center tags;
+''';
+    try {
+      final r = await http.post(
+        Uri.parse(overpassUrl),
+        body: {'data': query},
+        headers: {'User-Agent': 'Wegwiesel/1.0 (wegwiesel.app)'},
+      ).timeout(const Duration(seconds: 20));
+      if (r.statusCode != 200) return null;
+      final data = jsonDecode(r.body) as Map<String, dynamic>;
+      final elements = (data['elements'] as List).cast<Map<String, dynamic>>();
+      OvernightAnchor? best;
+      double bestScore = double.infinity;
+      for (final e in elements) {
+        double? eLat;
+        double? eLon;
+        if (e['type'] == 'node') {
+          eLat = (e['lat'] as num?)?.toDouble();
+          eLon = (e['lon'] as num?)?.toDouble();
+        } else {
+          final c = e['center'] as Map?;
+          eLat = (c?['lat'] as num?)?.toDouble();
+          eLon = (c?['lon'] as num?)?.toDouble();
+        }
+        final tags = (e['tags'] as Map?)?.cast<String, dynamic>() ?? {};
+        final type = tags['tourism'] as String?;
+        if (eLat == null || eLon == null || type == null) continue;
+        // Distance in meters via haversine; the stage_planner.dart helper
+        // expects [lon, lat, _] triples, hence the throwaway 0 elevation.
+        final d = StagePlanner._haversine([lon, lat, 0], [eLon, eLat, 0]) * 1000;
+        // Rank: cheaper overnight types beat fancier ones, then closer beats
+        // farther. Camping is 1.0, hostels 1.5, hotels 2.5.
+        final categoryWeight = switch (type) {
+          'camp_site' || 'alpine_hut' || 'wilderness_hut' => 1.0,
+          'hostel' => 1.5,
+          _ => 2.5,
+        };
+        final score = d * categoryWeight;
+        if (score < bestScore) {
+          bestScore = score;
+          best = OvernightAnchor(
+            type: type,
+            name: tags['name'] as String?,
+            lat: eLat,
+            lon: eLon,
+            distanceMeters: d,
+          );
+        }
+      }
+      return best;
+    } catch (_) {
+      return null;
+    }
+  }
+}
