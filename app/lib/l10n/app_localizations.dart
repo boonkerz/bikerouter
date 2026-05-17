@@ -623,8 +623,14 @@ abstract class AppLocalizations {
   /// No description provided for @profileHiking.
   ///
   /// In de, this message translates to:
-  /// **'Wandern (beta)'**
+  /// **'Wandern'**
   String get profileHiking;
+
+  /// No description provided for @profileRunning.
+  ///
+  /// In de, this message translates to:
+  /// **'Laufen'**
+  String get profileRunning;
 
   /// No description provided for @profileShortest.
   ///
@@ -1862,6 +1868,12 @@ abstract class AppLocalizations {
   /// **'Rundtour fehlgeschlagen: {error}'**
   String roundtripFailed(String error);
 
+  /// No description provided for @roundtripOffTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine passende Rundtour gefunden (BRouter hat {actualKm} km geliefert). Bitte andere Richtung oder kürzere Distanz probieren.'**
+  String roundtripOffTarget(String actualKm);
+
   /// No description provided for @exportFailed.
   ///
   /// In de, this message translates to:
@@ -2299,6 +2311,114 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Aussicht'**
   String get poiCatScenic;
+
+  /// No description provided for @poiCatShelter.
+  ///
+  /// In de, this message translates to:
+  /// **'Schutzhütte'**
+  String get poiCatShelter;
+
+  /// No description provided for @sacBadgePrefix.
+  ///
+  /// In de, this message translates to:
+  /// **'Schwierigkeit:'**
+  String get sacBadgePrefix;
+
+  /// No description provided for @sacT1.
+  ///
+  /// In de, this message translates to:
+  /// **'Wandern (T1)'**
+  String get sacT1;
+
+  /// No description provided for @sacT2.
+  ///
+  /// In de, this message translates to:
+  /// **'Bergwandern (T2)'**
+  String get sacT2;
+
+  /// No description provided for @sacT3.
+  ///
+  /// In de, this message translates to:
+  /// **'Anspruchsvolles Bergwandern (T3)'**
+  String get sacT3;
+
+  /// No description provided for @sacT4.
+  ///
+  /// In de, this message translates to:
+  /// **'Alpinwandern (T4)'**
+  String get sacT4;
+
+  /// No description provided for @sacT5.
+  ///
+  /// In de, this message translates to:
+  /// **'Anspruchsvolles Alpinwandern (T5)'**
+  String get sacT5;
+
+  /// No description provided for @sacT6.
+  ///
+  /// In de, this message translates to:
+  /// **'Schwieriges Alpinwandern (T6)'**
+  String get sacT6;
+
+  /// No description provided for @preferHikingRoutesLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Wanderwege bevorzugen'**
+  String get preferHikingRoutesLabel;
+
+  /// No description provided for @hikingPresetTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Schwierigkeitsstufe'**
+  String get hikingPresetTitle;
+
+  /// No description provided for @hikingPresetComfortable.
+  ///
+  /// In de, this message translates to:
+  /// **'Gemütlich'**
+  String get hikingPresetComfortable;
+
+  /// No description provided for @hikingPresetSporty.
+  ///
+  /// In de, this message translates to:
+  /// **'Sportlich'**
+  String get hikingPresetSporty;
+
+  /// No description provided for @hikingPresetMountain.
+  ///
+  /// In de, this message translates to:
+  /// **'Bergtour'**
+  String get hikingPresetMountain;
+
+  /// No description provided for @actionPauseRecommendations.
+  ///
+  /// In de, this message translates to:
+  /// **'Pausen'**
+  String get actionPauseRecommendations;
+
+  /// No description provided for @pauseRecsTooShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Route ist zu kurz für Pausen-Empfehlungen (mind. 1.5 h).'**
+  String get pauseRecsTooShort;
+
+  /// No description provided for @pauseRecsNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Pausenplätze in der Nähe der Route gefunden.'**
+  String get pauseRecsNone;
+
+  /// No description provided for @pauseRecsFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Pausensuche fehlgeschlagen: {error}'**
+  String pauseRecsFailed(String error);
+
+  /// No description provided for @poiCatPicnic.
+  ///
+  /// In de, this message translates to:
+  /// **'Picknickplatz'**
+  String get poiCatPicnic;
 
   /// No description provided for @poiCatCamping.
   ///

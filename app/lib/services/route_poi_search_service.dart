@@ -50,9 +50,20 @@ class RoutePoiSearchService {
     ],
     PoiCategory.water: ['[amenity=drinking_water]'],
     PoiCategory.scenic: ['[tourism=viewpoint]'],
+    PoiCategory.shelter: [
+      // tourism-tagged huts (alpine + wilderness) are full POIs; amenity=shelter
+      // also covers picnic-shelters and rain shelters but we filter out bus
+      // stops in _classify.
+      '[tourism~"^(alpine_hut|wilderness_hut)\$"]',
+      '[amenity=shelter][shelter_type!~"^public_transport\$"]',
+    ],
+    PoiCategory.picnic: ['[tourism=picnic_site]'],
     PoiCategory.camping: ['[tourism~"^(camp_site|caravan_site)\$"]'],
     PoiCategory.lodging: [
-      '[tourism~"^(hotel|motel|hostel|guest_house|bed_and_breakfast|apartment|chalet|alpine_hut|wilderness_hut)\$"]',
+      // alpine_hut/wilderness_hut are intentionally excluded — they now have
+      // their own PoiCategory.shelter so hikers can pick "rest huts" without
+      // pulling in every hotel along the route.
+      '[tourism~"^(hotel|motel|hostel|guest_house|bed_and_breakfast|apartment|chalet)\$"]',
     ],
     PoiCategory.info: ['[tourism=information]'],
   };
@@ -186,6 +197,9 @@ class RoutePoiSearchService {
     if (amenity == 'fuel') return PoiCategory.fuel;
     if (amenity == 'charging_station') return PoiCategory.charging;
     if (amenity == 'drinking_water') return PoiCategory.water;
+    if (amenity == 'shelter' && tags['shelter_type'] != 'public_transport') {
+      return PoiCategory.shelter;
+    }
     if (amenity == 'restaurant' ||
         amenity == 'cafe' ||
         amenity == 'fast_food' ||
@@ -201,6 +215,10 @@ class RoutePoiSearchService {
     final tourism = tags['tourism'];
     if (tourism == 'viewpoint') return PoiCategory.scenic;
     if (tourism == 'information') return PoiCategory.info;
+    if (tourism == 'picnic_site') return PoiCategory.picnic;
+    if (tourism == 'alpine_hut' || tourism == 'wilderness_hut') {
+      return PoiCategory.shelter;
+    }
     if (tourism == 'camp_site' || tourism == 'caravan_site') {
       return PoiCategory.camping;
     }
@@ -210,9 +228,7 @@ class RoutePoiSearchService {
         tourism == 'guest_house' ||
         tourism == 'bed_and_breakfast' ||
         tourism == 'apartment' ||
-        tourism == 'chalet' ||
-        tourism == 'alpine_hut' ||
-        tourism == 'wilderness_hut') {
+        tourism == 'chalet') {
       return PoiCategory.lodging;
     }
     if (tourism == 'attraction' ||
@@ -241,9 +257,15 @@ class RoutePoiSearchService {
         return 'shop';
       case PoiCategory.sights:
       case PoiCategory.scenic:
+      case PoiCategory.picnic:
       case PoiCategory.camping:
       case PoiCategory.lodging:
       case PoiCategory.info:
+        return 'tourism';
+      case PoiCategory.shelter:
+        // Mixed: alpine_hut/wilderness_hut sit under tourism, while
+        // amenity=shelter belongs to amenity. The legend prefers tourism
+        // since that's the more descriptive label when present.
         return 'tourism';
       case PoiCategory.other:
         return 'name';

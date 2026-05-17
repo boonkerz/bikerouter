@@ -67,6 +67,22 @@ enum PoiCategory {
     gpxSym: 'Scenic Area',
     gpxType: 'scenic',
   ),
+  shelter(
+    id: 'shelter',
+    label: 'Schutzhütte',
+    icon: Icons.cabin,
+    color: Color(0xFF8d6e63),
+    gpxSym: 'Lodge',
+    gpxType: 'shelter',
+  ),
+  picnic(
+    id: 'picnic',
+    label: 'Picknickplatz',
+    icon: Icons.deck,
+    color: Color(0xFF7cb342),
+    gpxSym: 'Picnic Area',
+    gpxType: 'picnic',
+  ),
   camping(
     id: 'camping',
     label: 'Camping',
@@ -131,6 +147,10 @@ enum PoiCategory {
         return l.poiCatSights;
       case PoiCategory.scenic:
         return l.poiCatScenic;
+      case PoiCategory.shelter:
+        return l.poiCatShelter;
+      case PoiCategory.picnic:
+        return l.poiCatPicnic;
       case PoiCategory.camping:
         return l.poiCatCamping;
       case PoiCategory.info:

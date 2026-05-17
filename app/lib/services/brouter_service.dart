@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import '../models/nogo_area.dart';
 import '../models/route_result.dart';
+import 'hiking_prefs.dart';
 import 'profile_speed_prefs.dart';
 import 'road_snap_service.dart';
 import 'offline_routing/offline_router.dart';
@@ -45,6 +46,13 @@ class BRouterService {
           '&profile:avoid_unpaved=$avoidUnpaved'
           '&profile:shortest_route=$shortestRoute'
           '&profile:add_beeline=1';
+    }
+    if (profile == 'hiking-beta') {
+      final prefer = HikingPrefs.preferHikingRoutes ? 1 : 0;
+      final sac = HikingPrefs.sacScaleLimit;
+      return 'profile=hiking-beta'
+          '&profile:prefer_hiking_routes=$prefer'
+          '&profile:SAC_scale_limit=$sac';
     }
     return 'profile=$profile';
   }
@@ -194,6 +202,21 @@ class BRouterService {
     return RouteResult.fromGeojson(geojson);
   }
 
+  // BRouter's engineMode=4 `roundTripDistance` parameter is a search radius;
+  // the actual route circumference is roughly radius × 4–8 depending on
+  // profile and how curvy the local network is. We start from radius =
+  // target / 5, then iterate with a square-root-dampened correction so a
+  // 10× first miss doesn't collapse the radius to a useless value on the
+  // next try. The hiking profile in particular detours to reach trails,
+  // so a single naive correction would either overshoot or oscillate.
+  static const _roundtripRadiusDivisor = 5.0;
+  static const _roundtripMinRadius = 150;
+  static const _roundtripMaxIters = 5;
+  static const _roundtripAcceptToleranceLow = 0.85;
+  static const _roundtripAcceptToleranceHigh = 1.15;
+  static const _roundtripFailToleranceLow = 0.5;
+  static const _roundtripFailToleranceHigh = 1.8;
+
   static Future<RouteResult> calculateRoundtrip({
     required List<double> start,
     required String profile,
@@ -202,19 +225,44 @@ class BRouterService {
     List<NogoArea> nogos = const [],
   }) async {
     final targetDistance = distanceKm * 1000.0; // meters
-    var radius = (targetDistance / pi).round();
+    var radius = max(
+      _roundtripMinRadius,
+      (targetDistance / _roundtripRadiusDivisor).round(),
+    );
 
-    RouteResult? result;
-    for (var i = 0; i < 3; i++) {
-      result = await _fetchRoundtripOnce(
+    RouteResult? best;
+    double bestErr = double.infinity;
+    for (var i = 0; i < _roundtripMaxIters; i++) {
+      final result = await _fetchRoundtripOnce(
         start: start, profile: profile, radius: radius, direction: direction,
         nogos: nogos,
       );
-      final ratio = (result.distance * 1000) / targetDistance;
-      if ((ratio - 1.0).abs() < 0.10) break;
-      radius = (radius / ratio).round();
+      final actual = result.distance * 1000;
+      final ratio = actual / targetDistance;
+      final err = (ratio - 1.0).abs();
+      if (err < bestErr) {
+        bestErr = err;
+        best = result;
+      }
+      if (ratio >= _roundtripAcceptToleranceLow &&
+          ratio <= _roundtripAcceptToleranceHigh) {
+        break;
+      }
+      // Square-root dampening: ratio=4 → divide by 2, ratio=0.25 → multiply by 2.
+      // Keeps the next radius in a sane range even for wildly off first replies.
+      radius = max(
+        _roundtripMinRadius,
+        (radius / sqrt(ratio)).round(),
+      );
     }
-    return result!;
+    final finalRatio = (best!.distance * 1000) / targetDistance;
+    if (finalRatio < _roundtripFailToleranceLow ||
+        finalRatio > _roundtripFailToleranceHigh) {
+      throw Exception(
+        'roundtrip_off_target:${best.distance.toStringAsFixed(1)}',
+      );
+    }
+    return best;
   }
 
   static Future<RouteResult> calculateRoundtripByTime({
@@ -226,20 +274,42 @@ class BRouterService {
     List<NogoArea> nogos = const [],
   }) async {
     final targetSeconds = timeMinutes * 60.0;
-    var estimatedKm = (timeMinutes / 60.0 * avgSpeedKmh);
-    var radius = (estimatedKm * 1000 / pi).round();
+    final estimatedKm = timeMinutes / 60.0 * avgSpeedKmh;
+    var radius = max(
+      _roundtripMinRadius,
+      (estimatedKm * 1000 / _roundtripRadiusDivisor).round(),
+    );
 
-    RouteResult? result;
-    for (var i = 0; i < 3; i++) {
-      result = await _fetchRoundtripOnce(
+    RouteResult? best;
+    double bestErr = double.infinity;
+    for (var i = 0; i < _roundtripMaxIters; i++) {
+      final result = await _fetchRoundtripOnce(
         start: start, profile: profile, radius: radius, direction: direction,
         nogos: nogos,
       );
       final ratio = result.time / targetSeconds;
-      if ((ratio - 1.0).abs() < 0.10) break;
-      radius = (radius / ratio).round();
+      final err = (ratio - 1.0).abs();
+      if (err < bestErr) {
+        bestErr = err;
+        best = result;
+      }
+      if (ratio >= _roundtripAcceptToleranceLow &&
+          ratio <= _roundtripAcceptToleranceHigh) {
+        break;
+      }
+      radius = max(
+        _roundtripMinRadius,
+        (radius / sqrt(ratio)).round(),
+      );
     }
-    return result!;
+    final finalRatio = best!.time / targetSeconds;
+    if (finalRatio < _roundtripFailToleranceLow ||
+        finalRatio > _roundtripFailToleranceHigh) {
+      throw Exception(
+        'roundtrip_off_target:${best.distance.toStringAsFixed(1)}',
+      );
+    }
+    return best;
   }
 
   static Future<String> fetchGpx({

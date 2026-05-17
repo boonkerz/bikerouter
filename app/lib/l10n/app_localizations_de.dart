@@ -274,7 +274,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get profileMtbZossebartHard => 'MTB „Zossebart“ (hart)';
 
   @override
-  String get profileHiking => 'Wandern (beta)';
+  String get profileHiking => 'Wandern';
+
+  @override
+  String get profileRunning => 'Laufen';
 
   @override
   String get profileShortest => 'Kürzeste Route';
@@ -950,6 +953,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String roundtripOffTarget(String actualKm) {
+    return 'Keine passende Rundtour gefunden (BRouter hat $actualKm km geliefert). Bitte andere Richtung oder kürzere Distanz probieren.';
+  }
+
+  @override
   String exportFailed(String error) {
     return 'Export fehlgeschlagen: $error';
   }
@@ -1175,6 +1183,64 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get poiCatScenic => 'Aussicht';
+
+  @override
+  String get poiCatShelter => 'Schutzhütte';
+
+  @override
+  String get sacBadgePrefix => 'Schwierigkeit:';
+
+  @override
+  String get sacT1 => 'Wandern (T1)';
+
+  @override
+  String get sacT2 => 'Bergwandern (T2)';
+
+  @override
+  String get sacT3 => 'Anspruchsvolles Bergwandern (T3)';
+
+  @override
+  String get sacT4 => 'Alpinwandern (T4)';
+
+  @override
+  String get sacT5 => 'Anspruchsvolles Alpinwandern (T5)';
+
+  @override
+  String get sacT6 => 'Schwieriges Alpinwandern (T6)';
+
+  @override
+  String get preferHikingRoutesLabel => 'Wanderwege bevorzugen';
+
+  @override
+  String get hikingPresetTitle => 'Schwierigkeitsstufe';
+
+  @override
+  String get hikingPresetComfortable => 'Gemütlich';
+
+  @override
+  String get hikingPresetSporty => 'Sportlich';
+
+  @override
+  String get hikingPresetMountain => 'Bergtour';
+
+  @override
+  String get actionPauseRecommendations => 'Pausen';
+
+  @override
+  String get pauseRecsTooShort =>
+      'Route ist zu kurz für Pausen-Empfehlungen (mind. 1.5 h).';
+
+  @override
+  String get pauseRecsNone =>
+      'Keine Pausenplätze in der Nähe der Route gefunden.';
+
+  @override
+  String pauseRecsFailed(String error) {
+    return 'Pausensuche fehlgeschlagen: $error';
+  }
+
+  @override
+  String get poiCatPicnic => 'Picknickplatz';
 
   @override
   String get poiCatCamping => 'Camping';

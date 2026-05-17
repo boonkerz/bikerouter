@@ -37,6 +37,7 @@ import '../services/garmin_share_service.dart';
 import '../services/gpx_builder.dart';
 import '../services/nogo_storage.dart';
 import '../services/profile_speed_prefs.dart';
+import '../services/hiking_prefs.dart';
 import '../services/route_storage.dart';
 import '../services/geocoding_service.dart';
 import '../services/route_share.dart';
@@ -48,6 +49,7 @@ import '../widgets/elevation_chart.dart';
 import '../services/stage_planner.dart';
 import '../widgets/accommodation_sheet.dart';
 import '../widgets/route_poi_search_sheet.dart';
+import '../services/route_poi_search_service.dart';
 import '../widgets/stages_sheet.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/weather_sheet.dart';
@@ -99,6 +101,7 @@ class _MapScreenState extends State<MapScreen> {
   final List<RoutePoi> _pois = [];
   List<OsmSight> _sights = [];
   bool _loadingSights = false;
+  bool _loadingPauseRecs = false;
   Set<String> _enabledSightTypes = allSightTypes;
   Set<String> _activeOverlays = {};
   double _overlayOpacity = 0.5;
@@ -146,6 +149,7 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) setState(() => _nogos = v);
     });
     ProfileSpeedPrefs.load();
+    HikingPrefs.load();
     GarminConnect.isAvailable().then((v) {
       if (mounted) setState(() => _garminAvailable = v);
     });
@@ -404,6 +408,9 @@ class _MapScreenState extends State<MapScreen> {
                   route: _route!,
                   actions: _buildStatsActions(context),
                   userSpeedKmh: ProfileSpeedPrefs.speedFor(_profile),
+                  highlightAscent: _profile == 'hiking-beta' ||
+                      _profile == 'wegwiesel-running',
+                  showSacBadge: _profile == 'hiking-beta',
                 ),
               if (_route != null && _showElevation)
                 ElevationChart(
@@ -1264,6 +1271,7 @@ class _MapScreenState extends State<MapScreen> {
 
   List<StatsAction> _buildStatsActions(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final isOnFoot = _profile == 'hiking-beta' || _profile == 'wegwiesel-running';
     final actions = <StatsAction>[
       StatsAction(
         icon: _sights.isEmpty ? Icons.explore_outlined : Icons.explore_off_outlined,
@@ -1293,6 +1301,13 @@ class _MapScreenState extends State<MapScreen> {
         active: _stages.isNotEmpty,
         onTap: _showStagesPlanner,
       ),
+      if (isOnFoot)
+        StatsAction(
+          icon: Icons.deck_outlined,
+          label: l.actionPauseRecommendations,
+          loading: _loadingPauseRecs,
+          onTap: _addPauseRecommendations,
+        ),
     ];
     return actions;
   }
@@ -2453,7 +2468,22 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _setProfile(String profile) {
-    setState(() => _profile = profile);
+    setState(() {
+      _profile = profile;
+      // Hiking has a much smaller realistic distance range than cycling.
+      // Without this clamp, switching from "fastbike 100 km roundtrip" to
+      // hiking would send a 100 km value into BRouter even though the slider
+      // visually maxes out at 50 km.
+      // Hiking/running operate on a much smaller scale than cycling.
+      // A 100 km value carried over from "fastbike" would silently be sent
+      // to BRouter even though the slider's max is 50 km — clamp + reset
+      // to a typical day-tour length so the user starts in a sensible
+      // place when they switch profile.
+      if ((profile == 'hiking-beta' || profile == 'wegwiesel-running') &&
+          _rtDistanceKm > 50) {
+        _rtDistanceKm = profile == 'hiking-beta' ? 8 : 5;
+      }
+    });
     if (_roundtripMode) {
       if (_lastRoundtripRequest != null && _waypoints.isNotEmpty) {
         _calculateRoundtrip(_lastRoundtripRequest!);
@@ -2638,7 +2668,15 @@ class _MapScreenState extends State<MapScreen> {
       }
       _displayRoute(result);
     } catch (e) {
-      if (mounted) _showError(AppLocalizations.of(context).roundtripFailed(e.toString()));
+      if (!mounted) return;
+      final l = AppLocalizations.of(context);
+      final msg = e.toString();
+      final offTargetMatch = RegExp(r'roundtrip_off_target:([\d.]+)').firstMatch(msg);
+      if (offTargetMatch != null) {
+        _showError(l.roundtripOffTarget(offTargetMatch.group(1)!));
+      } else {
+        _showError(l.roundtripFailed(msg));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -2830,8 +2868,13 @@ class _MapScreenState extends State<MapScreen> {
       _stages = [];
     });
 
-    // In roundtrip mode with only start point, auto-generate anchor points
-    if (_roundtripMode && _waypoints.length == 1 && points.length > 2) {
+    // Regenerate anchors on every roundtrip display, not only on the first
+    // run. Otherwise "Andere Variante" / direction-change would update the
+    // route geometry but leave the A/B/C/D markers pinned to the previous
+    // route's curve. _generateAnchors() preserves _waypoints.first (the
+    // start) and replaces everything else, so this is safe to call after a
+    // prior roundtrip has already populated anchors.
+    if (_roundtripMode && _waypoints.isNotEmpty && points.length > 2) {
       _generateAnchors();
     }
   }
@@ -2984,6 +3027,76 @@ class _MapScreenState extends State<MapScreen> {
         ));
       }
     });
+  }
+
+  /// Picks one rest-spot POI (picnic site, alpine/wilderness hut, or shelter)
+  /// every ~1.5 hours of estimated walking time and pins them on the map.
+  /// Skips POIs we've already added so re-running is idempotent.
+  Future<void> _addPauseRecommendations() async {
+    final route = _route;
+    if (route == null || _loadingPauseRecs) return;
+    final speedKmh = ProfileSpeedPrefs.speedFor(_profile);
+    final totalHours = route.distance / speedKmh;
+    if (totalHours < 1.5) {
+      _showError(AppLocalizations.of(context).pauseRecsTooShort);
+      return;
+    }
+    setState(() => _loadingPauseRecs = true);
+    try {
+      final hits = await RoutePoiSearchService.searchAlongRoute(
+        coordinates: route.coordinates,
+        categories: {PoiCategory.picnic, PoiCategory.shelter},
+        corridorMeters: 800,
+      );
+      // Target time markers every 1.5h, excluding 0 and the final pause-at-end.
+      const interval = 1.5;
+      final markers = <double>[];
+      for (var t = interval; t < totalHours; t += interval) {
+        markers.add(t * speedKmh); // target km along route
+      }
+      if (markers.isEmpty || hits.isEmpty) {
+        if (mounted) _showError(AppLocalizations.of(context).pauseRecsNone);
+        return;
+      }
+      final existing = _pois.map((p) => p.id).toSet();
+      final picked = <RoutePoiHit>[];
+      for (final targetKm in markers) {
+        RoutePoiHit? best;
+        double bestDelta = double.infinity;
+        for (final h in hits) {
+          if (picked.contains(h)) continue;
+          final delta = (h.routeKm - targetKm).abs();
+          if (delta < bestDelta && delta < 5.0) {
+            bestDelta = delta;
+            best = h;
+          }
+        }
+        if (best != null) picked.add(best);
+      }
+      if (picked.isEmpty) {
+        if (mounted) _showError(AppLocalizations.of(context).pauseRecsNone);
+        return;
+      }
+      setState(() {
+        for (final hit in picked) {
+          final id = '${hit.osmType}-${hit.osmId}';
+          if (existing.contains(id)) continue;
+          _pois.add(RoutePoi(
+            id: id,
+            lat: hit.lat,
+            lon: hit.lon,
+            category: hit.category,
+            name: hit.name,
+          ));
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        _showError(AppLocalizations.of(context).pauseRecsFailed(e.toString()));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingPauseRecs = false);
+    }
   }
 
   Future<void> _showNogosSheet() async {

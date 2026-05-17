@@ -41,6 +41,8 @@ class BikeProfile {
         return l.profileMtbZossebartHard;
       case 'hiking-beta':
         return l.profileHiking;
+      case 'wegwiesel-running':
+        return l.profileRunning;
       case 'shortest':
         return l.profileShortest;
       case 'car':
@@ -104,6 +106,7 @@ const profiles = [
   BikeProfile(id: 'car-trailer', category: ProfileCategory.car, icon: '🚙', avgSpeedKmh: 80),
   // Other
   BikeProfile(id: 'hiking-beta', category: ProfileCategory.other, icon: '🥾', avgSpeedKmh: 5),
+  BikeProfile(id: 'wegwiesel-running', category: ProfileCategory.other, icon: '🏃', avgSpeedKmh: 10),
   BikeProfile(id: 'shortest', category: ProfileCategory.other, icon: '📏', avgSpeedKmh: 20),
 ];
 

@@ -46,6 +46,25 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
 
   int get _speed => ProfileSpeedPrefs.speedFor(widget.profile);
 
+  bool get _isOnFoot =>
+      widget.profile == 'hiking-beta' || widget.profile == 'wegwiesel-running';
+  bool get _isCar =>
+      widget.profile == 'car' || widget.profile == 'car-trailer';
+
+  // Slider geometry per category. Hiking/running realistically tops out around
+  // a long day-tour (~50 km), so the bike-default 5..200 with 5-km steps is
+  // far too coarse — at the short end you can't even pick a 5 km tour without
+  // already being at the minimum. Car gets larger steps and a higher max.
+  ({int min, int max, int div}) get _distanceConfig {
+    if (_isOnFoot) return (min: 2, max: 50, div: 48);   // 1 km steps
+    if (_isCar)    return (min: 10, max: 500, div: 49); // 10 km steps
+    return (min: 5, max: 200, div: 39);                 // 5 km steps
+  }
+
+  ({int min, int max, int div}) get _timeConfig {
+    return (min: 30, max: 480, div: 30);                // 15 min steps
+  }
+
   int get _computedDistanceKm {
     if (!_useTime) return widget.distanceKm;
     return (_timeMinutes / 60 * _speed).round();
@@ -79,18 +98,21 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               _formatTime(l, _timeMinutes),
               style: const TextStyle(color: Colors.black54, fontSize: 13),
             ),
-            Slider(
-              value: _timeMinutes.toDouble(),
-              min: 30,
-              max: 480,
-              divisions: 30,
-              activeColor: const Color(0xFF6a4a28),
-              inactiveColor: Colors.black26,
-              onChanged: (v) {
-                setState(() => _timeMinutes = v.round());
-                widget.onDistanceChanged(_computedDistanceKm);
-              },
-            ),
+            Builder(builder: (_) {
+              final t = _timeConfig;
+              return Slider(
+                value: _timeMinutes.toDouble().clamp(t.min.toDouble(), t.max.toDouble()),
+                min: t.min.toDouble(),
+                max: t.max.toDouble(),
+                divisions: t.div,
+                activeColor: const Color(0xFF6a4a28),
+                inactiveColor: Colors.black26,
+                onChanged: (v) {
+                  setState(() => _timeMinutes = v.round());
+                  widget.onDistanceChanged(_computedDistanceKm);
+                },
+              );
+            }),
             Text(
               l.roundtripApproxAt(_computedDistanceKm, _speed),
               style: TextStyle(color: Colors.black.withValues(alpha: 0.4), fontSize: 11),
@@ -100,15 +122,18 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               l.roundtripDistanceLabel(widget.distanceKm),
               style: const TextStyle(color: Colors.black54, fontSize: 13),
             ),
-            Slider(
-              value: widget.distanceKm.toDouble(),
-              min: 5,
-              max: 200,
-              divisions: 39,
-              activeColor: const Color(0xFF6a4a28),
-              inactiveColor: Colors.black26,
-              onChanged: (v) => widget.onDistanceChanged(v.round()),
-            ),
+            Builder(builder: (_) {
+              final d = _distanceConfig;
+              return Slider(
+                value: widget.distanceKm.toDouble().clamp(d.min.toDouble(), d.max.toDouble()),
+                min: d.min.toDouble(),
+                max: d.max.toDouble(),
+                divisions: d.div,
+                activeColor: const Color(0xFF6a4a28),
+                inactiveColor: Colors.black26,
+                onChanged: (v) => widget.onDistanceChanged(v.round()),
+              );
+            }),
           ],
           const SizedBox(height: 4),
           Text(

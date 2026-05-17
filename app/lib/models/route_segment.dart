@@ -34,6 +34,28 @@ class RouteSegment {
   String? get trackType => tags['tracktype'];
   String? get smoothness => tags['smoothness'];
   String? get maxSpeedRaw => tags['maxspeed'];
+  String? get sacScale => tags['sac_scale'];
+
+  /// Returns the SAC scale as 1..6, or 0 when the segment has no sac_scale
+  /// tag (treated as flat/T0 — paved or trivial paths). See
+  /// https://wiki.openstreetmap.org/wiki/Key:sac_scale.
+  int get sacLevel {
+    switch (sacScale) {
+      case 'hiking':
+        return 1;
+      case 'mountain_hiking':
+        return 2;
+      case 'demanding_mountain_hiking':
+        return 3;
+      case 'alpine_hiking':
+        return 4;
+      case 'demanding_alpine_hiking':
+        return 5;
+      case 'difficult_alpine_hiking':
+        return 6;
+    }
+    return 0;
+  }
 
   /// Parses maxspeed tag. Supports plain numbers (km/h assumed) and "X mph".
   /// Returns null for tags like "walk", "signals", "none".

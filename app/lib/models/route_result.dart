@@ -24,6 +24,16 @@ class RouteResult {
     this.turnHints = const [],
   });
 
+  /// Highest SAC scale found along the route (0..6, 0 means no SAC-tagged
+  /// segments). Used to surface a difficulty badge for hiking profiles.
+  int get maxSacLevel {
+    var max = 0;
+    for (final s in segments) {
+      if (s.sacLevel > max) max = s.sacLevel;
+    }
+    return max;
+  }
+
   factory RouteResult.fromGeojson(Map<String, dynamic> geojson) {
     final features = geojson['features'] as List;
     if (features.isEmpty) throw Exception('No route found');

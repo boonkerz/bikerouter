@@ -274,7 +274,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileMtbZossebartHard => 'MTB “Zossebart” (hard)';
 
   @override
-  String get profileHiking => 'Hiking (beta)';
+  String get profileHiking => 'Hiking';
+
+  @override
+  String get profileRunning => 'Running';
 
   @override
   String get profileShortest => 'Shortest route';
@@ -951,6 +954,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String roundtripOffTarget(String actualKm) {
+    return 'No matching round trip found (BRouter returned $actualKm km). Try a different direction or a shorter distance.';
+  }
+
+  @override
   String exportFailed(String error) {
     return 'Export failed: $error';
   }
@@ -1176,6 +1184,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get poiCatScenic => 'Scenic';
+
+  @override
+  String get poiCatShelter => 'Shelter';
+
+  @override
+  String get sacBadgePrefix => 'Difficulty:';
+
+  @override
+  String get sacT1 => 'Hiking (T1)';
+
+  @override
+  String get sacT2 => 'Mountain hiking (T2)';
+
+  @override
+  String get sacT3 => 'Demanding mountain hiking (T3)';
+
+  @override
+  String get sacT4 => 'Alpine hiking (T4)';
+
+  @override
+  String get sacT5 => 'Demanding alpine hiking (T5)';
+
+  @override
+  String get sacT6 => 'Difficult alpine hiking (T6)';
+
+  @override
+  String get preferHikingRoutesLabel => 'Prefer waymarked trails';
+
+  @override
+  String get hikingPresetTitle => 'Difficulty preset';
+
+  @override
+  String get hikingPresetComfortable => 'Easy';
+
+  @override
+  String get hikingPresetSporty => 'Sporty';
+
+  @override
+  String get hikingPresetMountain => 'Mountain';
+
+  @override
+  String get actionPauseRecommendations => 'Breaks';
+
+  @override
+  String get pauseRecsTooShort =>
+      'Route too short for break suggestions (min. 1.5 h).';
+
+  @override
+  String get pauseRecsNone => 'No suitable rest spots found near the route.';
+
+  @override
+  String pauseRecsFailed(String error) {
+    return 'Break search failed: $error';
+  }
+
+  @override
+  String get poiCatPicnic => 'Picnic';
 
   @override
   String get poiCatCamping => 'Camping';

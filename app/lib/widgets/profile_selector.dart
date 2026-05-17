@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/profile.dart';
+import '../services/hiking_prefs.dart';
 import '../services/profile_speed_prefs.dart';
 
 class ProfileSelector extends StatelessWidget {
@@ -120,6 +121,8 @@ class ProfileSelector extends StatelessWidget {
     final l = AppLocalizations.of(context);
     int value = ProfileSpeedPrefs.speedFor(p.id);
     final defaultSpeed = ProfileSpeedPrefs.defaultSpeedFor(p.id);
+    bool preferHiking = HikingPrefs.preferHikingRoutes;
+    HikingPreset preset = HikingPrefs.preset;
     await showDialog<void>(
       context: context,
       builder: (ctx) {
@@ -148,6 +151,43 @@ class ProfileSelector extends StatelessWidget {
                   inactiveColor: Colors.black26,
                   onChanged: (v) => setDialogState(() => value = v.round()),
                 ),
+                if (p.id == 'hiking-beta') ...[
+                  const Divider(height: 24, color: Colors.black12),
+                  Text(l.hikingPresetTitle,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      )),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final option in HikingPreset.values)
+                        _PresetChip(
+                          label: _presetLabel(l, option),
+                          active: preset == option,
+                          onTap: () async {
+                            setDialogState(() => preset = option);
+                            await HikingPrefs.setPreset(option);
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l.preferHikingRoutesLabel,
+                        style: const TextStyle(color: Colors.black87, fontSize: 14)),
+                    value: preferHiking,
+                    activeThumbColor: const Color(0xFF6a4a28),
+                    onChanged: (v) async {
+                      setDialogState(() => preferHiking = v);
+                      await HikingPrefs.setPreferHikingRoutes(v);
+                    },
+                  ),
+                ],
               ],
             ),
             actions: [
@@ -184,6 +224,56 @@ class ProfileSelector extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  String _presetLabel(AppLocalizations l, HikingPreset preset) {
+    switch (preset) {
+      case HikingPreset.comfortable:
+        return l.hikingPresetComfortable;
+      case HikingPreset.sporty:
+        return l.hikingPresetSporty;
+      case HikingPreset.mountain:
+        return l.hikingPresetMountain;
+    }
+  }
+}
+
+class _PresetChip extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _PresetChip({
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFF6a4a28)
+              : const Color(0xFF6a4a28).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active ? const Color(0xFF6a4a28) : Colors.black26,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? const Color(0xFFf5e9d8) : const Color(0xFF6a4a28),
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 }
