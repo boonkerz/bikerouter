@@ -10,10 +10,10 @@ Hauptdomain: https://wegwiesel.app · Bundle: `com.thomaspeterson.bikerouter` ·
 
 | Bereich | Version | Stand |
 |---|---|---|
-| Flutter App (iOS + Android) | **2.0.0+58** | Code auf `main`, Codemagic-Push ausgelöst |
-| Web App (wegwiesel.app) | v2.0 | deployt via `scripts/deploy-web.sh` |
+| Flutter App (iOS + Android) | **2.1.0+61** | Code auf `main`, Codemagic-Push für v2.1.0-Release ausgelöst |
+| Web App (wegwiesel.app) | v2.1 (Hiking-Pack + Bikepacking live) | deployt via `scripts/deploy-web.sh` |
 | Garmin Connect IQ App (WegwieselSync) | 1.5.1 | `.iq`-Paket gebaut, Store-Submission **wartet auf Garmin-Review** |
-| BRouter Profile | inkl. `wegwiesel-ebike` | im Docker-Container deployt |
+| BRouter Profile | inkl. `wegwiesel-ebike`, `wegwiesel-running`, `hiking-beta` mit per-Request-Knobs (SAC_scale_limit, prefer_hiking_routes) | im Docker-Container deployt |
 | Server-Services | brouter + overpass + share + feedback + tracking + `/segments/*.rd5` | live auf 204.168.254.31 |
 
 ---
@@ -65,9 +65,9 @@ Zweistufiger Pfad statt Big-Bang-v2.0:
 - Beim Speichern wird die komplette Geometrie + alle Turn-Hints snapshotetet
 - Beim Laden wird der Cache direkt in `_displayRoute()` gepumpt, kein BRouter-Roundtrip nötig
 
-## v2.0 „Off the grid" (in Arbeit — echtes Offline-Routing)
+## v2.0 „Off the grid" (✓ ausgeliefert als MVP — Qualitätsausbau offen)
 
-**Status:** Pure-Dart-Port ist als MVP umgesetzt. Routing-Kern, hart codiertes `trekking`-Profil, RD5-Segment-Download, Server-Auslieferung, RD5-MicroCache-Decoder, Graph-Loader und App-Initialisierung sind in `main`. Für v2.0.x bleibt die semantische Tag-Auflösung/Profile-Sprache als Qualitätsausbau.
+**Status:** Pure-Dart-Port als MVP **in v2.0.0+59 released**. Routing-Kern, hart codiertes `trekking`-Profil, RD5-Segment-Download, Server-Auslieferung, RD5-MicroCache-Decoder, Graph-Loader und App-Initialisierung sind live. Für v2.0.x bleibt die semantische Tag-Auflösung/Profile-Sprache als Qualitätsausbau (siehe v2.1.x Roadmap unten).
 
 **Ziel:** Der größte USP-Block. Komoot Premium kann Offline-Maps, Wegwiesel macht es kostenlos und privacy-freundlich.
 
@@ -95,36 +95,55 @@ Zweistufiger Pfad statt Big-Bang-v2.0:
 - **Aufwand verbleibend für Qualitätsausbau:** ca. 4–6 Tage
 
 ### v2.0 Versions-Plan
-- v1.10.0 = Public Route Library + Heatmap (bereits umgesetzt)
-- v1.11.0 = Raster-Offline-Karten + Saved Routes offline (bereits umgesetzt)
-- v2.0.0 = Offline-Routing-MVP mit lokalem RD5-Segmentdownload und Pure-Dart-Routingkern
-- Pre-Release: Beta-Cohort über TestFlight 2 Wochen vor Submission, damit Offline-Funktion in der Praxis getestet wird
+- v1.10.0 = Public Route Library + Heatmap ✓
+- v1.11.0 = Raster-Offline-Karten + Saved Routes offline ✓
+- v2.0.0 = Offline-Routing-MVP mit lokalem RD5-Segmentdownload und Pure-Dart-Routingkern ✓
+- Offen: Beta-Cohort über TestFlight (zurückgestellt, weil v2.1.0 zuerst rauskommen sollte)
 
 ---
 
-## v2.1 „Wider reach" (Welle 3 — ca. 2 Wochen)
+## v2.0.x Hiking-Pack (✓ ausgeliefert als Teil von v2.1.0)
 
-**Ziel:** Hardware + Zielgruppen-Diversifikation.
+Eingeschoben zwischen v2.0 und v2.1, weil das Bikepacking-Feature konzeptionell darauf aufbaut. Alle Hiking-Features wurden mit v2.1.0 gemeinsam released.
 
-### v2.1 Feature 1 — Wahoo-Sync analog zum Garmin-Flow
-- **Hintergrund:** Wahoo Bolt/Roam/Ace sind die zweite große Gerätegruppe nach Garmin Edge
-- **Wahoo App-API:** Wahoo X / Wahoo Companion App akzeptiert GPX-Routen via Deep-Link `wahoofitness://route?url=...` — die Wahoo-App lädt dann von einer URL
-- **Implementierung:** ähnlich Garmin-Share-Flow, aber statt Code-an-Edge-übergeben → Deep-Link mit Share-URL öffnen, Wahoo-App holt GPX vom Share-Service
-- **Fallback:** GPX-Datei mit Wahoo-konformen Tags (Wahoo will spezielle XML-Extensions für Turn-Hints) — schon weitgehend kompatibel
-- **Aufwand:** 5 Tage (inkl. Test auf realer Wahoo-Hardware → vom User selbst, kein Edge im Schrank)
-- **Erweiterung:** Hammerhead Karoo läuft Android → könnte direkt eine Wegwiesel-Android-Variante laden, aber das ist v2.2-Material
+- **Wandern de-beta + neues Lauf-Profil** — `wegwiesel-running.brf` (SAC T1, keine Treppen, prefer_hiking_routes=0)
+- **POI-Kategorien Schutzhütte + Picknickplatz** — alpine_hut/wilderness_hut wandern aus Unterkunft raus
+- **Höhenmeter prominent + Default-Distanz 8 km bei Wandern** — StatsBar mit `highlightAscent` + Profil-Wechsel-Clamp
+- **SAC-Skala-Anzeige T1–T6** — parst sac_scale aus BRouter-Messages, Badge unter Stats
+- **„Wanderwege bevorzugen"-Toggle + Schwierigkeitsstufen-Presets** (Gemütlich/Sportlich/Bergtour) — `HikingPrefs`, durchgereicht an BRouter via `&profile:SAC_scale_limit=N&profile:prefer_hiking_routes=N`
+- **Pausen-Empfehlungen** auf Fuß-Profilen — Stats-Action pickt ein Picknickplatz/Schutzhütte pro 1.5 h Gehzeit
 
-### v2.1 Feature 2 — Bikepacking-Modus
-- **Multi-Day-Tour-Planung:** Etappen-Planer mit gezielten Camping-/Wasser-/Resupply-Suchen pro Tag
-- **Sunrise/Sunset pro Etappe:** Algorithm aus `dart:math`, basierend auf End-Coord der Etappe + Datum — zeigt wieviel Restzeit für Camp-Aufbau
-- **Wildcamping-Hinweise:** Deutschland-spezifisch — OSM-Tags `tourism=camp_pitch` (offiziell) vs. „wo wäre es theoretisch erlaubt" (Forst-Regelung, BY/NRW/SH zeigen). Heikel rechtlich, mit Disclaimer
-- **Verlängerter Wetter-Forecast:** statt 24h-Vorhersage → 5-Tage-Outlook entlang der Route
-- **POI-Kategorien bevorzugen:** „Bikepacking-Mode" Toggle priorisiert Wasserstellen, Schutzhütten, Bahnhöfe in der POI-Suche
-- **Aufwand:** 6 Tage
+Außerdem in derselben Welle gefixt:
+- **Roundtrip-Iteration** — BRouter `roundTripDistance` ist Suchradius, nicht Ziel-Distanz; Iteration neu mit `radius = target/5`, sqrt-gedämpfter Korrektur, 5 Iter, Best-of, harter Fail bei >50 % Abweichung
+- **Anker-Marker-Bug** — `_displayRoute` regeneriert A/B/C/D bei jeder Roundtrip-Anzeige (vorher nur beim allerersten Run)
+- **Slider-Granularität** — Wandern/Laufen 1-km-Schritte (2–50 km), Auto 10-km-Schritte (10–500 km), Rad unverändert
+
+---
+
+## v2.1 „Hiking & Bikepacking" (✓ ausgeliefert als v2.1.0+61)
+
+**Ziel:** Wandern und Mehrtagestouren-Planung. Wahoo-Sync wurde aus dem Scope herausgenommen und auf v2.1.1 verschoben.
+
+### v2.1 Feature 1 — Hiking-Pack ✓
+Siehe `v2.0.x Hiking-Pack` oben — bewusst getrennter Abschnitt, weil die Features eine eigene Kategorie sind, aber in derselben Release-Welle gingen.
+
+### v2.1 Feature 2 — Bikepacking-Modus ✓
+- **Global Toggle in Settings** → `BikepackingPrefs`, persistiert per SharedPreferences
+- **Neue POI-Kategorie 🚂 Bahnhof** — `railway=station|halt` + `public_transport=station`
+- **POI-Sheet öffnet voreingestellt** mit camping/water/shelter/picnic/station, wenn Modus aktiv ist
+- **Etappen-Planer-Aufrüstung:**
+  - **Starttag-Picker** (default heute, bis +365 Tage)
+  - **Sonnenaufgang/-untergang pro Etappe** via Pure-Dart NOAA-Algorithmus (`solar_calc.dart`, ±1 min, kein Netz)
+  - **Wetter pro Etappe** — Open-Meteo bei Mittag des Etappentags, gecappt auf 16-Tage-Fenster
+  - **Übernachtungs-Anchor pro Etappe** — Overpass-Query im 5-km-Radius, Ranking camp_site/alpine_hut/wilderness_hut > hostel > hotel
 
 ### v2.1 Versions-Plan
-- v2.1.0 = beide Features zusammen
-- Marketing-Story: „Vom Tagesausflug bis zur 3-Wochen-Bikepacking-Tour"
+- v2.1.0 = Hiking-Pack + Bikepacking-Modus ✓ (released 2026-05-17)
+- v2.1.x-Pipeline (in der Reihenfolge der Priorität):
+  - Wahoo-Sync (Deep-Link `wahoofitness://route?url=...` mit Share-URL) — 5 Tage
+  - Wildcamping-Hinweise (Tag `tourism=camp_pitch` + DE-Rechtshinweis) — 1 Tag
+  - Crash-Persistierung beim Recording (Disk-Flush alle N Punkte) — 1 Tag
+  - v2.0 Polish: lookups.dat-Tag-Auflösung statt generischer Fahrrad-Kanten, LRU-Subtile-Cache, bidirektionale A* — 4–6 Tage
 
 ---
 
@@ -186,4 +205,4 @@ Ideen für später, wenn die Hauptwellen ausgerollt sind:
 
 ---
 
-*Letzte Aktualisierung: 2026-05-13 (v2.0.0+58, Plan mit aktuellem Code abgeglichen)*
+*Letzte Aktualisierung: 2026-05-18 (v2.1.0+61, Hiking-Pack + Bikepacking-Modus released, Wahoo nach v2.1.1 verschoben)*
