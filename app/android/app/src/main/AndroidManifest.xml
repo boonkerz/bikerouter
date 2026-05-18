@@ -49,5 +49,11 @@
             <data android:mimeType="text/plain"/>
         </intent>
         <package android:name="com.garmin.android.apps.connectmobile" />
+        <!-- Wahoo Companion app deep-link support (wahoofitness://route?url=...) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:scheme="wahoofitness" />
+        </intent>
     </queries>
 </manifest>

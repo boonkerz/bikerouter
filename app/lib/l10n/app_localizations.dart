@@ -2450,6 +2450,54 @@ abstract class AppLocalizations {
   /// **'(Unbenannte Unterkunft)'**
   String get stagesOvernightUnnamed;
 
+  /// No description provided for @rideRecoveredSnack.
+  ///
+  /// In de, this message translates to:
+  /// **'Unterbrochene Aufzeichnung wiederhergestellt ({km} km). Findest du unter „Aufzeichnungen\".'**
+  String rideRecoveredSnack(String km);
+
+  /// No description provided for @wildCampDisclaimerTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wildcampen — bitte beachten'**
+  String get wildCampDisclaimerTitle;
+
+  /// No description provided for @wildCampDisclaimerBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Bikepacking-Modus zeigt auch informelle Zeltplätze (camp_pitch) in der POI-Suche.\n\nIn Deutschland ist Wildcampen außerhalb ausgewiesener Plätze meist verboten — die genauen Regeln hängen vom Bundesland und Forstrecht ab. In Schweden/Norwegen/Finnland gilt das Jedermannsrecht. Informiere dich vor jeder Übernachtung selbst — Wegwiesel übernimmt keine Haftung für die rechtliche Lage am gewählten Ort.'**
+  String get wildCampDisclaimerBody;
+
+  /// No description provided for @shareToWahoo.
+  ///
+  /// In de, this message translates to:
+  /// **'An Wahoo senden'**
+  String get shareToWahoo;
+
+  /// No description provided for @shareToWahooSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wahoo Companion App öffnet die Route automatisch'**
+  String get shareToWahooSubtitle;
+
+  /// No description provided for @wahooSendFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Senden an Wahoo fehlgeschlagen: {error}'**
+  String wahooSendFailed(String error);
+
+  /// No description provided for @wahooNotInstalledTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wahoo-App nicht gefunden'**
+  String get wahooNotInstalledTitle;
+
+  /// No description provided for @wahooNotInstalledBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Installiere die „Wahoo Companion\"- bzw. „Wahoo Fitness\"-App aus dem App Store / Play Store und versuche es erneut.'**
+  String get wahooNotInstalledBody;
+
   /// No description provided for @poiCatCamping.
   ///
   /// In de, this message translates to:

@@ -58,7 +58,13 @@ class RoutePoiSearchService {
       '[amenity=shelter][shelter_type!~"^public_transport\$"]',
     ],
     PoiCategory.picnic: ['[tourism=picnic_site]'],
-    PoiCategory.camping: ['[tourism~"^(camp_site|caravan_site)\$"]'],
+    // camp_pitch is the OSM tag for informal/wild-ish pitches (individual
+    // tent spots, often outside formal sites). Their density in Germany is
+    // low so bundling them under "camping" doesn't pollute the result list,
+    // and bikepackers explicitly want to see them in the same view.
+    PoiCategory.camping: [
+      '[tourism~"^(camp_site|caravan_site|camp_pitch)\$"]',
+    ],
     PoiCategory.station: [
       // Mainline train stations + tram/light-rail stops + bus stations.
       // Halt-only entries (railway=halt) are tiny request-only stops and
@@ -230,7 +236,9 @@ class RoutePoiSearchService {
     if (tourism == 'alpine_hut' || tourism == 'wilderness_hut') {
       return PoiCategory.shelter;
     }
-    if (tourism == 'camp_site' || tourism == 'caravan_site') {
+    if (tourism == 'camp_site' ||
+        tourism == 'caravan_site' ||
+        tourism == 'camp_pitch') {
       return PoiCategory.camping;
     }
     if (tourism == 'hotel' ||

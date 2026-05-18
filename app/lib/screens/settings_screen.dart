@@ -64,6 +64,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const _feedbackUrl = '$_baseUrl/feedback/';
   static const _supportEmail = 'support@thomas-peterson.de';
 
+  Future<void> _showWildCampDisclaimer() async {
+    final l = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFf5e9d8),
+        title: Text(l.wildCampDisclaimerTitle,
+            style: const TextStyle(color: Colors.black87)),
+        content: Text(l.wildCampDisclaimerBody,
+            style: const TextStyle(color: Colors.black87, fontSize: 13, height: 1.4)),
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF6a4a28),
+              foregroundColor: const Color(0xFFf5e9d8),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l.commonOk),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _openUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -134,6 +158,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: (v) async {
               setState(() => _bikepacking = v);
               await BikepackingPrefs.setActive(v);
+              if (v && !BikepackingPrefs.wildCampDisclaimerSeen && mounted) {
+                await _showWildCampDisclaimer();
+                await BikepackingPrefs.markWildCampDisclaimerSeen();
+              }
             },
           ),
           _sectionHeader(l.settingsSectionAbout),

@@ -10,7 +10,7 @@ Hauptdomain: https://wegwiesel.app · Bundle: `com.thomaspeterson.bikerouter` ·
 
 | Bereich | Version | Stand |
 |---|---|---|
-| Flutter App (iOS + Android) | **2.1.0+61** | Code auf `main`, Codemagic-Push für v2.1.0-Release ausgelöst |
+| Flutter App (iOS + Android) | **2.1.1+62** | Code auf `main`, Codemagic-Push für v2.1.1-Release ausgelöst |
 | Web App (wegwiesel.app) | v2.1 (Hiking-Pack + Bikepacking live) | deployt via `scripts/deploy-web.sh` |
 | Garmin Connect IQ App (WegwieselSync) | 1.5.1 | `.iq`-Paket gebaut, Store-Submission **wartet auf Garmin-Review** |
 | BRouter Profile | inkl. `wegwiesel-ebike`, `wegwiesel-running`, `hiking-beta` mit per-Request-Knobs (SAC_scale_limit, prefer_hiking_routes) | im Docker-Container deployt |
@@ -139,11 +139,11 @@ Siehe `v2.0.x Hiking-Pack` oben — bewusst getrennter Abschnitt, weil die Featu
 
 ### v2.1 Versions-Plan
 - v2.1.0 = Hiking-Pack + Bikepacking-Modus ✓ (released 2026-05-17)
-- v2.1.x-Pipeline (in der Reihenfolge der Priorität):
-  - Wahoo-Sync (Deep-Link `wahoofitness://route?url=...` mit Share-URL) — 5 Tage
-  - Wildcamping-Hinweise (Tag `tourism=camp_pitch` + DE-Rechtshinweis) — 1 Tag
-  - Crash-Persistierung beim Recording (Disk-Flush alle N Punkte) — 1 Tag
-  - v2.0 Polish: lookups.dat-Tag-Auflösung statt generischer Fahrrad-Kanten, LRU-Subtile-Cache, bidirektionale A* — 4–6 Tage
+- v2.1.1 = Wahoo-Sync, Recording-Crash-Persistierung, Wildcamping-Hinweise, LRU-Subtile-Cache ✓ (released 2026-05-18)
+- v2.1.2+ (offen):
+  - **Offline-Routing-Tag-Resolution** — lookups.dat-getriebenes Tag-Map pro Edge statt hardcodiertem `highway=cycleway`. Berührt Microcache-Decoder, brouter_bit_coder.dart und das Edge-Model. ~3 Tage Risiko, eigenes Release-Fenster
+  - **Bidirektionale A*** — Speedup für lange Routen, Rewrite der `_routeLeg` in graph_offline_router.dart. ~2 Tage
+  - **Wahoo-Test auf Hardware** — Deep-Link nur in Theorie validiert; Praxistest braucht reale Wahoo-Hardware (vom User)
 
 ---
 
@@ -205,4 +205,4 @@ Ideen für später, wenn die Hauptwellen ausgerollt sind:
 
 ---
 
-*Letzte Aktualisierung: 2026-05-18 (v2.1.0+61, Hiking-Pack + Bikepacking-Modus released, Wahoo nach v2.1.1 verschoben)*
+*Letzte Aktualisierung: 2026-05-18 (v2.1.1+62, Wahoo + Crash-Persist + Wildcamp + LRU released; Tag-Resolution + bidirektionale A* in v2.1.2+)*

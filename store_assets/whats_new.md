@@ -5,6 +5,24 @@
 
 ---
 
+## v2.1.1 (DE) — „Hardware & Schutzanker"
+**Drei Punkte, die im Alltag den Unterschied machen.**
+
+• An Wahoo senden: Route mit einem Tipp an die Wahoo Companion App übergeben (Wahoo Bolt/Roam/Ace)
+• Aufzeichnung crash-sicher: Tracks werden während der Fahrt alle 10 Punkte auf die Festplatte geschrieben — stürzt die App ab, ist die Fahrt beim nächsten Start wiederhergestellt
+• Wildcampen-Hinweis: Bikepacking-Modus zeigt auch informelle Zeltplätze (camp_pitch), mit klarem Rechtshinweis beim ersten Aktivieren
+• Offline-Routing schneller: LRU-Cache hält bis zu 200 zuletzt benutzte Microcaches im Speicher, Wiederholungs-Routing in derselben Region ist deutlich schneller
+
+## v2.1.1 (EN) — "Hardware & safety net"
+**Three quality-of-life upgrades that pay off on every ride.**
+
+• Send to Wahoo: hand off a route to the Wahoo Companion app with one tap (Wahoo Bolt/Roam/Ace)
+• Crash-safe recording: tracks are flushed to disk every 10 points — if the app crashes mid-ride, your track is restored on the next launch
+• Wild-camping note: bikepacking mode now includes informal tent pitches (camp_pitch), with a clear legal disclaimer on first activation
+• Offline routing speedup: LRU cache keeps up to 200 recently used microcaches in memory, re-planning in the same area is much faster
+
+---
+
 ## v2.1.0 (DE) — „Wandern & Bikepacking"
 **Zwei neue Welten in Wegwiesel: Wandern wird vollwertig, Mehrtagestouren werden planbar.**
 

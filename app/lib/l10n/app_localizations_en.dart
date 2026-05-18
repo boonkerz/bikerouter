@@ -1259,6 +1259,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stagesOvernightUnnamed => '(Unnamed lodging)';
 
   @override
+  String rideRecoveredSnack(String km) {
+    return 'Interrupted recording recovered ($km km). Find it under \"Recordings\".';
+  }
+
+  @override
+  String get wildCampDisclaimerTitle => 'Wild camping — please note';
+
+  @override
+  String get wildCampDisclaimerBody =>
+      'Bikepacking mode now also shows informal tent pitches (camp_pitch) in POI search.\n\nIn Germany wild camping outside of designated sites is mostly prohibited — exact rules depend on the federal state and local forestry law. In Sweden/Norway/Finland the \"Right to Roam\" applies. Check the local rules yourself before pitching — Wegwiesel takes no responsibility for the legal status of any chosen spot.';
+
+  @override
+  String get shareToWahoo => 'Send to Wahoo';
+
+  @override
+  String get shareToWahooSubtitle =>
+      'Wahoo Companion app opens the route automatically';
+
+  @override
+  String wahooSendFailed(String error) {
+    return 'Send to Wahoo failed: $error';
+  }
+
+  @override
+  String get wahooNotInstalledTitle => 'Wahoo app not found';
+
+  @override
+  String get wahooNotInstalledBody =>
+      'Install the \"Wahoo Companion\" or \"Wahoo Fitness\" app from the App Store / Play Store and try again.';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override

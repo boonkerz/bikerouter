@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../models/recorded_ride.dart';
 import 'body_weight_prefs.dart';
+import 'ride_session_store.dart';
 
 enum RecorderState { idle, recording, paused }
 
@@ -57,6 +58,12 @@ class RideRecorder extends ChangeNotifier {
   DateTime? _pausedAt;
   Duration _pausedAccumulated = Duration.zero;
   double _bodyKg = 75.0;
+  // Disk-flush ticks every Nth point. Combined with the atomic write in
+  // RideSessionStore, this caps "data loss after crash" at the last
+  // ~N×distanceFilter meters of travel.
+  static const int _flushEveryNPoints = 10;
+  int _pointsSinceLastFlush = 0;
+  bool _flushInFlight = false;
 
   // Running totals so per-tick math stays O(1).
   double _distanceM = 0;
@@ -106,8 +113,13 @@ class RideRecorder extends ChangeNotifier {
     _currentSpeed = 0;
     _pausedAccumulated = Duration.zero;
     _pausedAt = null;
+    _pointsSinceLastFlush = 0;
     _startedAt = DateTime.now();
     _state = RecorderState.recording;
+    // Clear any leftover session from a previous run before we start
+    // writing fresh snapshots — otherwise recovery on the *next* crash
+    // would replay both old and new points.
+    await RideSessionStore.clearSession();
 
     final settings = _buildLocationSettings();
     _gpsSub = Geolocator.getPositionStream(locationSettings: settings)
@@ -120,6 +132,9 @@ class RideRecorder extends ChangeNotifier {
     if (_state != RecorderState.recording) return;
     _state = RecorderState.paused;
     _pausedAt = DateTime.now();
+    // Snapshot the session at pause boundaries — a user pausing because
+    // they're heading into a sketchy area is exactly when a crash hurts.
+    unawaited(_flushSession());
     notifyListeners();
   }
 
@@ -169,6 +184,9 @@ class RideRecorder extends ChangeNotifier {
     );
 
     _state = RecorderState.idle;
+    // Successful stop → clean up the session file so the next launch
+    // doesn't think we crashed.
+    await RideSessionStore.clearSession();
     notifyListeners();
     return ride;
   }
@@ -209,7 +227,34 @@ class RideRecorder extends ChangeNotifier {
     if (_currentSpeed > (_maxSpeed ?? 0)) _maxSpeed = _currentSpeed;
 
     _points.add(point);
+    _pointsSinceLastFlush++;
+    if (_pointsSinceLastFlush >= _flushEveryNPoints) {
+      _pointsSinceLastFlush = 0;
+      unawaited(_flushSession());
+    }
     notifyListeners();
+  }
+
+  /// Writes the active session to disk. Best-effort — failures (e.g. disk
+  /// full) are swallowed because losing the next flush is strictly less
+  /// bad than crashing the recording.
+  Future<void> _flushSession() async {
+    if (_flushInFlight) return;
+    final started = _startedAt;
+    if (started == null) return;
+    _flushInFlight = true;
+    try {
+      await RideSessionStore.writeSession(
+        startedAt: started,
+        pausedAccumulated: _pausedAccumulated,
+        bodyKg: _bodyKg,
+        points: List<RecordedPoint>.from(_points),
+      );
+    } catch (_) {
+      // best-effort
+    } finally {
+      _flushInFlight = false;
+    }
   }
 
   Duration _movingDuration() {

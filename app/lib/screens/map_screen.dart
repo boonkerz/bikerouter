@@ -39,6 +39,9 @@ import '../services/nogo_storage.dart';
 import '../services/profile_speed_prefs.dart';
 import '../services/hiking_prefs.dart';
 import '../services/bikepacking_prefs.dart';
+import '../services/ride_recorder.dart';
+import '../services/ride_session_store.dart';
+import '../services/ride_storage.dart';
 import '../services/route_storage.dart';
 import '../services/geocoding_service.dart';
 import '../services/route_share.dart';
@@ -152,11 +155,42 @@ class _MapScreenState extends State<MapScreen> {
     ProfileSpeedPrefs.load();
     HikingPrefs.load();
     BikepackingPrefs.load();
+    _recoverOrphanRide();
     GarminConnect.isAvailable().then((v) {
       if (mounted) setState(() => _garminAvailable = v);
     });
     _tryLoadSharedRoute();
   }
+
+  /// If the last app session crashed mid-recording, an orphan session file
+  /// is on disk. Convert it to a saved ride and tell the user. We skip the
+  /// recovery if the recorder is somehow already running (hot-restart edge
+  /// case during dev) so we don't snapshot a live session.
+  Future<void> _recoverOrphanRide() async {
+    if (RideRecorder.instance.isActive) return;
+    if (!await RideSessionStore.hasOrphanSession()) return;
+    final now = DateTime.now();
+    final name =
+        'Wiederhergestellte Fahrt ${_pad(now.day)}.${_pad(now.month)}. ${_pad(now.hour)}:${_pad(now.minute)}';
+    final ride = await RideSessionStore.recoverAsRide(name);
+    await RideSessionStore.clearSession();
+    if (ride == null) return;
+    await RideStorage.save(ride);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).rideRecoveredSnack(
+            ride.distanceKm.toStringAsFixed(1),
+          ),
+        ),
+        backgroundColor: const Color(0xFF6a4a28),
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
+
+  static String _pad(int v) => v.toString().padLeft(2, '0');
 
   void _tryLoadSharedRoute() {
     final param = readShareParam();
@@ -3712,6 +3746,13 @@ class _MapScreenState extends State<MapScreen> {
                 subtitle: Text(l.shareToGarminSubtitle),
                 onTap: () => Navigator.pop(ctx, 'garmin'),
               ),
+            if (_route != null)
+              ListTile(
+                leading: const Icon(Icons.pedal_bike),
+                title: Text(l.shareToWahoo),
+                subtitle: Text(l.shareToWahooSubtitle),
+                onTap: () => Navigator.pop(ctx, 'wahoo'),
+              ),
             const SizedBox(height: 8),
           ],
         ),
@@ -3724,6 +3765,8 @@ class _MapScreenState extends State<MapScreen> {
       await _sendToGarmin();
     } else if (action == 'edge') {
       await _sendDirectToEdge();
+    } else if (action == 'wahoo') {
+      await _sendToWahoo();
     }
   }
 
@@ -3779,6 +3822,77 @@ class _MapScreenState extends State<MapScreen> {
         SnackBar(content: Text(l.garminUploadFailed(e.toString()))),
       );
     }
+  }
+
+  /// Wahoo Companion App listens for `wahoofitness://route?url=...` deep
+  /// links and fetches the GPX from the URL we hand it. The link only
+  /// works on a phone where the Wahoo app is installed; on Web/Desktop
+  /// it'll silently fail. We upload to the existing share-service first
+  /// because the Wahoo app needs an HTTPS URL it can GET — no Companion
+  /// app accepts raw file payloads.
+  Future<void> _sendToWahoo() async {
+    if (_route == null) return;
+    final l = AppLocalizations.of(context);
+    final trackName = _roundtripMode
+        ? l.roundtripTourName(_rtDistanceKm)
+        : l.defaultTourName;
+    final gpx = GpxBuilder.build(
+      route: _route!,
+      trackName: trackName,
+      pois: _pois,
+      poiFallbackName: (poi) => poi.category.localizedLabel(l),
+    );
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await GarminShareService.upload(
+        name: trackName,
+        gpx: gpx,
+        distanceMeters: (_route!.distance * 1000).round(),
+      );
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      final deepLink = Uri.parse(
+        'wahoofitness://route?url=${Uri.encodeQueryComponent(result.gpxUrl)}',
+      );
+      final launched = await launchUrl(
+        deepLink,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        // App nicht installiert → Hilfe-Dialog mit Store-Link.
+        await _showWahooNotInstalledDialog();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.wahooSendFailed(e.toString()))),
+      );
+    }
+  }
+
+  Future<void> _showWahooNotInstalledDialog() async {
+    final l = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFf5e9d8),
+        title: Text(l.wahooNotInstalledTitle),
+        content: Text(l.wahooNotInstalledBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.commonOk),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showGarminCodeDialog(GarminShareResult result) async {
