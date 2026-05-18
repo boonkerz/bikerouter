@@ -146,42 +146,68 @@ class NoisyDiffDecoder {
   int decodeSignedValue() => _coder.decodeNoisyDiff(noisyBits);
 }
 
+/// One entry from a way-/node-description: the BRouter tag-index (0-based
+/// against lookups.dat's positional table, where index 0 is the implicit
+/// "reversedirection" / "nodeaccessgranted") and the value-index (0=empty,
+/// 1=unknown, 2+ = the values from lookups.dat in declaration order).
+class TagValueEntry {
+  final int tagIdx;
+  final int valueIdx;
+  const TagValueEntry(this.tagIdx, this.valueIdx);
+}
+
+/// Huffman tree that maps a per-edge bit prefix to a tag-value set. Leaves
+/// either hold a [payload] of [TagValueEntry]s (the edge's tag list) or are
+/// "empty" (the edge has no tags, [payload] is null).
+///
+/// Mirrors BRouter's `TagValueCoder` (brouter-codec/.../TagValueCoder.java).
 class TagValueTree {
   final TagValueTree? child1;
   final TagValueTree? child2;
-  final bool hasData;
+  final List<TagValueEntry>? payload;
 
-  const TagValueTree.leaf(this.hasData)
-      : child1 = null,
-        child2 = null;
+  const TagValueTree._({this.child1, this.child2, this.payload});
 
-  const TagValueTree.node(this.child1, this.child2) : hasData = false;
+  bool get isNode => child1 != null && child2 != null;
+  bool get hasData => payload != null;
 
   static TagValueTree read(BrouterBitCoder coder) {
     final isNode = coder.decodeBit();
     if (isNode) {
-      return TagValueTree.node(read(coder), read(coder));
+      return TagValueTree._(child1: read(coder), child2: read(coder));
     }
 
+    // Leaf — decode tag-value pairs until delta=0 closes the list.
+    // BRouter encoding: inum starts at 0, then `inum += delta` per pair,
+    // `data = decodeVarBits()`. Pair (inum, data) is one tag entry.
+    final pairs = <TagValueEntry>[];
+    var inum = 0;
     var hasData = false;
     for (;;) {
       final delta = coder.decodeVarBits();
-      if (!hasData && delta == 0) {
-        return const TagValueTree.leaf(false);
-      }
       if (delta == 0) {
-        return TagValueTree.leaf(hasData);
+        // First delta=0 with no data so far is BRouter's "empty leaf"
+        // marker (= edge has no tags).
+        return TagValueTree._(payload: hasData ? pairs : null);
       }
+      inum += delta;
+      final data = coder.decodeVarBits();
+      pairs.add(TagValueEntry(inum, data));
       hasData = true;
-      coder.decodeVarBits();
     }
   }
 
-  bool decode(BrouterBitCoder coder) {
+  /// Reads one edge's prefix bits and returns the leaf's tag list, or null
+  /// when the edge has no tags.
+  List<TagValueEntry>? decodePayload(BrouterBitCoder coder) {
     var node = this;
-    while (node.child1 != null && node.child2 != null) {
+    while (node.isNode) {
       node = coder.decodeBit() ? node.child2! : node.child1!;
     }
-    return node.hasData;
+    return node.payload;
   }
+
+  /// Legacy boolean variant kept for callers that only need "does this
+  /// edge carry any tags". New code should prefer [decodePayload].
+  bool decode(BrouterBitCoder coder) => decodePayload(coder) != null;
 }

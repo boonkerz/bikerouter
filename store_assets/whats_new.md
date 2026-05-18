@@ -5,6 +5,22 @@
 
 ---
 
+## v2.1.3 (DE) — „Echte Offline-Routenqualität"
+**Der Offline-Router kennt jetzt jedes OSM-Tag.**
+
+• lookups.dat wird als App-Asset gebündelt und beim Start eingelesen
+• Der RD5-Microcache-Decoder löst die binär kodierten Tag-Indizes über lookups.dat in echte highway/surface/access/cycleway-Werte auf
+• Folge: das Trekking-Profil im Offline-Router gewichtet Asphalt vs. Pfad korrekt, vermeidet motorway+steps, bevorzugt cycleways — wie online
+
+## v2.1.3 (EN) — "Real offline routing quality"
+**The offline router now sees every OSM tag.**
+
+• lookups.dat is bundled as an app asset and parsed at startup
+• The RD5 microcache decoder resolves the binary-encoded tag indices via lookups.dat into real highway/surface/access/cycleway values
+• Result: the offline router's trekking profile now weighs asphalt vs path correctly, avoids motorway+steps, prefers cycleways — same behaviour as online
+
+---
+
 ## v2.1.2 (DE) — „POI-Fotos & schnellere Offline-Routen"
 **Mehr Kontext zu POIs und Offline-Routing wird spürbar flotter.**
 

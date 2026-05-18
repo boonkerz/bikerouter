@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'brouter_bit_coder.dart';
+import 'lookups.dart';
 import 'offline_routing_graph.dart';
 
 class Rd5DecodedMicroCache {
@@ -19,13 +20,21 @@ class Rd5MicroCacheDecoder {
   final int lonIdx;
   final int latIdx;
   final int divisor;
+  /// When set, the way-tag bitstream is resolved into real OSM key/value
+  /// pairs via the way-context. Falls back to a generic
+  /// `{highway: cycleway}` placeholder when null — useful for early-boot
+  /// scenarios where lookups.dat hasn't been parsed yet.
+  final Lookups? lookups;
 
   Rd5MicroCacheDecoder({
     required this.bytes,
     required this.lonIdx,
     required this.latIdx,
     required this.divisor,
+    this.lookups,
   });
+
+  static const Map<String, String> _placeholderTags = {'highway': 'cycleway'};
 
   Rd5DecodedMicroCache decode() {
     final coder = BrouterBitCoder(bytes);
@@ -107,13 +116,13 @@ class Rd5MicroCacheDecoder {
           dlat = extLatDiff.decodeSignedValue();
         }
 
-        final hasWayTags = wayTags.decode(coder);
+        final wayPayload = wayTags.decodePayload(coder);
         final targetLon = ilon + dlon;
         final targetLat = ilat + dlat;
         final targetNode = _node(targetLon, targetLat, 0);
         nodeById.putIfAbsent(targetNode.id, () => targetNode);
 
-        if (hasWayTags || !reverse) {
+        if (wayPayload != null || !reverse) {
           edges.add(OfflineRoutingEdge(
             fromNodeId: node.id,
             toNodeId: targetNode.id,
@@ -126,7 +135,7 @@ class Rd5MicroCacheDecoder {
                 targetNode.lat,
               ),
             ).toDouble(),
-            tags: const {'highway': 'cycleway'},
+            tags: _resolveTags(wayPayload),
             bidirectional: internal && !reverse,
           ));
         }
@@ -149,6 +158,23 @@ class Rd5MicroCacheDecoder {
     }
 
     return Rd5DecodedMicroCache(nodes: nodeById.values.toList(), edges: edges);
+  }
+
+  /// Resolves a way-tag payload against lookups.dat into an OSM tag map.
+  /// Returns the static placeholder when [lookups] isn't available or the
+  /// payload is empty — both cases keep the offline router functional but
+  /// generic (matches the pre-tag-resolution behavior).
+  Map<String, String> _resolveTags(List<TagValueEntry>? payload) {
+    final way = lookups?.way;
+    if (payload == null || payload.isEmpty || way == null) {
+      return _placeholderTags;
+    }
+    final out = <String, String>{};
+    for (final entry in payload) {
+      final kv = way.resolve(entry.tagIdx, entry.valueIdx);
+      if (kv != null) out[kv.key] = kv.value;
+    }
+    return out.isEmpty ? _placeholderTags : out;
   }
 
   void _decodeTagValueSet(BrouterBitCoder coder) {

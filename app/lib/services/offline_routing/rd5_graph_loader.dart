@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:io';
 
+import 'lookups.dart';
 import 'offline_routing_graph.dart';
 import 'rd5_microcache_decoder.dart';
 import 'rd5_reader.dart';
@@ -8,6 +9,11 @@ import 'rd5_segment_downloader.dart';
 
 class Rd5GraphLoader {
   final Rd5SegmentDownloader downloader;
+  /// Tag dictionary used to resolve per-edge tag indices into real OSM
+  /// key/value pairs. Null falls back to the placeholder tags inside the
+  /// microcache decoder — the offline router still works, just without
+  /// surface/highway-specific cost differentiation.
+  final Lookups? lookups;
   // Decoded microcaches cached LRU-style. Re-planning a route a few km away
   // (the common case for tweaking start/end points) hits the same cells
   // again and decoding is by far the most expensive step here. 200 cells
@@ -16,7 +22,7 @@ class Rd5GraphLoader {
   final LinkedHashMap<String, Rd5DecodedMicroCache> _cache =
       LinkedHashMap<String, Rd5DecodedMicroCache>();
 
-  Rd5GraphLoader({Rd5SegmentDownloader? downloader})
+  Rd5GraphLoader({Rd5SegmentDownloader? downloader, this.lookups})
       : downloader = downloader ?? Rd5SegmentDownloader.instance;
 
   /// Drops all cached decoded microcaches. Useful when the user clears the
@@ -70,6 +76,7 @@ class Rd5GraphLoader {
             lonIdx: cell.lonIdx,
             latIdx: cell.latIdx,
             divisor: reader.divisor,
+            lookups: lookups,
           ).decode();
           _cache[cacheKey] = decoded;
           if (_cache.length > _maxCacheEntries) {

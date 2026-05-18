@@ -1,5 +1,6 @@
 import '../../models/route_result.dart';
 import 'graph_offline_router.dart';
+import 'lookups.dart';
 import 'offline_router.dart';
 import 'rd5_graph_loader.dart';
 import 'rd5_segment_downloader.dart';
@@ -11,8 +12,10 @@ class Rd5OfflineRouter implements OfflineRouter {
   Rd5OfflineRouter({
     Rd5SegmentDownloader? downloader,
     Rd5GraphLoader? graphLoader,
+    Lookups? lookups,
   })  : downloader = downloader ?? Rd5SegmentDownloader.instance,
-        graphLoader = graphLoader ?? Rd5GraphLoader();
+        graphLoader =
+            graphLoader ?? Rd5GraphLoader(lookups: lookups);
 
   @override
   Future<bool> canRoute({
