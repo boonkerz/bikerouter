@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/route_poi.dart';
 import '../services/bikepacking_prefs.dart';
+import '../services/poi_image_resolver.dart';
 import '../services/route_poi_search_service.dart';
 
 const List<PoiCategory> _availableCategories = [
@@ -253,11 +254,41 @@ class _SheetState extends State<_Sheet> {
         final kmText = h.routeKm < 10
             ? h.routeKm.toStringAsFixed(1)
             : h.routeKm.toStringAsFixed(0);
+        final imageUrl = PoiImageResolver.resolve(h.tags);
         return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: h.category.color.withValues(alpha: 0.2),
-            child: Icon(h.category.icon, color: h.category.color, size: 20),
-          ),
+          leading: imageUrl != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      // Falls Wikimedia 404 / Redirect-Loop bringt, fallen
+                      // wir auf das normale Category-Icon zurück.
+                      errorBuilder: (_, __, ___) => CircleAvatar(
+                        backgroundColor:
+                            h.category.color.withValues(alpha: 0.2),
+                        child: Icon(h.category.icon,
+                            color: h.category.color, size: 20),
+                      ),
+                      loadingBuilder: (ctx, child, progress) {
+                        if (progress == null) return child;
+                        return CircleAvatar(
+                          backgroundColor:
+                              h.category.color.withValues(alpha: 0.2),
+                          child: Icon(h.category.icon,
+                              color: h.category.color, size: 20),
+                        );
+                      },
+                    ),
+                  ),
+                )
+              : CircleAvatar(
+                  backgroundColor: h.category.color.withValues(alpha: 0.2),
+                  child: Icon(h.category.icon, color: h.category.color, size: 20),
+                ),
           title: Text(
             h.name ?? h.category.localizedLabel(l),
             style: const TextStyle(

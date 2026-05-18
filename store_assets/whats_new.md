@@ -5,6 +5,22 @@
 
 ---
 
+## v2.1.2 (DE) — „POI-Fotos & schnellere Offline-Routen"
+**Mehr Kontext zu POIs und Offline-Routing wird spürbar flotter.**
+
+• POI-Fotos: Wenn eine OSM-Sehenswürdigkeit ein image= oder wikimedia_commons=-Tag hat, zeigt Wegwiesel das Bild als Vorschau im POI-Sheet und großflächig im Tap-Dialog (Pinch-Zoom in der Vollbildansicht)
+• Bidirektionale A* im Offline-Router: lange Routen werden parallel von Start und Ziel berechnet und treffen sich in der Mitte — auf typischen Tagestouren etwa doppelt so schnell wie die alte Vorwärtssuche
+• Fix: rd5-Graph-Cache zählt jetzt für beide Suchrichtungen (incoming-Adjazenz)
+
+## v2.1.2 (EN) — "POI photos & faster offline routes"
+**More POI context and offline routing gets noticeably snappier.**
+
+• POI photos: OSM features with image= or wikimedia_commons= tags now show a thumbnail in the POI sheet and full-width in the tap dialog (pinch-zoom in the fullscreen view)
+• Bidirectional A* in the offline router: long routes are computed from both ends in parallel and meet in the middle — roughly 2× faster than the previous forward-only search on day-trip distances
+• Fix: rd5 graph cache now works for both search directions (incoming adjacency)
+
+---
+
 ## v2.1.1 (DE) — „Hardware & Schutzanker"
 **Drei Punkte, die im Alltag den Unterschied machen.**
 

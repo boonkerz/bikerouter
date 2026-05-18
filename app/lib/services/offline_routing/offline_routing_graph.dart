@@ -3,12 +3,18 @@ import 'dart:math';
 class OfflineRoutingGraph {
   final Map<int, OfflineRoutingNode> nodes;
   final Map<int, List<OfflineRoutingEdge>> outgoing;
+  // Same shape as [outgoing] but oriented for the reversed graph, used by
+  // backward A* search. For each original edge A→B, [incoming] holds a
+  // reversed copy at B (whose fromNodeId is B, toNodeId is A). For
+  // bidirectional edges the original direction is also added at A.
+  final Map<int, List<OfflineRoutingEdge>> incoming;
 
   OfflineRoutingGraph({
     required Iterable<OfflineRoutingNode> nodes,
     required Iterable<OfflineRoutingEdge> edges,
   })  : nodes = {for (final node in nodes) node.id: node},
-        outgoing = _buildOutgoing(edges);
+        outgoing = _buildOutgoing(edges),
+        incoming = _buildIncoming(edges);
 
   bool get isEmpty => nodes.isEmpty;
 
@@ -25,6 +31,23 @@ class OfflineRoutingGraph {
       }
     }
     return out;
+  }
+
+  static Map<int, List<OfflineRoutingEdge>> _buildIncoming(
+    Iterable<OfflineRoutingEdge> edges,
+  ) {
+    final in_ = <int, List<OfflineRoutingEdge>>{};
+    for (final edge in edges) {
+      in_.putIfAbsent(edge.toNodeId, () => <OfflineRoutingEdge>[]).add(
+            edge.reversed(),
+          );
+      if (edge.bidirectional) {
+        in_.putIfAbsent(edge.fromNodeId, () => <OfflineRoutingEdge>[]).add(
+              edge,
+            );
+      }
+    }
+    return in_;
   }
 
   OfflineRoutingNode? nearestNode(double lon, double lat) {

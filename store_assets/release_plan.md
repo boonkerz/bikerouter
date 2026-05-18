@@ -10,7 +10,7 @@ Hauptdomain: https://wegwiesel.app · Bundle: `com.thomaspeterson.bikerouter` ·
 
 | Bereich | Version | Stand |
 |---|---|---|
-| Flutter App (iOS + Android) | **2.1.1+62** | Code auf `main`, Codemagic-Push für v2.1.1-Release ausgelöst |
+| Flutter App (iOS + Android) | **2.1.2+63** | Code auf `main`, Codemagic-Push für v2.1.2-Release ausgelöst |
 | Web App (wegwiesel.app) | v2.1 (Hiking-Pack + Bikepacking live) | deployt via `scripts/deploy-web.sh` |
 | Garmin Connect IQ App (WegwieselSync) | 1.5.1 | `.iq`-Paket gebaut, Store-Submission **wartet auf Garmin-Review** |
 | BRouter Profile | inkl. `wegwiesel-ebike`, `wegwiesel-running`, `hiking-beta` mit per-Request-Knobs (SAC_scale_limit, prefer_hiking_routes) | im Docker-Container deployt |
@@ -140,9 +140,9 @@ Siehe `v2.0.x Hiking-Pack` oben — bewusst getrennter Abschnitt, weil die Featu
 ### v2.1 Versions-Plan
 - v2.1.0 = Hiking-Pack + Bikepacking-Modus ✓ (released 2026-05-17)
 - v2.1.1 = Wahoo-Sync, Recording-Crash-Persistierung, Wildcamping-Hinweise, LRU-Subtile-Cache ✓ (released 2026-05-18)
-- v2.1.2+ (offen):
-  - **Offline-Routing-Tag-Resolution** — lookups.dat-getriebenes Tag-Map pro Edge statt hardcodiertem `highway=cycleway`. Berührt Microcache-Decoder, brouter_bit_coder.dart und das Edge-Model. ~3 Tage Risiko, eigenes Release-Fenster
-  - **Bidirektionale A*** — Speedup für lange Routen, Rewrite der `_routeLeg` in graph_offline_router.dart. ~2 Tage
+- v2.1.2 = POI-Fotos (Wikimedia-Commons), Bidirektionale A* + `incoming`-Adjazenz ✓ (released 2026-05-18)
+- v2.1.3 (offen):
+  - **Offline-Routing-Tag-Resolution** — lookups.dat-getriebenes Tag-Map pro Edge statt hardcodiertem `highway=cycleway`. **Verschoben weil:** Huffman-Payload-Kodierung der Tag-Indizes (delta + value-index) braucht die BRouter-Java-Source als Referenz; lookups.dat muss als Asset gebündelt werden; Fehler hier sind stille Routenqualitätsregressionen ohne Compile-Time-Sicherheit. ~3 Tage mit verfügbarer Referenz
   - **Wahoo-Test auf Hardware** — Deep-Link nur in Theorie validiert; Praxistest braucht reale Wahoo-Hardware (vom User)
 
 ---
@@ -205,4 +205,4 @@ Ideen für später, wenn die Hauptwellen ausgerollt sind:
 
 ---
 
-*Letzte Aktualisierung: 2026-05-18 (v2.1.1+62, Wahoo + Crash-Persist + Wildcamp + LRU released; Tag-Resolution + bidirektionale A* in v2.1.2+)*
+*Letzte Aktualisierung: 2026-05-18 (v2.1.2+63, POI-Fotos + bidirektionale A* released; Tag-Resolution in v2.1.3 mit BRouter-Java-Referenz)*

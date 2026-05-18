@@ -54,6 +54,7 @@ import '../services/stage_planner.dart';
 import '../widgets/accommodation_sheet.dart';
 import '../widgets/route_poi_search_sheet.dart';
 import '../services/route_poi_search_service.dart';
+import '../services/poi_image_resolver.dart';
 import '../widgets/stages_sheet.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/weather_sheet.dart';
@@ -1566,6 +1567,61 @@ class _MapScreenState extends State<MapScreen> {
     await _editPoi(poi);
   }
 
+  /// Opens the POI photo in a full-screen black-backdrop viewer with
+  /// pinch-to-zoom. Tap anywhere closes the view.
+  Future<void> _showPoiPhotoFullscreen(String url, String? name) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: InteractiveViewer(
+                  child: Center(
+                    child: Image.network(
+                      url,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white54,
+                        size: 64,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (name != null)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 32,
+                  child: Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      shadows: [Shadow(blurRadius: 4, color: Colors.black87)],
+                    ),
+                  ),
+                ),
+              Positioned(
+                top: 36,
+                right: 12,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _editPoi(RoutePoi poi) async {
     final nameCtrl = TextEditingController(text: poi.name ?? '');
     final noteCtrl = TextEditingController(text: poi.note ?? '');
@@ -1588,6 +1644,39 @@ class _MapScreenState extends State<MapScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (poi.imageUrl != null) ...[
+                    GestureDetector(
+                      onTap: () => _showPoiPhotoFullscreen(poi.imageUrl!, poi.name),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 160,
+                          child: Image.network(
+                            poi.imageUrl!,
+                            fit: BoxFit.cover,
+                            // Wikimedia kann mit 404/Redirect-Loop antworten
+                            // — den Fehler verschlucken statt einen
+                            // hässlichen ImageException-Block zeigen.
+                            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                            loadingBuilder: (ctx, child, progress) =>
+                                progress == null
+                                    ? child
+                                    : Container(
+                                        color: Colors.black.withValues(alpha: 0.05),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF6a4a28),
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Text(l.poiCategoryLabel,
                       style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   const SizedBox(height: 6),
@@ -3060,6 +3149,7 @@ class _MapScreenState extends State<MapScreen> {
           lon: hit.lon,
           category: hit.category,
           name: hit.name,
+          imageUrl: PoiImageResolver.resolve(hit.tags),
         ));
       }
     });
@@ -3123,6 +3213,7 @@ class _MapScreenState extends State<MapScreen> {
             lon: hit.lon,
             category: hit.category,
             name: hit.name,
+            imageUrl: PoiImageResolver.resolve(hit.tags),
           ));
         }
       });

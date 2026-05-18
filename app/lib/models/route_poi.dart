@@ -178,6 +178,11 @@ class RoutePoi {
   final PoiCategory category;
   final String? name;
   final String? note;
+  /// Optional photo thumbnail URL — derived at search time from OSM
+  /// image=/wikimedia_commons= tags. Persisted with the POI so we don't
+  /// have to round-trip to Overpass just to recover the photo reference
+  /// on the next launch.
+  final String? imageUrl;
 
   const RoutePoi({
     required this.id,
@@ -186,9 +191,15 @@ class RoutePoi {
     required this.category,
     this.name,
     this.note,
+    this.imageUrl,
   });
 
-  RoutePoi copyWith({PoiCategory? category, String? name, String? note}) =>
+  RoutePoi copyWith({
+    PoiCategory? category,
+    String? name,
+    String? note,
+    String? imageUrl,
+  }) =>
       RoutePoi(
         id: id,
         lat: lat,
@@ -196,6 +207,7 @@ class RoutePoi {
         category: category ?? this.category,
         name: name ?? this.name,
         note: note ?? this.note,
+        imageUrl: imageUrl ?? this.imageUrl,
       );
 
   Map<String, dynamic> toJson() => {
@@ -205,6 +217,7 @@ class RoutePoi {
         'category': category.id,
         if (name != null) 'name': name,
         if (note != null) 'note': note,
+        if (imageUrl != null) 'imageUrl': imageUrl,
       };
 
   factory RoutePoi.fromJson(Map<String, dynamic> j) => RoutePoi(
@@ -214,5 +227,6 @@ class RoutePoi {
         category: PoiCategory.fromId(j['category'] as String),
         name: j['name'] as String?,
         note: j['note'] as String?,
+        imageUrl: j['imageUrl'] as String?,
       );
 }
