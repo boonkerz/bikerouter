@@ -10,7 +10,7 @@ Hauptdomain: https://wegwiesel.app · Bundle: `com.thomaspeterson.bikerouter` ·
 
 | Bereich | Version | Stand |
 |---|---|---|
-| Flutter App (iOS + Android) | **2.1.3+64** | Code auf `main`, Codemagic-Push für v2.1.3-Release ausgelöst |
+| Flutter App (iOS + Android) | **2.1.4+65** | Code auf `main`, Codemagic-Push für v2.1.4-Release ausgelöst |
 | Web App (wegwiesel.app) | v2.1 (Hiking-Pack + Bikepacking live) | deployt via `scripts/deploy-web.sh` |
 | Garmin Connect IQ App (WegwieselSync) | 1.5.1 | `.iq`-Paket gebaut, Store-Submission **wartet auf Garmin-Review** |
 | BRouter Profile | inkl. `wegwiesel-ebike`, `wegwiesel-running`, `hiking-beta` mit per-Request-Knobs (SAC_scale_limit, prefer_hiking_routes) | im Docker-Container deployt |
@@ -142,6 +142,7 @@ Siehe `v2.0.x Hiking-Pack` oben — bewusst getrennter Abschnitt, weil die Featu
 - v2.1.1 = Wahoo-Sync, Recording-Crash-Persistierung, Wildcamping-Hinweise, LRU-Subtile-Cache ✓ (released 2026-05-18)
 - v2.1.2 = POI-Fotos (Wikimedia-Commons), Bidirektionale A* + `incoming`-Adjazenz ✓ (released 2026-05-18)
 - v2.1.3 = Offline-Routing-Tag-Resolution ✓ (released 2026-05-18)
+- v2.1.4 = POI-Fotos via Wikipedia-Tags (MediaWiki PageImages-Batch) ✓ (released 2026-05-19)
   - lookups.dat als App-Asset gebündelt, beim Boot via `rootBundle.load` geparst
   - `TagValueTree` (brouter_bit_coder.dart) hält jetzt das Leaf-Payload als `List<TagValueEntry>`, abgeleitet aus BRouter's `TagValueCoder.java`
   - `Rd5MicroCacheDecoder.lookups` resolved (tagIdx, valueIdx) → echte OSM-Maps, fällt sauber auf den `highway=cycleway`-Placeholder zurück wenn Lookups fehlen
@@ -209,4 +210,4 @@ Ideen für später, wenn die Hauptwellen ausgerollt sind:
 
 ---
 
-*Letzte Aktualisierung: 2026-05-18 (v2.1.3+64, Tag-Resolution mit BRouter-Source-Referenz released; v2.1 inhaltlich abgeschlossen)*
+*Letzte Aktualisierung: 2026-05-19 (v2.1.4+65, POI-Foto-Coverage via Wikipedia-Tags released)*

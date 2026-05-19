@@ -5,6 +5,22 @@
 
 ---
 
+## v2.1.4 (DE) — „Mehr POI-Fotos"
+**OSM-Tag-Coverage für image=/wikimedia_commons= war dünn — jetzt holen wir uns Bilder auch über Wikipedia-Tags.**
+
+• Nach der Overpass-Suche werden alle POIs mit `wikipedia=lang:Titel`-Tag in einer Batch-Abfrage an die MediaWiki PageImages-API geschickt
+• Bis zu 50 Titel pro Sprache in einem Request, transparent für den User
+• Folge: spürbar mehr Sehenswürdigkeiten zeigen Vorschaubilder im POI-Sheet und im Tap-Dialog
+
+## v2.1.4 (EN) — "More POI photos"
+**OSM image=/wikimedia_commons= coverage was thin — now we also pull thumbnails from Wikipedia.**
+
+• After the Overpass search, POIs with a `wikipedia=lang:Title` tag are batch-queried against the MediaWiki PageImages API
+• Up to 50 titles per language in a single request, transparent to the user
+• Result: noticeably more sights show a thumbnail in the POI sheet and the tap dialog
+
+---
+
 ## v2.1.3 (DE) — „Echte Offline-Routenqualität"
 **Der Offline-Router kennt jetzt jedes OSM-Tag.**
 

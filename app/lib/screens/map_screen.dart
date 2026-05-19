@@ -3149,7 +3149,7 @@ class _MapScreenState extends State<MapScreen> {
           lon: hit.lon,
           category: hit.category,
           name: hit.name,
-          imageUrl: PoiImageResolver.resolve(hit.tags),
+          imageUrl: hit.imageUrl ?? PoiImageResolver.resolve(hit.tags),
         ));
       }
     });
@@ -3213,7 +3213,7 @@ class _MapScreenState extends State<MapScreen> {
             lon: hit.lon,
             category: hit.category,
             name: hit.name,
-            imageUrl: PoiImageResolver.resolve(hit.tags),
+            imageUrl: hit.imageUrl ?? PoiImageResolver.resolve(hit.tags),
           ));
         }
       });

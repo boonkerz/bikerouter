@@ -254,7 +254,10 @@ class _SheetState extends State<_Sheet> {
         final kmText = h.routeKm < 10
             ? h.routeKm.toStringAsFixed(1)
             : h.routeKm.toStringAsFixed(0);
-        final imageUrl = PoiImageResolver.resolve(h.tags);
+        // Prefer the service-resolved URL (covers image=, wikimedia_commons=
+        // and the Wikipedia PageImages fallback). Falls back to a fresh
+        // sync-resolve for hits constructed outside the service.
+        final imageUrl = h.imageUrl ?? PoiImageResolver.resolve(h.tags);
         return ListTile(
           leading: imageUrl != null
               ? ClipRRect(

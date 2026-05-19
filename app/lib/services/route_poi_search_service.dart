@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 
 import '../models/route_poi.dart';
+import 'poi_image_resolver.dart';
 
 class RoutePoiHit {
   final int osmId;
@@ -16,6 +17,12 @@ class RoutePoiHit {
   final Map<String, String> tags;
   final double routeKm;
   final double sideMeters;
+  /// Pre-resolved thumbnail URL: filled in by the search service via
+  /// PoiImageResolver (image=/wikimedia_commons=) plus an optional
+  /// Wikipedia PageImages batch lookup. Callers should prefer this
+  /// over re-resolving from [tags] so they get the wikipedia fallback
+  /// for free.
+  final String? imageUrl;
 
   const RoutePoiHit({
     required this.osmId,
@@ -28,7 +35,22 @@ class RoutePoiHit {
     required this.tags,
     this.name,
     this.subtype,
+    this.imageUrl,
   });
+
+  RoutePoiHit withImageUrl(String? url) => RoutePoiHit(
+        osmId: osmId,
+        osmType: osmType,
+        category: category,
+        lat: lat,
+        lon: lon,
+        routeKm: routeKm,
+        sideMeters: sideMeters,
+        tags: tags,
+        name: name,
+        subtype: subtype,
+        imageUrl: url,
+      );
 }
 
 class RoutePoiSearchService {
@@ -202,7 +224,46 @@ class RoutePoiSearchService {
       ));
     }
     out.sort((a, b) => a.routeKm.compareTo(b.routeKm));
-    return out;
+    return _enrichWithImages(out);
+  }
+
+  /// Two-pass image resolution: first the synchronous Commons sources
+  /// (image=, wikimedia_commons=), then a single batched Wikipedia
+  /// PageImages call for everything that still lacks a photo but has a
+  /// `wikipedia=` tag. The result is the same list, sorted, with
+  /// [RoutePoiHit.imageUrl] populated where possible.
+  static Future<List<RoutePoiHit>> _enrichWithImages(
+      List<RoutePoiHit> hits) async {
+    final synced = <RoutePoiHit>[];
+    final wikipediaTags = <String>{};
+    for (final h in hits) {
+      final url = PoiImageResolver.resolve(h.tags);
+      if (url != null) {
+        synced.add(h.withImageUrl(url));
+      } else {
+        synced.add(h);
+        final wp = h.tags['wikipedia'];
+        if (wp != null && wp.isNotEmpty) wikipediaTags.add(wp);
+      }
+    }
+    if (wikipediaTags.isEmpty) return synced;
+
+    Map<String, String> resolved;
+    try {
+      resolved = await PoiImageResolver.resolveWikipediaBatch(wikipediaTags);
+    } catch (_) {
+      return synced;
+    }
+    if (resolved.isEmpty) return synced;
+    return synced
+        .map((h) {
+          if (h.imageUrl != null) return h;
+          final wp = h.tags['wikipedia'];
+          if (wp == null) return h;
+          final url = resolved[wp];
+          return url == null ? h : h.withImageUrl(url);
+        })
+        .toList();
   }
 
   static PoiCategory? _classify(Map<String, String> tags) {
