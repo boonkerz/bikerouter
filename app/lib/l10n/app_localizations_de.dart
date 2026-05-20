@@ -1344,6 +1344,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ftpFinderStartRecord => 'Aufzeichnung starten';
 
   @override
+  String get ftpFinderOriginWaypoint => 'Suche um den gesetzten Startpunkt.';
+
+  @override
+  String get ftpFinderOriginGps => 'Suche um deine aktuelle GPS-Position.';
+
+  @override
+  String get ftpFinderOriginMapView =>
+      'Suche um den Kartenmittelpunkt. Für ein besseres Ergebnis erst einen Punkt auf der Karte tippen oder GPS einschalten.';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override

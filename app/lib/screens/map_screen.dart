@@ -3170,24 +3170,40 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// Opens the FTP-test-route picker centred on the user's current GPS
-  /// (or, if we don't have a GPS fix yet, the map's centre). On a pick
-  /// we render the candidate as a magenta polyline overlay, fit the
-  /// camera, and offer a SnackBar action to start a recording.
+  /// Opens the FTP-test-route picker. Search centre, in priority order:
+  ///   1. The first waypoint on the active route, if the user has placed
+  ///      one — most explicit signal of "search around here".
+  ///   2. Current GPS fix (5 s timeout).
+  ///   3. Map view centre — falls back to wherever the user is currently
+  ///      looking.
+  /// We surface which one we picked so the user can decide if it's
+  /// actually where they want to search.
   Future<void> _showFtpFinder() async {
     LatLng center;
-    try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
-      ).timeout(const Duration(seconds: 5));
-      center = LatLng(pos.latitude, pos.longitude);
-    } catch (_) {
-      center = _mapController.camera.center;
+    FtpFinderOriginLabel origin;
+    if (_waypoints.isNotEmpty) {
+      center = _waypoints.first;
+      origin = FtpFinderOriginLabel.waypoint;
+    } else {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+          ),
+        ).timeout(const Duration(seconds: 5));
+        center = LatLng(pos.latitude, pos.longitude);
+        origin = FtpFinderOriginLabel.gps;
+      } catch (_) {
+        center = _mapController.camera.center;
+        origin = FtpFinderOriginLabel.mapView;
+      }
     }
     if (!mounted) return;
-    final pick = await showFtpFinderSheet(context, center: center);
+    final pick = await showFtpFinderSheet(
+      context,
+      center: center,
+      origin: origin,
+    );
     if (pick == null) return;
     setState(() {
       _ftpCandidate = pick.candidate;

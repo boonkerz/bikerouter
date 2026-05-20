@@ -2594,6 +2594,24 @@ abstract class AppLocalizations {
   /// **'Aufzeichnung starten'**
   String get ftpFinderStartRecord;
 
+  /// No description provided for @ftpFinderOriginWaypoint.
+  ///
+  /// In de, this message translates to:
+  /// **'Suche um den gesetzten Startpunkt.'**
+  String get ftpFinderOriginWaypoint;
+
+  /// No description provided for @ftpFinderOriginGps.
+  ///
+  /// In de, this message translates to:
+  /// **'Suche um deine aktuelle GPS-Position.'**
+  String get ftpFinderOriginGps;
+
+  /// No description provided for @ftpFinderOriginMapView.
+  ///
+  /// In de, this message translates to:
+  /// **'Suche um den Kartenmittelpunkt. Für ein besseres Ergebnis erst einen Punkt auf der Karte tippen oder GPS einschalten.'**
+  String get ftpFinderOriginMapView;
+
   /// No description provided for @poiCatCamping.
   ///
   /// In de, this message translates to:

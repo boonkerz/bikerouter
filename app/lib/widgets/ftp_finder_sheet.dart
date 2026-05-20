@@ -10,6 +10,11 @@ class FtpFinderResult {
   const FtpFinderResult({required this.candidate, required this.test});
 }
 
+/// Marks where the search centre came from, so the sheet can tell the
+/// user "I'm searching around your current GPS" vs. "around the start
+/// of your route" vs. "around the visible map area".
+enum FtpFinderOriginLabel { waypoint, gps, mapView }
+
 /// Bottom-sheet picker for the FTP test route finder. The user dials in
 /// a test type + terrain mode + search radius; the sheet calls
 /// [FtpRouteFinder.findCandidates] and renders the top results. Tap a
@@ -18,6 +23,7 @@ class FtpFinderResult {
 Future<FtpFinderResult?> showFtpFinderSheet(
   BuildContext context, {
   required LatLng center,
+  required FtpFinderOriginLabel origin,
 }) {
   return showModalBottomSheet<FtpFinderResult>(
     context: context,
@@ -26,13 +32,14 @@ Future<FtpFinderResult?> showFtpFinderSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
-    builder: (ctx) => _Sheet(center: center),
+    builder: (ctx) => _Sheet(center: center, origin: origin),
   );
 }
 
 class _Sheet extends StatefulWidget {
   final LatLng center;
-  const _Sheet({required this.center});
+  final FtpFinderOriginLabel origin;
+  const _Sheet({required this.center, required this.origin});
 
   @override
   State<_Sheet> createState() => _SheetState();
@@ -103,6 +110,8 @@ class _SheetState extends State<_Sheet> {
                     color: Colors.black87,
                     fontSize: 16,
                     fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            _originHint(l),
             const SizedBox(height: 10),
             _typePicker(l),
             const SizedBox(height: 8),
@@ -131,6 +140,42 @@ class _SheetState extends State<_Sheet> {
             Expanded(child: _body(sc, l)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _originHint(AppLocalizations l) {
+    // Map-view fallback is the one to flag: the user might be looking at
+    // their home city while standing in another. The other two cases get
+    // a calm informational pill.
+    final (label, isWarning) = switch (widget.origin) {
+      FtpFinderOriginLabel.waypoint => (l.ftpFinderOriginWaypoint, false),
+      FtpFinderOriginLabel.gps => (l.ftpFinderOriginGps, false),
+      FtpFinderOriginLabel.mapView => (l.ftpFinderOriginMapView, true),
+    };
+    final color = isWarning ? const Color(0xFFef6c00) : const Color(0xFF6a4a28);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isWarning ? Icons.info_outline : Icons.my_location,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: color, fontSize: 12),
+            ),
+          ),
+        ],
       ),
     );
   }
