@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/route_poi.dart';
-import '../services/bikepacking_prefs.dart';
 import '../services/poi_image_resolver.dart';
 import '../services/route_poi_search_service.dart';
 
@@ -45,15 +44,11 @@ class _Sheet extends StatefulWidget {
 }
 
 class _SheetState extends State<_Sheet> {
-  // Bikepacking mode prioritizes overnight + resupply categories. Otherwise
-  // we default to the common touring-cyclist set (fuel/shop/sights).
-  late final Set<PoiCategory> _selected = BikepackingPrefs.active
-      ? {...BikepackingPrefs.defaultCategories}
-      : {
-          PoiCategory.fuel,
-          PoiCategory.shop,
-          PoiCategory.sights,
-        };
+  // Default to all searchable categories — easier UX than guessing the
+  // "right" subset per profile. Users uncheck what they don't want; the
+  // per-category Overpass calls are batched into one query so the cost
+  // of "everything on" is small.
+  late final Set<PoiCategory> _selected = _availableCategories.toSet();
   List<RoutePoiHit>? _hits;
   bool _loading = false;
   String? _error;

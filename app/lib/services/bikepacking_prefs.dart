@@ -16,13 +16,17 @@ class BikepackingPrefs {
 
   /// Categories prioritized in POI suggestions while bikepacking mode is on.
   /// Camping for the night, water + shelter + picnic for the day, station
-  /// as an escape hatch when something breaks.
+  /// as an escape hatch when something breaks, sights because bikepackers
+  /// still want to see what's on the way (the original default-set
+  /// without sights surprised testers who expected landmarks on their
+  /// hiking routes).
   static const Set<PoiCategory> defaultCategories = {
     PoiCategory.camping,
     PoiCategory.water,
     PoiCategory.shelter,
     PoiCategory.picnic,
     PoiCategory.station,
+    PoiCategory.sights,
   };
 
   static Future<void> load() async {
