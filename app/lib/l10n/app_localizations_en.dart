@@ -1290,6 +1290,60 @@ class AppLocalizationsEn extends AppLocalizations {
       'Install the \"Wahoo Companion\" or \"Wahoo Fitness\" app from the App Store / Play Store and try again.';
 
   @override
+  String get menuFindFtpRoute => 'Find training segment';
+
+  @override
+  String get ftpFinderTitle => 'Find FTP test segment';
+
+  @override
+  String get ftpFinderTest20 => '20-min';
+
+  @override
+  String get ftpFinderTest8 => '8-min (2×)';
+
+  @override
+  String get ftpFinderTestRamp => 'Ramp';
+
+  @override
+  String get ftpFinderTestSweetSpot => 'Sweet spot';
+
+  @override
+  String get ftpFinderModeFlat => 'Flat';
+
+  @override
+  String get ftpFinderModeClimb => 'Climb';
+
+  @override
+  String get ftpFinderModeEither => 'Either';
+
+  @override
+  String ftpFinderRadius(int km) {
+    return 'Radius: $km km';
+  }
+
+  @override
+  String get ftpFinderSearch => 'Search segments';
+
+  @override
+  String get ftpFinderPickToSearch =>
+      'Pick a test type, then tap \"Search segments\".';
+
+  @override
+  String get ftpFinderEmpty =>
+      'No suitable segment within the radius. Try a larger radius or a different test type.';
+
+  @override
+  String get ftpFinderUnnamed => 'Unnamed segment';
+
+  @override
+  String ftpFinderPicked(String km) {
+    return 'Segment selected ($km km). Warm up time?';
+  }
+
+  @override
+  String get ftpFinderStartRecord => 'Start recording';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override

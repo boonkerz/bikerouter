@@ -55,6 +55,8 @@ import '../widgets/accommodation_sheet.dart';
 import '../widgets/route_poi_search_sheet.dart';
 import '../services/route_poi_search_service.dart';
 import '../services/poi_image_resolver.dart';
+import '../services/ftp_route_finder.dart';
+import '../widgets/ftp_finder_sheet.dart';
 import '../widgets/stages_sheet.dart';
 import '../widgets/stats_bar.dart';
 import '../widgets/weather_sheet.dart';
@@ -107,6 +109,9 @@ class _MapScreenState extends State<MapScreen> {
   List<OsmSight> _sights = [];
   bool _loadingSights = false;
   bool _loadingPauseRecs = false;
+  FtpTestCandidate? _ftpCandidate;
+  // ignore: unused_field
+  FtpTestType? _ftpTestType; // reserved for upcoming test-instructions overlay
   Set<String> _enabledSightTypes = allSightTypes;
   Set<String> _activeOverlays = {};
   double _overlayOpacity = 0.5;
@@ -365,6 +370,27 @@ class _MapScreenState extends State<MapScreen> {
                           ],
                         ),
                     ],
+                    if (_ftpCandidate != null)
+                      // Bright magenta overlay so the picked FTP-test segment
+                      // is visible even when it overlaps the regular route.
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: _ftpCandidate!.coords
+                                .map((c) => LatLng(c[1], c[0]))
+                                .toList(growable: false),
+                            color: const Color(0xFFE91E63).withValues(alpha: 0.35),
+                            strokeWidth: 10,
+                          ),
+                          Polyline(
+                            points: _ftpCandidate!.coords
+                                .map((c) => LatLng(c[1], c[0]))
+                                .toList(growable: false),
+                            color: const Color(0xFFE91E63),
+                            strokeWidth: 5,
+                          ),
+                        ],
+                      ),
                     // Highlight marker from elevation chart
                     if (_highlightIndex != null &&
                         _route != null &&
@@ -768,6 +794,14 @@ class _MapScreenState extends State<MapScreen> {
                               const Icon(Icons.search, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
                               Text(l.menuSearchAlongRoute, style: const TextStyle(color: Colors.black87)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'ftp_finder',
+                            child: Row(children: [
+                              const Icon(Icons.timer_outlined, color: Color(0xFF6a4a28), size: 20),
+                              const SizedBox(width: 12),
+                              Text(l.menuFindFtpRoute, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           const PopupMenuDivider(),
@@ -3125,12 +3159,86 @@ class _MapScreenState extends State<MapScreen> {
       case 'poi_search':
         await _showPoiSearchSheet();
         break;
+      case 'ftp_finder':
+        await _showFtpFinder();
+        break;
       case 'settings':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const SettingsScreen()),
         );
         break;
     }
+  }
+
+  /// Opens the FTP-test-route picker centred on the user's current GPS
+  /// (or, if we don't have a GPS fix yet, the map's centre). On a pick
+  /// we render the candidate as a magenta polyline overlay, fit the
+  /// camera, and offer a SnackBar action to start a recording.
+  Future<void> _showFtpFinder() async {
+    LatLng center;
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      ).timeout(const Duration(seconds: 5));
+      center = LatLng(pos.latitude, pos.longitude);
+    } catch (_) {
+      center = _mapController.camera.center;
+    }
+    if (!mounted) return;
+    final pick = await showFtpFinderSheet(context, center: center);
+    if (pick == null) return;
+    setState(() {
+      _ftpCandidate = pick.candidate;
+      _ftpTestType = pick.test;
+    });
+    // Frame the picked segment with a margin so the user sees full
+    // context (entry + exit roads) rather than just the segment.
+    final points = pick.candidate.coords
+        .map((c) => LatLng(c[1], c[0]))
+        .toList(growable: false);
+    if (points.isNotEmpty) {
+      final bounds = LatLngBounds.fromPoints(points);
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(60),
+        ),
+      );
+    }
+    if (!mounted) return;
+    final l = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(l.ftpFinderPicked(pick.candidate.lengthKm.toStringAsFixed(1))),
+      backgroundColor: const Color(0xFF6a4a28),
+      duration: const Duration(seconds: 6),
+      action: SnackBarAction(
+        label: l.ftpFinderStartRecord,
+        textColor: const Color(0xFFf5e9d8),
+        onPressed: _startFtpRecording,
+      ),
+    ));
+  }
+
+  Future<void> _startFtpRecording() async {
+    final started = await RideRecorder.instance.start();
+    if (!mounted) return;
+    if (!started) {
+      final l = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.gpsPermissionDenied)),
+      );
+      return;
+    }
+    // The recording screen is the natural follow-up — it shows live
+    // pace/elevation/time stats while the rider works through the
+    // effort. RideRecorder is already running by the time we navigate.
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RecordingScreen(mapStyle: _mapStyle),
+      ),
+    );
   }
 
   Future<void> _showPoiSearchSheet() async {

@@ -2498,6 +2498,102 @@ abstract class AppLocalizations {
   /// **'Installiere die „Wahoo Companion\"- bzw. „Wahoo Fitness\"-App aus dem App Store / Play Store und versuche es erneut.'**
   String get wahooNotInstalledBody;
 
+  /// No description provided for @menuFindFtpRoute.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainingsstrecke finden'**
+  String get menuFindFtpRoute;
+
+  /// No description provided for @ftpFinderTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'FTP-Test-Strecke finden'**
+  String get ftpFinderTitle;
+
+  /// No description provided for @ftpFinderTest20.
+  ///
+  /// In de, this message translates to:
+  /// **'20-min'**
+  String get ftpFinderTest20;
+
+  /// No description provided for @ftpFinderTest8.
+  ///
+  /// In de, this message translates to:
+  /// **'8-min (2×)'**
+  String get ftpFinderTest8;
+
+  /// No description provided for @ftpFinderTestRamp.
+  ///
+  /// In de, this message translates to:
+  /// **'Stufentest'**
+  String get ftpFinderTestRamp;
+
+  /// No description provided for @ftpFinderTestSweetSpot.
+  ///
+  /// In de, this message translates to:
+  /// **'Sweet Spot'**
+  String get ftpFinderTestSweetSpot;
+
+  /// No description provided for @ftpFinderModeFlat.
+  ///
+  /// In de, this message translates to:
+  /// **'Flach'**
+  String get ftpFinderModeFlat;
+
+  /// No description provided for @ftpFinderModeClimb.
+  ///
+  /// In de, this message translates to:
+  /// **'Bergauf'**
+  String get ftpFinderModeClimb;
+
+  /// No description provided for @ftpFinderModeEither.
+  ///
+  /// In de, this message translates to:
+  /// **'Beides'**
+  String get ftpFinderModeEither;
+
+  /// No description provided for @ftpFinderRadius.
+  ///
+  /// In de, this message translates to:
+  /// **'Umkreis: {km} km'**
+  String ftpFinderRadius(int km);
+
+  /// No description provided for @ftpFinderSearch.
+  ///
+  /// In de, this message translates to:
+  /// **'Strecke suchen'**
+  String get ftpFinderSearch;
+
+  /// No description provided for @ftpFinderPickToSearch.
+  ///
+  /// In de, this message translates to:
+  /// **'Test-Typ wählen und „Strecke suchen\" tippen.'**
+  String get ftpFinderPickToSearch;
+
+  /// No description provided for @ftpFinderEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine passende Strecke im Umkreis gefunden. Versuche einen größeren Radius oder einen anderen Test-Typ.'**
+  String get ftpFinderEmpty;
+
+  /// No description provided for @ftpFinderUnnamed.
+  ///
+  /// In de, this message translates to:
+  /// **'Unbenannte Strecke'**
+  String get ftpFinderUnnamed;
+
+  /// No description provided for @ftpFinderPicked.
+  ///
+  /// In de, this message translates to:
+  /// **'Strecke ausgewählt ({km} km). Schon mal aufwärmen?'**
+  String ftpFinderPicked(String km);
+
+  /// No description provided for @ftpFinderStartRecord.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufzeichnung starten'**
+  String get ftpFinderStartRecord;
+
   /// No description provided for @poiCatCamping.
   ///
   /// In de, this message translates to:

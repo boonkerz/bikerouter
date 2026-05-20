@@ -1290,6 +1290,60 @@ class AppLocalizationsDe extends AppLocalizations {
       'Installiere die „Wahoo Companion\"- bzw. „Wahoo Fitness\"-App aus dem App Store / Play Store und versuche es erneut.';
 
   @override
+  String get menuFindFtpRoute => 'Trainingsstrecke finden';
+
+  @override
+  String get ftpFinderTitle => 'FTP-Test-Strecke finden';
+
+  @override
+  String get ftpFinderTest20 => '20-min';
+
+  @override
+  String get ftpFinderTest8 => '8-min (2×)';
+
+  @override
+  String get ftpFinderTestRamp => 'Stufentest';
+
+  @override
+  String get ftpFinderTestSweetSpot => 'Sweet Spot';
+
+  @override
+  String get ftpFinderModeFlat => 'Flach';
+
+  @override
+  String get ftpFinderModeClimb => 'Bergauf';
+
+  @override
+  String get ftpFinderModeEither => 'Beides';
+
+  @override
+  String ftpFinderRadius(int km) {
+    return 'Umkreis: $km km';
+  }
+
+  @override
+  String get ftpFinderSearch => 'Strecke suchen';
+
+  @override
+  String get ftpFinderPickToSearch =>
+      'Test-Typ wählen und „Strecke suchen\" tippen.';
+
+  @override
+  String get ftpFinderEmpty =>
+      'Keine passende Strecke im Umkreis gefunden. Versuche einen größeren Radius oder einen anderen Test-Typ.';
+
+  @override
+  String get ftpFinderUnnamed => 'Unbenannte Strecke';
+
+  @override
+  String ftpFinderPicked(String km) {
+    return 'Strecke ausgewählt ($km km). Schon mal aufwärmen?';
+  }
+
+  @override
+  String get ftpFinderStartRecord => 'Aufzeichnung starten';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override
