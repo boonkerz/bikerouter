@@ -93,6 +93,10 @@ class PoiImageResolver {
           '?action=query&format=json'
           '&prop=pageimages&piprop=thumbnail&pithumbsize=$thumbWidth'
           '&redirects=1'
+          // origin=* enables anonymous CORS access from the web build;
+          // without it Chromium silently drops the response. Native
+          // iOS/Android don't care either way.
+          '&origin=*'
           '&titles=$joined',
         );
         try {
