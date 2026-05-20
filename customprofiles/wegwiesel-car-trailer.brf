@@ -71,9 +71,21 @@ assign hgv_blocked
            greater totalweight 3500
 
 # Cost factor = multiplier on edge length. 10000 = blocked.
-# Numbers shifted vs. wegwiesel-car: motorway stays cheap, but
-# Bundes-/Land-/Kreis-Strassen are progressively more painful so a
-# slightly-longer autobahn route wins over a winding shortcut.
+#
+# Tuned to be roughly time-proportional rather than class-preferential.
+# The earlier 0.9/1.0/2.5/4.0/… spread made the engine pick any Autobahn
+# detour up to 2.5× distance over a direct Bundesstrasse — too greedy.
+# ADAC and Google Maps mirror this by valuing actual driving time (with
+# a fuel-economy bias), and on a 4-lane B96 with very few junctions a
+# trailer drives almost as fast as on Autobahn. New ratios mirror the
+# typical speed difference per class:
+#   motorway 80 km/h  →  1.00
+#   trunk    80 km/h  →  1.00
+#   primary  70 km/h  →  1.15  (slight bias away from city centres)
+#   secondary 60 km/h →  1.40
+#   tertiary  50 km/h →  1.85
+#   residential 25 km/h → 5.00  (extra penalty: trailer turning radius)
+#   service   →           8.00
 assign costfactor
        if highway=cycleway|footway|bridleway|path|steps|pedestrian then 10000
        else if not caraccess then 10000
@@ -82,16 +94,16 @@ assign costfactor
        else if and avoid_toll      toll=yes then 10000
        else if and avoid_unpaved   is_unpaved then 10000
        else if shortest_route then 1.0
-       else if highway=motorway|motorway_link  then 0.9
-       else if highway=trunk|trunk_link        then 1.0
-       else if highway=primary|primary_link    then 2.5
-       else if highway=secondary|secondary_link then 4.0
-       else if highway=tertiary|tertiary_link  then 5.5
-       else if highway=unclassified            then 6.5
-       else if highway=residential|living_street then 9.0
-       else if highway=service                 then 11.0
-       else if highway=track                   then 12.0
-       else 5.0
+       else if highway=motorway|motorway_link  then 1.00
+       else if highway=trunk|trunk_link        then 1.00
+       else if highway=primary|primary_link    then 1.15
+       else if highway=secondary|secondary_link then 1.40
+       else if highway=tertiary|tertiary_link  then 1.85
+       else if highway=unclassified            then 2.20
+       else if highway=residential|living_street then 5.00
+       else if highway=service                 then 8.00
+       else if highway=track                   then 12.00
+       else 2.00
 
 # Time / vmax estimate per highway class — clamped by the user-set vmax
 # (default 80 km/h matches the German law for Gespanne on Autobahn).
