@@ -12,33 +12,49 @@ import 'package:http/http.dart' as http;
 ///   3. `wikipedia=lang:Title` — resolved via the MediaWiki PageImages
 ///      API. Async, batched (up to 50 titles per call) by language.
 class PoiImageResolver {
-  /// Returns a thumbnail URL synchronously when possible — that means a
-  /// plain HTTPS `image=` URL. `wikimedia_commons=File:…` and bare
-  /// filenames now go through [resolveCommonsBatch] instead, because the
-  /// Special:FilePath redirect we previously used here doesn't carry
-  /// CORS headers and Flutter's CanvasKit blocks the load on web.
+  // Matches Commons wiki-page URLs like
+  //   https://commons.wikimedia.org/wiki/File:Foo.jpg
+  //   https://commons.wikimedia.org/wiki/Datei:Foo.jpg
+  // which look image-shaped to a naive eye but actually return HTML.
+  static final RegExp _commonsWikiPageUrl = RegExp(
+    r'^https?://commons\.wikimedia\.org/wiki/(?:File|Datei|Bild|Fichier|Plik):(.+)$',
+    caseSensitive: false,
+  );
+
+  /// Returns a thumbnail URL synchronously when possible. Recognises
+  /// plain HTTPS `image=` URLs but specifically *rejects* Commons
+  /// description-page URLs (`commons.wikimedia.org/wiki/File:…`) — those
+  /// return HTML, not an image, and need [resolveCommonsBatch] to map
+  /// them to a direct upload.wikimedia.org URL.
   static String? resolve(Map<String, String> tags) {
     final image = tags['image'];
     if (image != null && image.isNotEmpty) {
       final lower = image.toLowerCase();
       if (lower.startsWith('https://') || lower.startsWith('http://')) {
-        // A direct image= URL works as-is. (commons.wikimedia.org/wiki/File:…
-        // URLs would also hit a CORS-blocked redirect; we leave that to
-        // resolveCommonsBatch via the dedicated `wikimedia_commons` path.)
+        if (_commonsWikiPageUrl.hasMatch(image)) return null; // needs async
         return image;
       }
     }
     return null;
   }
 
-  /// Convenience: returns the raw `wikimedia_commons=` tag value (or an
-  /// `image=File:…` bare filename) that needs async resolution via
-  /// [resolveCommonsBatch], or null if no such reference exists.
+  /// Convenience: returns whatever Commons reference a POI carries that
+  /// needs async resolution via [resolveCommonsBatch]. Covers:
+  ///   - `wikimedia_commons=File:Foo.jpg`
+  ///   - `image=File:Foo.jpg` (bare File: prefix)
+  ///   - `image=https://commons.wikimedia.org/wiki/File:Foo.jpg` (page URL)
+  /// Returns null if no such reference exists.
   static String? extractCommonsReference(Map<String, String> tags) {
     final commons = tags['wikimedia_commons'];
     if (commons != null && commons.isNotEmpty) return commons;
     final image = tags['image'];
-    if (image != null && image.startsWith('File:')) return image;
+    if (image == null || image.isEmpty) return null;
+    if (image.startsWith('File:')) return image;
+    final m = _commonsWikiPageUrl.firstMatch(image);
+    if (m != null) {
+      // Rebuild as File:<filename> so resolveCommonsBatch keys consistently.
+      return 'File:${Uri.decodeComponent(m.group(1)!)}';
+    }
     return null;
   }
 

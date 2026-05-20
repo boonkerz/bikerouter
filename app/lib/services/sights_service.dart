@@ -92,32 +92,44 @@ out center body;
   ///      lack a canonical page-image set (common on smaller German
   ///      Wikipedia entries — Schloss Wrangelsburg-class).
   static Future<List<OsmSight>> _resolveCommonsThumbs(List<OsmSight> sights) async {
-    final commonsValues = <String>{};
+    // Build a per-sight tag map so we can reuse PoiImageResolver — that's
+    // where the regex for Commons description-page URLs lives, and we
+    // want one source of truth for "which Commons reference does this
+    // sight carry".
+    Map<String, String> sightTags(OsmSight s) => {
+          if (s.wikimediaCommons != null) 'wikimedia_commons': s.wikimediaCommons!,
+          if (s.image != null) 'image': s.image!,
+        };
+
+    final commonsRefs = <String>{};
     for (final s in sights) {
       if (s.directImageUrl != null) continue;
-      final c = s.wikimediaCommons;
-      if (c != null && c.startsWith('File:')) commonsValues.add(c);
-      final img = s.image;
-      if (img != null && img.startsWith('File:')) commonsValues.add(img);
+      final ref = PoiImageResolver.extractCommonsReference(sightTags(s));
+      if (ref != null) commonsRefs.add(ref);
     }
     Map<String, String> commonsResolved = const {};
-    if (commonsValues.isNotEmpty) {
+    if (commonsRefs.isNotEmpty) {
       try {
         commonsResolved =
-            await PoiImageResolver.resolveCommonsBatch(commonsValues);
+            await PoiImageResolver.resolveCommonsBatch(commonsRefs);
       } catch (_) {}
     }
     final afterCommons = [
       for (final s in sights)
         () {
           if (s.directImageUrl != null) return s;
-          final img = s.image;
-          if (img != null && (img.startsWith('https://') || img.startsWith('http://'))) {
-            return s.withDirectImageUrl(img);
+          // Prefer a Commons-resolved direct upload URL when available;
+          // it's CORS-safe and serves a server-side-resized thumbnail.
+          final ref = PoiImageResolver.extractCommonsReference(sightTags(s));
+          if (ref != null) {
+            final url = commonsResolved[ref];
+            if (url != null) return s.withDirectImageUrl(url);
           }
-          final tag = s.wikimediaCommons ?? s.image;
-          final url = tag == null ? null : commonsResolved[tag];
-          return url == null ? s : s.withDirectImageUrl(url);
+          // Otherwise fall back to a sync `image=https://…` URL (vetted by
+          // PoiImageResolver.resolve to reject Commons page URLs).
+          final synced = PoiImageResolver.resolve(sightTags(s));
+          if (synced != null) return s.withDirectImageUrl(synced);
+          return s;
         }(),
     ];
 

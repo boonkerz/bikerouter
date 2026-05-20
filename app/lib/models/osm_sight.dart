@@ -259,12 +259,20 @@ class OsmSight {
 
   /// Direct image URL if available. Prefers the pre-resolved direct
   /// upload.wikimedia.org thumbnail (CORS-safe), then a raw HTTPS
-  /// `image=` URL. The Special:FilePath fallback is intentionally
-  /// dropped — it breaks CanvasKit's crossOrigin loading on web and
-  /// the imageinfo batch is the canonical replacement.
+  /// `image=` URL. Commons description-page URLs
+  /// (`commons.wikimedia.org/wiki/File:…`) are rejected because they
+  /// return HTML, not an image — those need the imageinfo batch
+  /// (SightsService handles that before constructing the final sight).
   String? get imageUrl {
     if (directImageUrl != null) return directImageUrl;
-    if (image != null && image!.startsWith('http')) return image;
-    return null;
+    final img = image;
+    if (img == null || !img.startsWith('http')) return null;
+    if (_commonsPageUrl.hasMatch(img)) return null;
+    return img;
   }
+
+  static final RegExp _commonsPageUrl = RegExp(
+    r'^https?://commons\.wikimedia\.org/wiki/(?:File|Datei|Bild|Fichier|Plik):',
+    caseSensitive: false,
+  );
 }
