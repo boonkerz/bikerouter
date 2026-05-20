@@ -1355,6 +1355,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Searching around the map centre. For better results, tap a point on the map first or enable GPS.';
 
   @override
+  String get menuRouteSourcesTooltip => 'Route sources';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override

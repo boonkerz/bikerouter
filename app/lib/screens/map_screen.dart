@@ -509,6 +509,8 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                _routeSourcesMenu(context),
+                const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _showProfileSheet(context),
@@ -695,6 +697,7 @@ class _MapScreenState extends State<MapScreen> {
                       itemBuilder: (ctx) {
                         final l = AppLocalizations.of(ctx);
                         return [
+                          // Actions on the currently-loaded route.
                           PopupMenuItem(
                             value: 'navigate',
                             enabled: _route != null,
@@ -714,30 +717,25 @@ class _MapScreenState extends State<MapScreen> {
                             ]),
                           ),
                           PopupMenuItem(
-                            value: 'load',
+                            value: 'publish',
+                            enabled: _route != null,
                             child: Row(children: [
-                              const Icon(Icons.bookmarks_outlined, color: Color(0xFF6a4a28), size: 20),
+                              const Icon(Icons.public, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuSavedRoutes, style: const TextStyle(color: Colors.black87)),
+                              Text(l.menuPublishRoute, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           PopupMenuItem(
-                            value: 'import_gpx',
+                            value: 'poi_search',
+                            enabled: _route != null,
                             child: Row(children: [
-                              const Icon(Icons.upload_file_outlined, color: Color(0xFF6a4a28), size: 20),
+                              const Icon(Icons.search, color: Color(0xFF6a4a28), size: 20),
                               const SizedBox(width: 12),
-                              Text(l.menuImportGpx, style: const TextStyle(color: Colors.black87)),
-                            ]),
-                          ),
-                          PopupMenuItem(
-                            value: 'import_url',
-                            child: Row(children: [
-                              const Icon(Icons.cloud_download_outlined, color: Color(0xFF6a4a28), size: 20),
-                              const SizedBox(width: 12),
-                              Text(l.menuImportUrl, style: const TextStyle(color: Colors.black87)),
+                              Text(l.menuSearchAlongRoute, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
                           const PopupMenuDivider(),
+                          // Recording — own track + browse the archive.
                           PopupMenuItem(
                             value: 'recording',
                             child: Row(children: [
@@ -754,23 +752,8 @@ class _MapScreenState extends State<MapScreen> {
                               Text(l.menuRecordedRides, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
-                          PopupMenuItem(
-                            value: 'library',
-                            child: Row(children: [
-                              const Icon(Icons.travel_explore, color: Color(0xFF6a4a28), size: 20),
-                              const SizedBox(width: 12),
-                              Text(l.menuLibrary, style: const TextStyle(color: Colors.black87)),
-                            ]),
-                          ),
-                          PopupMenuItem(
-                            value: 'publish',
-                            enabled: _route != null,
-                            child: Row(children: [
-                              const Icon(Icons.public, color: Color(0xFF6a4a28), size: 20),
-                              const SizedBox(width: 12),
-                              Text(l.menuPublishRoute, style: const TextStyle(color: Colors.black87)),
-                            ]),
-                          ),
+                          const PopupMenuDivider(),
+                          // App-wide utilities.
                           PopupMenuItem(
                             value: 'offline_maps',
                             child: Row(children: [
@@ -787,24 +770,6 @@ class _MapScreenState extends State<MapScreen> {
                               Text(l.menuNogos, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
-                          PopupMenuItem(
-                            value: 'poi_search',
-                            enabled: _route != null,
-                            child: Row(children: [
-                              const Icon(Icons.search, color: Color(0xFF6a4a28), size: 20),
-                              const SizedBox(width: 12),
-                              Text(l.menuSearchAlongRoute, style: const TextStyle(color: Colors.black87)),
-                            ]),
-                          ),
-                          PopupMenuItem(
-                            value: 'ftp_finder',
-                            child: Row(children: [
-                              const Icon(Icons.timer_outlined, color: Color(0xFF6a4a28), size: 20),
-                              const SizedBox(width: 12),
-                              Text(l.menuFindFtpRoute, style: const TextStyle(color: Colors.black87)),
-                            ]),
-                          ),
-                          const PopupMenuDivider(),
                           PopupMenuItem(
                             value: 'settings',
                             child: Row(children: [
@@ -1299,6 +1264,81 @@ class _MapScreenState extends State<MapScreen> {
       ));
     }
     return markers;
+  }
+
+  /// "Where does my route come from"-menu rendered as a pill next to the
+  /// A-B / Rundtour mode chips. The popup-menu on the right side of the
+  /// screen now focuses on actions-on-the-current-route; this one groups
+  /// the route-source / discovery entries that used to clutter it
+  /// (gespeicherte Routen, entdecken, GPX-/URL-Import, FTP-Finder).
+  Widget _routeSourcesMenu(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Material(
+      color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
+      borderRadius: BorderRadius.circular(10),
+      child: PopupMenuButton<String>(
+        tooltip: l.menuRouteSourcesTooltip,
+        onSelected: _onMenuSelected,
+        color: const Color(0xFFf5e9d8),
+        offset: const Offset(0, 40),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        itemBuilder: (ctx) => [
+          PopupMenuItem(
+            value: 'load',
+            child: Row(children: [
+              const Icon(Icons.bookmarks_outlined, color: Color(0xFF6a4a28), size: 20),
+              const SizedBox(width: 12),
+              Text(l.menuSavedRoutes, style: const TextStyle(color: Colors.black87)),
+            ]),
+          ),
+          PopupMenuItem(
+            value: 'library',
+            child: Row(children: [
+              const Icon(Icons.travel_explore, color: Color(0xFF6a4a28), size: 20),
+              const SizedBox(width: 12),
+              Text(l.menuLibrary, style: const TextStyle(color: Colors.black87)),
+            ]),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'import_gpx',
+            child: Row(children: [
+              const Icon(Icons.upload_file_outlined, color: Color(0xFF6a4a28), size: 20),
+              const SizedBox(width: 12),
+              Text(l.menuImportGpx, style: const TextStyle(color: Colors.black87)),
+            ]),
+          ),
+          PopupMenuItem(
+            value: 'import_url',
+            child: Row(children: [
+              const Icon(Icons.cloud_download_outlined, color: Color(0xFF6a4a28), size: 20),
+              const SizedBox(width: 12),
+              Text(l.menuImportUrl, style: const TextStyle(color: Colors.black87)),
+            ]),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'ftp_finder',
+            child: Row(children: [
+              const Icon(Icons.timer_outlined, color: Color(0xFF6a4a28), size: 20),
+              const SizedBox(width: 12),
+              Text(l.menuFindFtpRoute, style: const TextStyle(color: Colors.black87)),
+            ]),
+          ),
+        ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.alt_route, color: Color(0xFF6a4a28), size: 18),
+              SizedBox(width: 4),
+              Icon(Icons.expand_more, color: Color(0xFF6a4a28), size: 16),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _modeChip(String label, bool isRoundtrip) {

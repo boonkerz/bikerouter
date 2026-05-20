@@ -1354,6 +1354,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Suche um den Kartenmittelpunkt. Für ein besseres Ergebnis erst einen Punkt auf der Karte tippen oder GPS einschalten.';
 
   @override
+  String get menuRouteSourcesTooltip => 'Routen-Quellen';
+
+  @override
   String get poiCatCamping => 'Camping';
 
   @override

@@ -2612,6 +2612,12 @@ abstract class AppLocalizations {
   /// **'Suche um den Kartenmittelpunkt. Für ein besseres Ergebnis erst einen Punkt auf der Karte tippen oder GPS einschalten.'**
   String get ftpFinderOriginMapView;
 
+  /// No description provided for @menuRouteSourcesTooltip.
+  ///
+  /// In de, this message translates to:
+  /// **'Routen-Quellen'**
+  String get menuRouteSourcesTooltip;
+
   /// No description provided for @poiCatCamping.
   ///
   /// In de, this message translates to:

@@ -494,6 +494,7 @@
   "ftpFinderOriginWaypoint": "Searching around your start waypoint.",
   "ftpFinderOriginGps": "Searching around your current GPS position.",
   "ftpFinderOriginMapView": "Searching around the map centre. For better results, tap a point on the map first or enable GPS.",
+  "menuRouteSourcesTooltip": "Route sources",
   "poiCatCamping": "Camping",
   "poiCatInfo": "Information",
   "poiCatOther": "Other",
