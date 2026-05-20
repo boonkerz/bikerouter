@@ -9,7 +9,10 @@ class SightsService {
 
   static Future<List<OsmSight>> fetchAlongRoute(
     List<LatLng> route, {
-    double bufferMeters = 300,
+    // Wide enough to catch landmarks in the neighbouring village (a real
+    // user complaint surfaced for Schloss Ranzin), still narrow enough
+    // that city-centre searches don't drown in food/shops.
+    double bufferMeters = 1500,
     Set<String>? enabledTypes,
   }) async {
     if (route.isEmpty) return [];
@@ -39,8 +42,14 @@ class SightsService {
       byCategory.putIfAbsent(parts[0], () => []).add(parts[1]);
     }
     final bbox = '$minLat,$minLon,$maxLat,$maxLon';
+    // Query both nodes AND ways — castles, museums and many landmarks are
+    // mapped as building-outline ways rather than POI nodes. `out center`
+    // gives the way's centroid lat/lon so we can render it as a point.
     final filters = byCategory.entries
-        .map((e) => '  node["${e.key}"~"${e.value.join('|')}"]($bbox);')
+        .expand((e) => [
+              '  node["${e.key}"~"${e.value.join('|')}"]($bbox);',
+              '  way["${e.key}"~"${e.value.join('|')}"]($bbox);',
+            ])
         .join('\n');
 
     final query = '''
@@ -48,7 +57,7 @@ class SightsService {
 (
 $filters
 );
-out body;
+out center body;
 ''';
 
     final response = await http.post(
@@ -95,10 +104,16 @@ out body;
       addrParts.add([postcode, city].whereType<String>().join(' '));
     }
 
+    // Nodes carry lat/lon directly; ways (and relations) only have a
+    // server-computed `center` block. Read whichever exists.
+    final centerMap = e['center'] as Map?;
+    final lat = (e['lat'] ?? centerMap?['lat']) as num?;
+    final lon = (e['lon'] ?? centerMap?['lon']) as num?;
+    if (lat == null || lon == null) return null;
     return OsmSight(
       id: (e['id'] as num).toInt(),
-      lat: (e['lat'] as num).toDouble(),
-      lon: (e['lon'] as num).toDouble(),
+      lat: lat.toDouble(),
+      lon: lon.toDouble(),
       category: category,
       subtype: subtype,
       name: (tags['name:de'] ?? tags['name']) as String?,
