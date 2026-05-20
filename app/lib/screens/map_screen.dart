@@ -3229,6 +3229,12 @@ class _MapScreenState extends State<MapScreen> {
       content: Text(l.ftpFinderPicked(pick.candidate.lengthKm.toStringAsFixed(1))),
       backgroundColor: const Color(0xFF6a4a28),
       duration: const Duration(seconds: 6),
+      // The map screen's floating buttons (GPS, layer-picker, mode-toggle,
+      // …) live in a Stack rather than the Scaffold's floatingActionButton
+      // slot, so a fixed-bottom SnackBar would overlay them. Float the
+      // SnackBar above the FAB row instead.
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 96),
       action: SnackBarAction(
         label: l.ftpFinderStartRecord,
         textColor: const Color(0xFFf5e9d8),
