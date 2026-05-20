@@ -75,4 +75,11 @@ dependencies {
     // depends on it compileOnly. Keeps a single source of truth in the
     // plugin tree.
     implementation(files("../../packages/garmin_connect/android/libs/ciq-companion-app-sdk-2.4.0.aar"))
+
+    // Wearable Data Layer — sends turn-by-turn updates to a paired Wear OS
+    // watch via DataClient / MessageClient (the Android side of v2.2).
+    implementation("com.google.android.gms:play-services-wearable:18.2.0")
+    // Provides Task.await() for the Wearable client calls in WatchBridge.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 }

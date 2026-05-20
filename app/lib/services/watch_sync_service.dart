@@ -79,7 +79,11 @@ class WatchSyncService {
     }
   }
 
-  bool get _isSupportedPlatform => Platform.isIOS;
+  // Apple Watch via WatchConnectivity (v2.2 P1) and Wear OS via the
+  // Wearable Data Layer (v2.2 P2) both speak through the same Flutter
+  // method channel — each platform plugs its own bridge in on the native
+  // side. Other platforms (web/desktop) have no companion to talk to.
+  bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
 }
 
 /// Stable string identifiers shared with the Swift side so the wire
