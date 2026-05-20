@@ -65,7 +65,18 @@ class RoutePoiSearchService {
     ],
     PoiCategory.sights: [
       '[tourism~"^(attraction|museum|monument|gallery|artwork|theme_park|zoo)\$"]',
-      '[historic~"^(castle|monument|memorial|ruins|archaeological_site|fort)\$"]',
+      // Match any historic-tagged feature — there's a long tail of niche
+      // values (tower, manor, palace, fortified_house, wayside_cross,
+      // citywalls, battlefield, …) that we'd otherwise miss. _classify
+      // already handles "any historic" so this just widens the dragnet.
+      '[historic]',
+      // Some castles in the wild are only tagged with castle_type=…
+      // (defensive, manor, palace, …) without historic=castle. Pick
+      // those up too — the classify pass groups them under sights.
+      '[castle_type]',
+      // Place-of-worship buildings are sometimes only tagged via
+      // building=cathedral|chapel|church|… without amenity coverage.
+      '[building~"^(cathedral|chapel|church|temple|mosque|synagogue|castle)\$"]',
     ],
     PoiCategory.food: [
       '[amenity~"^(restaurant|cafe|fast_food|biergarten|ice_cream|pub)\$"]',
@@ -106,7 +117,13 @@ class RoutePoiSearchService {
   static Future<List<RoutePoiHit>> searchAlongRoute({
     required List<List<double>> coordinates, // [lon, lat, ...] from BRouter
     required Set<PoiCategory> categories,
-    double corridorMeters = 1500,
+    // The corridor governs both the bbox padding for the Overpass query
+    // and a post-filter that drops hits whose nearest-route-vertex
+    // distance exceeds it. 2.5 km is wide enough that "ich fahr durchs
+    // Nachbardorf"-cases catch the local landmark without flooding the
+    // list in dense city centres (where the per-category filters already
+    // do most of the trimming).
+    double corridorMeters = 2500,
   }) async {
     if (coordinates.isEmpty || categories.isEmpty) return const [];
 
@@ -321,7 +338,21 @@ class RoutePoiSearchService {
       return PoiCategory.sights;
     }
 
-    if (tags['historic'] != null) return PoiCategory.sights;
+    final historic = tags['historic'];
+    if (historic != null && historic != 'no') return PoiCategory.sights;
+
+    if (tags['castle_type'] != null) return PoiCategory.sights;
+
+    final building = tags['building'];
+    if (building == 'cathedral' ||
+        building == 'chapel' ||
+        building == 'church' ||
+        building == 'temple' ||
+        building == 'mosque' ||
+        building == 'synagogue' ||
+        building == 'castle') {
+      return PoiCategory.sights;
+    }
 
     return null;
   }
