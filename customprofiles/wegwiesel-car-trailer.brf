@@ -1,0 +1,123 @@
+# Wegwiesel: car-with-trailer routing.
+#
+# Derived from `wegwiesel-car.brf` but tuned for caravans / boat trailers
+# / bike trailers. Key differences vs. the regular car profile:
+#
+#   1. Cost-shifted towards motorway/trunk: a Bundesstrasse shortcut
+#      that saves 20 % distance is rarely worth it when towing — the
+#      curves, junctions and traffic eat the time savings and the
+#      safety margin.
+#   2. Heavier penalty on residential / service / track-grade surfaces
+#      — turning a caravan in a Wohngebiet is no fun.
+#   3. `hgv=no` ways blocked when the user's totalweight exceeds 3.5 t
+#      (typical HGV-cutoff in DE).
+#   4. Default maxspeed assumptions reflect Gespann limits (80 km/h
+#      Autobahn, lower on Land-/Bundes-Strassen).
+#   5. avoid_unpaved is on by default — trailers + dirt = bad day.
+#
+# Note: native OSM `trailer=`, `caravan=`, `maxweight=` and `maxheight=`
+# tags are NOT in BRouter's default lookups.dat, so we can't reference
+# them in the profile language. Extending lookups.dat would require
+# regenerating all .rd5 segments, which is impractical. For trailer-
+# prohibited Alpine roads we rely on the steep-cost penalty on the
+# tighter highway classes that those roads usually carry.
+
+---context:global
+
+assign validForCars = true
+
+# Tunables exposed to the URL. Same shape as wegwiesel-car so the URL
+# wiring stays unchanged across both profiles.
+assign avoid_toll       = false  # %avoid_toll% | Avoid paid roads | boolean
+assign avoid_motorways  = false  # %avoid_motorways% | Avoid motorways | boolean
+assign avoid_unpaved    = true   # %avoid_unpaved% | Avoid unpaved roads | boolean
+assign add_beeline      = false  # %add_beeline% | Beeline to nearest road | boolean
+assign shortest_route   = false  # %shortest_route% | Prefer shortest route | boolean
+assign vmax             = 80     # %vmax% | Max planning speed (km/h) | number
+assign totalweight      = 2640   # %totalweight% | Total weight (kg) | number
+
+assign turnInstructionMode = 1   # %turnInstructionMode% | turn instruction mode | [0=none, 1=auto, 2=locus, 3=osmand, 4=comment, 5=gpsies, 6=orux]
+
+
+---context:way   # tags on the way
+
+# Car access logic — unchanged from the regular car profile so the
+# coverage is identical for ways that allow cars at all.
+assign caraccess
+       switch motorcar=
+              switch motor_vehicle=
+                     switch vehicle=
+                            switch access=
+                                   not highway=cycleway|footway|bridleway|path|steps|pedestrian|track
+                                   or access=yes|permissive|designated|destination
+                                      not access=no|private
+                            or vehicle=yes|permissive|designated|destination
+                               not vehicle=no|private
+                     or motor_vehicle=yes|permissive|designated|destination
+                        not motor_vehicle=no|private
+              or motorcar=yes|permissive|designated|destination
+                 not motorcar=no|private
+
+assign is_unpaved or surface=unpaved
+                  or surface=gravel|dirt|earth|grass|sand|mud|ground|fine_gravel|compacted
+                  or tracktype=grade2|grade3|grade4|grade5
+                  highway=track
+
+# Heavy-goods-vehicle restrictions apply to Gespanne when the combined
+# weight exceeds 3.5 t (typical HGV-cutoff). Small caravan setups stay
+# below, motor homes + larger trailers usually don't.
+assign hgv_blocked
+       and hgv=no
+           greater totalweight 3500
+
+# Cost factor = multiplier on edge length. 10000 = blocked.
+# Numbers shifted vs. wegwiesel-car: motorway stays cheap, but
+# Bundes-/Land-/Kreis-Strassen are progressively more painful so a
+# slightly-longer autobahn route wins over a winding shortcut.
+assign costfactor
+       if highway=cycleway|footway|bridleway|path|steps|pedestrian then 10000
+       else if not caraccess then 10000
+       else if hgv_blocked then 10000
+       else if and avoid_motorways highway=motorway|motorway_link then 10000
+       else if and avoid_toll      toll=yes then 10000
+       else if and avoid_unpaved   is_unpaved then 10000
+       else if shortest_route then 1.0
+       else if highway=motorway|motorway_link  then 0.9
+       else if highway=trunk|trunk_link        then 1.0
+       else if highway=primary|primary_link    then 2.5
+       else if highway=secondary|secondary_link then 4.0
+       else if highway=tertiary|tertiary_link  then 5.5
+       else if highway=unclassified            then 6.5
+       else if highway=residential|living_street then 9.0
+       else if highway=service                 then 11.0
+       else if highway=track                   then 12.0
+       else 5.0
+
+# Time / vmax estimate per highway class — clamped by the user-set vmax
+# (default 80 km/h matches the German law for Gespanne on Autobahn).
+assign maxspeed
+       min vmax
+       if      highway=motorway|motorway_link  then 80
+       else if highway=trunk|trunk_link        then 80
+       else if highway=primary|primary_link    then 70
+       else if highway=secondary|secondary_link then 60
+       else if highway=tertiary|tertiary_link  then 50
+       else if highway=unclassified            then 40
+       else if highway=residential|living_street then 25
+       else 20
+
+
+---context:node  # tags on a node
+
+assign caraccess
+       switch motorcar=
+              switch motor_vehicle=
+                     switch vehicle=
+                            switch access=
+                                   not barrier=gate|bollard|lift_gate|cycle_barrier
+                                   access=yes|permissive|designated|destination
+                            vehicle=yes|permissive|designated|destination
+                     motor_vehicle=yes|permissive|designated|destination
+              motorcar=yes|permissive|designated|destination
+
+assign initialcost = switch caraccess 0 1000000

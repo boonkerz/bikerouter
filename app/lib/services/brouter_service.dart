@@ -36,10 +36,17 @@ class BRouterService {
       final avoidUnpaved = profile == 'car-trailer' ? 1 : 0;
       final shortestRoute = shortestCarRoute ? 1 : 0;
       final avoidMotorways = avoidMotorwaysCarRoute ? 1 : 0;
+      // The trailer profile bakes in stronger motorway/trunk preference,
+      // trailer=/caravan=/maxweight= hard-blocks and Gespann-realistic
+      // maxspeed defaults. Solo car keeps the lighter wegwiesel-car
+      // profile which matches typical Google-Maps-style behaviour.
+      final brouterProfile = profile == 'car-trailer'
+          ? 'wegwiesel-car-trailer'
+          : 'wegwiesel-car';
       // add_beeline lets BRouter draw a beeline from the user's clicked
       // waypoint to the nearest car-accessible road. Without it, taps that
       // land on bike paths or footways trigger "target island failed".
-      return 'profile=wegwiesel-car'
+      return 'profile=$brouterProfile'
           '&profile:vmax=$vmax'
           '&profile:totalweight=$totalweight'
           '&profile:avoid_motorways=$avoidMotorways'
