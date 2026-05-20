@@ -244,40 +244,65 @@ class RoutePoiSearchService {
     return _enrichWithImages(out);
   }
 
-  /// Two-pass image resolution: first the synchronous Commons sources
-  /// (image=, wikimedia_commons=), then a single batched Wikipedia
-  /// PageImages call for everything that still lacks a photo but has a
-  /// `wikipedia=` tag. The result is the same list, sorted, with
-  /// [RoutePoiHit.imageUrl] populated where possible.
+  /// Three-pass image resolution:
+  /// 1. Sync from `image=https://…` URLs (the only safe synchronous source
+  ///    now that Special:FilePath is gone — it didn't carry CORS headers).
+  /// 2. Batched Commons `imageinfo` API lookup for `wikimedia_commons=File:…`
+  ///    (and `image=File:…`) tags → direct upload.wikimedia.org thumbs.
+  /// 3. Batched MediaWiki PageImages API lookup for `wikipedia=lang:Title`
+  ///    tags that still lack a photo.
   static Future<List<RoutePoiHit>> _enrichWithImages(
       List<RoutePoiHit> hits) async {
+    final commonsRefs = <String>{};
     final synced = <RoutePoiHit>[];
-    final wikipediaTags = <String>{};
     for (final h in hits) {
       final url = PoiImageResolver.resolve(h.tags);
-      if (url != null) {
-        synced.add(h.withImageUrl(url));
-      } else {
-        synced.add(h);
-        final wp = h.tags['wikipedia'];
-        if (wp != null && wp.isNotEmpty) wikipediaTags.add(wp);
+      synced.add(url == null ? h : h.withImageUrl(url));
+      if (url == null) {
+        final ref = PoiImageResolver.extractCommonsReference(h.tags);
+        if (ref != null) commonsRefs.add(ref);
       }
     }
-    if (wikipediaTags.isEmpty) return synced;
 
-    Map<String, String> resolved;
-    try {
-      resolved = await PoiImageResolver.resolveWikipediaBatch(wikipediaTags);
-    } catch (_) {
-      return synced;
+    Map<String, String> commonsResolved = const {};
+    if (commonsRefs.isNotEmpty) {
+      try {
+        commonsResolved =
+            await PoiImageResolver.resolveCommonsBatch(commonsRefs);
+      } catch (_) {}
     }
-    if (resolved.isEmpty) return synced;
-    return synced
+
+    final afterCommons = synced
+        .map((h) {
+          if (h.imageUrl != null) return h;
+          final ref = PoiImageResolver.extractCommonsReference(h.tags);
+          final url = ref == null ? null : commonsResolved[ref];
+          return url == null ? h : h.withImageUrl(url);
+        })
+        .toList();
+
+    final wikipediaTags = <String>{};
+    for (final h in afterCommons) {
+      if (h.imageUrl != null) continue;
+      final wp = h.tags['wikipedia'];
+      if (wp != null && wp.isNotEmpty) wikipediaTags.add(wp);
+    }
+    if (wikipediaTags.isEmpty) return afterCommons;
+
+    Map<String, String> wikipediaResolved;
+    try {
+      wikipediaResolved =
+          await PoiImageResolver.resolveWikipediaBatch(wikipediaTags);
+    } catch (_) {
+      return afterCommons;
+    }
+    if (wikipediaResolved.isEmpty) return afterCommons;
+    return afterCommons
         .map((h) {
           if (h.imageUrl != null) return h;
           final wp = h.tags['wikipedia'];
           if (wp == null) return h;
-          final url = resolved[wp];
+          final url = wikipediaResolved[wp];
           return url == null ? h : h.withImageUrl(url);
         })
         .toList();

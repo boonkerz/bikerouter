@@ -186,6 +186,10 @@ class OsmSight {
   final String? artworkType;
   final String? castleType;
   final String? material;
+  /// Pre-resolved direct upload.wikimedia.org thumbnail URL. Populated by
+  /// SightsService after a batched MediaWiki imageinfo lookup so the web
+  /// build doesn't trip over CORS on the Special:FilePath redirect.
+  final String? directImageUrl;
 
   const OsmSight({
     required this.id,
@@ -215,20 +219,52 @@ class OsmSight {
     this.artworkType,
     this.castleType,
     this.material,
+    this.directImageUrl,
   });
+
+  OsmSight withDirectImageUrl(String? url) => OsmSight(
+        id: id,
+        lat: lat,
+        lon: lon,
+        category: category,
+        subtype: subtype,
+        name: name,
+        wikipedia: wikipedia,
+        wikidata: wikidata,
+        website: website,
+        description: description,
+        phone: phone,
+        email: email,
+        openingHours: openingHours,
+        fee: fee,
+        charge: charge,
+        wheelchair: wheelchair,
+        address: address,
+        image: image,
+        wikimediaCommons: wikimediaCommons,
+        ele: ele,
+        startDate: startDate,
+        heritage: heritage,
+        operator: operator,
+        artist: artist,
+        artworkType: artworkType,
+        castleType: castleType,
+        material: material,
+        directImageUrl: url,
+      );
 
   String displayName(AppLocalizations l) => name ?? sightSubtypeLabel(l, subtype);
 
   String localizedSubtype(AppLocalizations l) => sightSubtypeLabel(l, subtype);
 
-  /// Direct image URL if available: prefers `image` tag, falls back to wikimedia_commons File:
+  /// Direct image URL if available. Prefers the pre-resolved direct
+  /// upload.wikimedia.org thumbnail (CORS-safe), then a raw HTTPS
+  /// `image=` URL. The Special:FilePath fallback is intentionally
+  /// dropped — it breaks CanvasKit's crossOrigin loading on web and
+  /// the imageinfo batch is the canonical replacement.
   String? get imageUrl {
+    if (directImageUrl != null) return directImageUrl;
     if (image != null && image!.startsWith('http')) return image;
-    final commons = wikimediaCommons ?? image;
-    if (commons != null && commons.startsWith('File:')) {
-      final fileName = Uri.encodeComponent(commons.substring(5));
-      return 'https://commons.wikimedia.org/wiki/Special:FilePath/$fileName?width=600';
-    }
     return null;
   }
 }

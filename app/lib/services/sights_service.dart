@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import '../models/osm_sight.dart';
+import 'poi_image_resolver.dart';
 
 class SightsService {
   static const String baseUrl = 'https://wegwiesel.app/overpass/api/interpreter';
@@ -77,7 +78,40 @@ out center body;
 
     // Filter by proximity to actual route polyline
     final bufMeters = bufferMeters;
-    return all.where((s) => _minDistToRoute(s, route) <= bufMeters).toList();
+    final nearby = all.where((s) => _minDistToRoute(s, route) <= bufMeters).toList();
+    return _resolveCommonsThumbs(nearby);
+  }
+
+  /// Replaces wikimedia_commons-derived URLs with CORS-friendly direct
+  /// upload.wikimedia.org thumbnails via MediaWiki's imageinfo API. Runs
+  /// in one batched call regardless of how many sights are involved.
+  /// Sights without a usable Commons tag pass through untouched.
+  static Future<List<OsmSight>> _resolveCommonsThumbs(List<OsmSight> sights) async {
+    final commonsValues = <String>{};
+    for (final s in sights) {
+      final c = s.wikimediaCommons;
+      if (c != null && c.startsWith('File:')) commonsValues.add(c);
+      // Some POIs put the File:... reference into `image=` instead of
+      // wikimedia_commons=; treat those identically.
+      final img = s.image;
+      if (img != null && img.startsWith('File:')) commonsValues.add(img);
+    }
+    if (commonsValues.isEmpty) return sights;
+    Map<String, String> resolved;
+    try {
+      resolved = await PoiImageResolver.resolveCommonsBatch(commonsValues);
+    } catch (_) {
+      return sights;
+    }
+    if (resolved.isEmpty) return sights;
+    return [
+      for (final s in sights)
+        () {
+          final tag = s.wikimediaCommons ?? s.image;
+          final url = tag == null ? null : resolved[tag];
+          return url == null ? s : s.withDirectImageUrl(url);
+        }(),
+    ];
   }
 
   static OsmSight? _parseElement(Map<String, dynamic> e) {

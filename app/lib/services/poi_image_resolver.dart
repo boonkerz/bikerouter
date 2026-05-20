@@ -12,30 +12,33 @@ import 'package:http/http.dart' as http;
 ///   3. `wikipedia=lang:Title` — resolved via the MediaWiki PageImages
 ///      API. Async, batched (up to 50 titles per call) by language.
 class PoiImageResolver {
-  /// Returns a thumbnail URL (≤ 1024 px wide) for the Commons-direct
-  /// sources (`image=`, `wikimedia_commons=`), or null when neither is
-  /// present. For Wikipedia-only POIs use [resolveWikipediaBatch].
+  /// Returns a thumbnail URL synchronously when possible — that means a
+  /// plain HTTPS `image=` URL. `wikimedia_commons=File:…` and bare
+  /// filenames now go through [resolveCommonsBatch] instead, because the
+  /// Special:FilePath redirect we previously used here doesn't carry
+  /// CORS headers and Flutter's CanvasKit blocks the load on web.
   static String? resolve(Map<String, String> tags) {
     final image = tags['image'];
     if (image != null && image.isNotEmpty) {
       final lower = image.toLowerCase();
       if (lower.startsWith('https://') || lower.startsWith('http://')) {
-        // Some `image` tags point at File:Foo.jpg on Commons via the wiki
-        // url. Special:FilePath always works; if the tag already used it,
-        // pass through untouched.
+        // A direct image= URL works as-is. (commons.wikimedia.org/wiki/File:…
+        // URLs would also hit a CORS-blocked redirect; we leave that to
+        // resolveCommonsBatch via the dedicated `wikimedia_commons` path.)
         return image;
       }
-      // Bare filename in `image=` is rare but happens; route via Commons.
-      return _commonsFilePathUrl(image);
     }
+    return null;
+  }
 
+  /// Convenience: returns the raw `wikimedia_commons=` tag value (or an
+  /// `image=File:…` bare filename) that needs async resolution via
+  /// [resolveCommonsBatch], or null if no such reference exists.
+  static String? extractCommonsReference(Map<String, String> tags) {
     final commons = tags['wikimedia_commons'];
-    if (commons != null && commons.isNotEmpty) {
-      final filename =
-          commons.startsWith('File:') ? commons.substring(5) : commons;
-      return _commonsFilePathUrl(filename);
-    }
-
+    if (commons != null && commons.isNotEmpty) return commons;
+    final image = tags['image'];
+    if (image != null && image.startsWith('File:')) return image;
     return null;
   }
 
@@ -53,6 +56,75 @@ class PoiImageResolver {
       lang: trimmed.substring(0, colon).toLowerCase(),
       title: trimmed.substring(colon + 1),
     );
+  }
+
+  /// Batch-resolves OSM `wikimedia_commons=File:…` tag values to direct
+  /// upload.wikimedia.org thumbnail URLs via MediaWiki's imageinfo API.
+  ///
+  /// The naive Special:FilePath redirect we used before doesn't send
+  /// `Access-Control-Allow-Origin: *` on the initial hop, so Flutter's
+  /// CanvasKit renderer can't draw the image (it loads images via
+  /// crossOrigin=anonymous fetch). The direct upload.wikimedia.org URLs
+  /// returned by imageinfo do carry CORS headers.
+  ///
+  /// Keys in the returned map are the original tag values (including the
+  /// `File:` prefix, exactly as the OSM tag carried them) — callers can
+  /// look up by their input string.
+  static Future<Map<String, String>> resolveCommonsBatch(
+    Iterable<String> commonsTagValues, {
+    int width = 1024,
+  }) async {
+    final out = <String, String>{};
+    if (commonsTagValues.isEmpty) return out;
+
+    // Normalize: ensure the title has the "File:" prefix the API expects,
+    // remember the original tag value so we can key the result back.
+    final byCanonical = <String, String>{};
+    for (final raw in commonsTagValues) {
+      final trimmed = raw.trim();
+      if (trimmed.isEmpty) continue;
+      final canonical =
+          trimmed.startsWith('File:') ? trimmed : 'File:$trimmed';
+      byCanonical.putIfAbsent(canonical, () => raw);
+    }
+    if (byCanonical.isEmpty) return out;
+
+    final keys = byCanonical.keys.toList();
+    for (var i = 0; i < keys.length; i += 50) {
+      final batch = keys.sublist(i, i + 50 > keys.length ? keys.length : i + 50);
+      final joined = batch.map(Uri.encodeComponent).join('|');
+      final uri = Uri.parse(
+        'https://commons.wikimedia.org/w/api.php'
+        '?action=query&format=json'
+        '&prop=imageinfo&iiprop=url&iiurlwidth=$width'
+        '&origin=*'
+        '&titles=$joined',
+      );
+      try {
+        final r = await http.get(uri, headers: const {
+          'User-Agent':
+              'Wegwiesel/2.1 (https://wegwiesel.app; support@thomas-peterson.de)',
+        }).timeout(const Duration(seconds: 10));
+        if (r.statusCode != 200) continue;
+        final json = jsonDecode(r.body) as Map<String, dynamic>;
+        final pages =
+            (json['query'] as Map<String, dynamic>?)?['pages'] as Map?;
+        if (pages == null) continue;
+        for (final page in pages.values) {
+          if (page is! Map) continue;
+          final title = page['title'] as String?;
+          final infos = page['imageinfo'] as List?;
+          if (title == null || infos == null || infos.isEmpty) continue;
+          final thumb = (infos.first as Map)['thumburl'] as String?;
+          if (thumb == null) continue;
+          final original = byCanonical[title];
+          if (original != null) out[original] = thumb;
+        }
+      } catch (_) {
+        // network/parse failure — leave these unresolved
+      }
+    }
+    return out;
   }
 
   /// Batch-resolves multiple wikipedia-page references to thumbnail URLs.
@@ -152,11 +224,4 @@ class PoiImageResolver {
     return out;
   }
 
-  /// Special:FilePath redirects to the canonical file URL. Adding ?width
-  /// forces Commons to serve a server-side-resized thumbnail rather than
-  /// the (often multi-megabyte) original.
-  static String _commonsFilePathUrl(String filename, {int width = 1024}) {
-    final encoded = Uri.encodeComponent(filename.replaceAll(' ', '_'));
-    return 'https://commons.wikimedia.org/wiki/Special:FilePath/$encoded?width=$width';
-  }
 }
