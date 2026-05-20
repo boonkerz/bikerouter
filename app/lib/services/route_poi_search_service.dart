@@ -292,7 +292,7 @@ class RoutePoiSearchService {
     Map<String, String> wikipediaResolved;
     try {
       wikipediaResolved =
-          await PoiImageResolver.resolveWikipediaBatch(wikipediaTags);
+          await PoiImageResolver.resolveWikipediaBatchWithFallback(wikipediaTags);
     } catch (_) {
       return afterCommons;
     }

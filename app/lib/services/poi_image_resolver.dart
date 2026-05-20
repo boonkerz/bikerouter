@@ -127,6 +127,164 @@ class PoiImageResolver {
     return out;
   }
 
+  /// Resolution chain for `wikipedia=` tags:
+  ///   1. PageImages API — fast, but many Wikipedia articles don't have a
+  ///      canonical page-image set (German Wikipedia in particular is
+  ///      spotty for smaller landmarks).
+  ///   2. For everything still unresolved, fall back to the article's
+  ///      `prop=images` list, pick the first reasonable JPG/PNG, then
+  ///      run that filename through [resolveCommonsBatch] to get the
+  ///      CORS-safe direct upload URL.
+  ///
+  /// Result keys are the original raw `wikipedia=` tag values so callers
+  /// can match back to their POIs.
+  static Future<Map<String, String>> resolveWikipediaBatchWithFallback(
+    Iterable<String> wikipediaTags, {
+    int thumbWidth = 1024,
+  }) async {
+    final fromPageImages =
+        await resolveWikipediaBatch(wikipediaTags, thumbWidth: thumbWidth);
+    final unresolved =
+        wikipediaTags.where((t) => !fromPageImages.containsKey(t)).toList();
+    if (unresolved.isEmpty) return fromPageImages;
+
+    // Per-title list of image files; pick first non-icon File.
+    final pickedFileForTag =
+        await _firstReasonableImagePerTag(unresolved);
+    if (pickedFileForTag.isEmpty) return fromPageImages;
+
+    final commonsBatch = await resolveCommonsBatch(
+      pickedFileForTag.values,
+      width: thumbWidth,
+    );
+    final out = Map<String, String>.from(fromPageImages);
+    for (final entry in pickedFileForTag.entries) {
+      final url = commonsBatch[entry.value];
+      if (url != null) out[entry.key] = url;
+    }
+    return out;
+  }
+
+  /// For each `wikipedia=lang:Title` tag, asks the MediaWiki API for the
+  /// list of images embedded in that page and picks the first one that
+  /// looks like a real photo (skipping SVG icons, Commons logos, etc.).
+  /// Returns a map of original-tag → File:Foo.jpg.
+  static Future<Map<String, String>> _firstReasonableImagePerTag(
+    Iterable<String> wikipediaTags,
+  ) async {
+    final out = <String, String>{};
+    // Same grouping as resolveWikipediaBatch.
+    final perLanguage = <String, Map<String, String>>{};
+    for (final raw in wikipediaTags) {
+      final parsed = parseWikipedia(raw);
+      if (parsed == null) continue;
+      perLanguage
+          .putIfAbsent(parsed.lang, () => <String, String>{})
+          .putIfAbsent(parsed.title, () => raw);
+    }
+
+    for (final entry in perLanguage.entries) {
+      final lang = entry.key;
+      final titles = entry.value;
+      final keys = titles.keys.toList();
+      for (var i = 0; i < keys.length; i += 50) {
+        final batch =
+            keys.sublist(i, i + 50 > keys.length ? keys.length : i + 50);
+        final joined = batch.map(Uri.encodeComponent).join('|');
+        final uri = Uri.parse(
+          'https://$lang.wikipedia.org/w/api.php'
+          '?action=query&format=json'
+          '&prop=images&imlimit=20'
+          '&redirects=1&origin=*'
+          '&titles=$joined',
+        );
+        try {
+          final r = await http.get(uri, headers: const {
+            'User-Agent':
+                'Wegwiesel/2.1 (https://wegwiesel.app; support@thomas-peterson.de)',
+          }).timeout(const Duration(seconds: 10));
+          if (r.statusCode != 200) continue;
+          final json = jsonDecode(r.body) as Map<String, dynamic>;
+          final query = json['query'] as Map<String, dynamic>?;
+          if (query == null) continue;
+
+          final canonicalFor = <String, String>{
+            for (final t in batch) t: t,
+          };
+          for (final pair in [
+            ...?(query['normalized'] as List?),
+            ...?(query['redirects'] as List?),
+          ]) {
+            if (pair is Map) {
+              final from = pair['from'] as String?;
+              final to = pair['to'] as String?;
+              if (from != null && to != null) {
+                canonicalFor.updateAll((k, v) => v == from ? to : v);
+              }
+            }
+          }
+
+          final pages = query['pages'] as Map<String, dynamic>?;
+          if (pages == null) continue;
+          for (final page in pages.values) {
+            if (page is! Map) continue;
+            final title = page['title'] as String?;
+            final images = page['images'] as List?;
+            if (title == null || images == null) continue;
+            String? picked;
+            for (final img in images) {
+              if (img is! Map) continue;
+              final name = img['title'] as String?;
+              if (name == null) continue;
+              if (_isLikelyIcon(name)) continue;
+              picked = _stripFilePrefix(name);
+              break;
+            }
+            if (picked == null) continue;
+            canonicalFor.forEach((requested, canonical) {
+              if (canonical == title) {
+                final originalTag = titles[requested];
+                if (originalTag != null) out[originalTag] = 'File:$picked';
+              }
+            });
+          }
+        } catch (_) {
+          // best-effort
+        }
+      }
+    }
+    return out;
+  }
+
+  /// Heuristic: skip Wikipedia's own icons, badges and SVG logos so we
+  /// land on a real photo. Works language-independently because we strip
+  /// the local namespace prefix before checking (German Wikipedia uses
+  /// "Datei:", French "Fichier:", etc.).
+  static bool _isLikelyIcon(String fileTitle) {
+    final bare = _stripFilePrefix(fileTitle).toLowerCase();
+    if (bare.endsWith('.svg')) return true;
+    if (bare.contains('logo')) return true;
+    if (bare.contains('wiktionary')) return true;
+    if (bare.contains('wikisource')) return true;
+    if (bare.contains('wikiquote')) return true;
+    if (bare.startsWith('wappen')) return true;
+    if (bare.startsWith('flagge')) return true;
+    if (bare.startsWith('coat of arms')) return true;
+    if (bare.contains('disambig')) return true;
+    return false;
+  }
+
+  /// Strips a file-namespace prefix ("File:", "Datei:", "Fichier:", "Bild:",
+  /// "Plik:", "Soubor:", …) so the bare filename can be fed back to the
+  /// Commons API which always expects "File:".
+  static String _stripFilePrefix(String name) {
+    final colon = name.indexOf(':');
+    // Only treat short leading tokens as namespace prefixes — Commons
+    // filenames themselves can contain colons further along.
+    if (colon > 0 && colon <= 10) return name.substring(colon + 1);
+    return name;
+  }
+
   /// Batch-resolves multiple wikipedia-page references to thumbnail URLs.
   /// Groups by language, issues one MediaWiki API call per group, returns
   /// a map keyed by the original input string (the raw OSM `wikipedia=`

@@ -82,33 +82,66 @@ out center body;
     return _resolveCommonsThumbs(nearby);
   }
 
-  /// Replaces wikimedia_commons-derived URLs with CORS-friendly direct
-  /// upload.wikimedia.org thumbnails via MediaWiki's imageinfo API. Runs
-  /// in one batched call regardless of how many sights are involved.
-  /// Sights without a usable Commons tag pass through untouched.
+  /// Three-stage resolution mirroring RoutePoiSearchService:
+  ///   1. Sync HTTPS `image=` URLs (no API call needed).
+  ///   2. `wikimedia_commons=File:…` + `image=File:…` via MediaWiki
+  ///      imageinfo (one batched call) → direct upload.wikimedia.org
+  ///      thumbnails with CORS headers.
+  ///   3. For everything still without a photo, `wikipedia=lang:Title` via
+  ///      PageImages, with a `prop=images` fallback for articles that
+  ///      lack a canonical page-image set (common on smaller German
+  ///      Wikipedia entries — Schloss Wrangelsburg-class).
   static Future<List<OsmSight>> _resolveCommonsThumbs(List<OsmSight> sights) async {
     final commonsValues = <String>{};
     for (final s in sights) {
+      if (s.directImageUrl != null) continue;
       final c = s.wikimediaCommons;
       if (c != null && c.startsWith('File:')) commonsValues.add(c);
-      // Some POIs put the File:... reference into `image=` instead of
-      // wikimedia_commons=; treat those identically.
       final img = s.image;
       if (img != null && img.startsWith('File:')) commonsValues.add(img);
     }
-    if (commonsValues.isEmpty) return sights;
-    Map<String, String> resolved;
-    try {
-      resolved = await PoiImageResolver.resolveCommonsBatch(commonsValues);
-    } catch (_) {
-      return sights;
+    Map<String, String> commonsResolved = const {};
+    if (commonsValues.isNotEmpty) {
+      try {
+        commonsResolved =
+            await PoiImageResolver.resolveCommonsBatch(commonsValues);
+      } catch (_) {}
     }
-    if (resolved.isEmpty) return sights;
-    return [
+    final afterCommons = [
       for (final s in sights)
         () {
+          if (s.directImageUrl != null) return s;
+          final img = s.image;
+          if (img != null && (img.startsWith('https://') || img.startsWith('http://'))) {
+            return s.withDirectImageUrl(img);
+          }
           final tag = s.wikimediaCommons ?? s.image;
-          final url = tag == null ? null : resolved[tag];
+          final url = tag == null ? null : commonsResolved[tag];
+          return url == null ? s : s.withDirectImageUrl(url);
+        }(),
+    ];
+
+    final wikipediaTags = <String>{};
+    for (final s in afterCommons) {
+      if (s.directImageUrl != null) continue;
+      final wp = s.wikipedia;
+      if (wp != null && wp.isNotEmpty) wikipediaTags.add(wp);
+    }
+    if (wikipediaTags.isEmpty) return afterCommons;
+    Map<String, String> wpResolved;
+    try {
+      wpResolved =
+          await PoiImageResolver.resolveWikipediaBatchWithFallback(wikipediaTags);
+    } catch (_) {
+      return afterCommons;
+    }
+    if (wpResolved.isEmpty) return afterCommons;
+    return [
+      for (final s in afterCommons)
+        () {
+          if (s.directImageUrl != null) return s;
+          final wp = s.wikipedia;
+          final url = wp == null ? null : wpResolved[wp];
           return url == null ? s : s.withDirectImageUrl(url);
         }(),
     ];
