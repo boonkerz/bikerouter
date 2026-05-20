@@ -14,6 +14,8 @@ import '../models/route_result.dart';
 import '../models/turn_hint.dart';
 import '../services/brouter_service.dart';
 import '../services/navigation_voice_service.dart';
+import '../services/profile_speed_prefs.dart';
+import '../services/watch_sync_service.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_storage.dart';
 
@@ -81,6 +83,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   void dispose() {
     _gpsSub?.cancel();
     NavigationVoiceService.instance.stop();
+    WatchSyncService.instance.stopNavigation();
     WakelockPlus.disable();
     super.dispose();
   }
@@ -112,11 +115,41 @@ class _NavigationScreenState extends State<NavigationScreen> {
     _maybeReroute();
     _recenter();
     _speakTurnIfNeeded();
+    _pushWatchUpdate();
     if (!wasArrived && _arrived) {
       final l = AppLocalizations.of(context);
       NavigationVoiceService.instance.speak(l.voiceArrived);
     }
     setState(() {});
+  }
+
+  /// Mirrors the current navigation state to a paired Apple Watch. The
+  /// service drops the call silently if there's no watch / no method
+  /// channel, so this is safe to invoke on every GPS tick.
+  void _pushWatchUpdate() {
+    if (_route == null) return;
+    if (_arrived) {
+      WatchSyncService.instance.updateNavigation(
+        direction: WatchTurnDirection.arrived,
+        distanceToTurnMeters: 0,
+        remainingKm: 0,
+        remainingMinutes: 0,
+      );
+      return;
+    }
+    final hint = _nextHint;
+    final distToHint = _distanceToNextHintM();
+    final remainingM = _remainingDistanceM();
+    final speedKmh = ProfileSpeedPrefs.speedFor(widget.profile);
+    final remainingMin = speedKmh > 0
+        ? ((remainingM / 1000.0) / speedKmh * 60).round()
+        : 0;
+    WatchSyncService.instance.updateNavigation(
+      direction: WatchTurnDirection.fromTurnCmd(hint?.cmd),
+      distanceToTurnMeters: distToHint.round(),
+      remainingKm: remainingM / 1000.0,
+      remainingMinutes: remainingMin,
+    );
   }
 
   void _speakTurnIfNeeded() {

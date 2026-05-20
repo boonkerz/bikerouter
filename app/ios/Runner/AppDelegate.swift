@@ -14,6 +14,11 @@ import UIKit
     FlutterViewController.swizzleVSyncClientCreation()
 
     GeneratedPluginRegistrant.register(with: self)
+    // Bridge for the paired Apple Watch (v2.2). The bridge no-ops when
+    // there's no watch paired, so it's safe to register unconditionally.
+    if let registrar = self.registrar(forPlugin: "WatchBridge") {
+      WatchBridge.register(with: registrar)
+    }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
