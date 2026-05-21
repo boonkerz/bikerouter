@@ -46,10 +46,22 @@ platform :ios do
       in_house: false,
     )
 
-    # Make sure provisioning profiles exist for both bundles (the iOS app
-    # and the embedded Watch companion). `match` would be cleaner for
-    # multi-developer teams, but for a single-machine setup `sigh`
-    # downloading App-Store profiles directly via the API key is simpler.
+    # Step 1: make sure an iOS Distribution Certificate is in the
+    # keychain. `cert` checks for an existing one and creates a new
+    # one via the API only when none matches — so re-running this is
+    # idempotent. Apple allows three distribution certificates per
+    # team; if you hit the limit, revoke an old one in the developer
+    # portal first.
+    cert(
+      api_key: api_key,
+      development: false,  # false = distribution (App Store / Ad-Hoc)
+    )
+
+    # Step 2: make sure provisioning profiles exist for both bundles
+    # (the iOS app and the embedded Watch companion). `match` would be
+    # cleaner for multi-developer teams, but for a single-machine setup
+    # `sigh` downloading App-Store profiles directly via the API key is
+    # simpler.
     sigh(
       api_key: api_key,
       app_identifier: "com.thomaspeterson.bikerouter",
