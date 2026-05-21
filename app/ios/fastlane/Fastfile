@@ -1,0 +1,67 @@
+default_platform(:ios)
+
+# Read the version string ("X.Y.Z") and the build number ("N") from the
+# Flutter pubspec.yaml so they are the single source of truth across iOS
+# and Android. Format in pubspec is `version: X.Y.Z+N`.
+def pubspec_version_components
+  pubspec = File.read("../../pubspec.yaml")
+  match = pubspec.match(/^version:\s*([0-9]+(?:\.[0-9]+)*)(?:\+([0-9]+))?/)
+  raise "could not parse version from pubspec.yaml" unless match
+  [match[1], match[2] || "1"]
+end
+
+platform :ios do
+  desc "Build the iOS IPA via Flutter and upload to TestFlight"
+  lane :release do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"],
+      is_key_content_base64: false,
+      in_house: false,
+    )
+
+    # Make sure provisioning profiles exist for both bundles (the iOS app
+    # and the embedded Watch companion). `match` would be cleaner for
+    # multi-developer teams, but for a single-machine setup `sigh`
+    # downloading App-Store profiles directly via the API key is simpler.
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.thomaspeterson.bikerouter",
+      platform: "ios",
+      readonly: false,
+    )
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.thomaspeterson.bikerouter.WegwieselWatch",
+      platform: "ios",
+      readonly: false,
+    )
+
+    version_name, build_number = pubspec_version_components
+    UI.message "Building iOS #{version_name}+#{build_number}"
+
+    # `flutter build ipa` handles the Watch target automatically because
+    # it's embedded in the Runner Xcode scheme. The build-number override
+    # ensures we use the pubspec value rather than whatever Xcode would
+    # auto-derive.
+    sh "cd ../.. && flutter build ipa --release " \
+       "--build-name=#{version_name} " \
+       "--build-number=#{build_number} " \
+       "--export-options-plist=#{ENV['HOME']}/export_options.plist 2>&1 || " \
+       "flutter build ipa --release " \
+       "--build-name=#{version_name} " \
+       "--build-number=#{build_number}"
+
+    ipa_path = Dir["#{ENV['GITHUB_WORKSPACE'] || '../..'}/app/build/ios/ipa/*.ipa"].first
+    ipa_path ||= Dir["../build/ios/ipa/*.ipa"].first
+    UI.user_error!("no IPA found after build") unless ipa_path
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      changelog: "Automated build #{version_name}+#{build_number}",
+    )
+  end
+end

@@ -1,0 +1,82 @@
+default_platform(:android)
+
+# Read the version string ("X.Y.Z") and the build number ("N") from the
+# Flutter pubspec.yaml — same source of truth as the iOS Fastfile.
+def pubspec_version_components
+  pubspec = File.read("../pubspec.yaml")
+  match = pubspec.match(/^version:\s*([0-9]+(?:\.[0-9]+)*)(?:\+([0-9]+))?/)
+  raise "could not parse version from pubspec.yaml" unless match
+  [match[1], match[2] || "1"]
+end
+
+# Map the Codemagic-era env-var names (CM_KEYSTORE_*) so the Gradle
+# signing block in android/app/build.gradle.kts can pick them up
+# without modification. Called once at lane start.
+def export_signing_env
+  ENV["CM_KEYSTORE_PATH"]     ||= File.expand_path("../release.keystore", __dir__)
+  ENV["CM_KEYSTORE_PASSWORD"] ||= ENV["ANDROID_KEYSTORE_PASSWORD"]
+  ENV["CM_KEY_ALIAS"]         ||= ENV["ANDROID_KEY_ALIAS"]
+  ENV["CM_KEY_PASSWORD"]      ||= ENV["ANDROID_KEY_PASSWORD"]
+end
+
+platform :android do
+  desc "Build Phone + Wear OS AABs and upload both to Google Play"
+  lane :release do
+    export_signing_env
+
+    version_name, build_number = pubspec_version_components
+    UI.message "Building Android #{version_name}+#{build_number}"
+
+    # Phone bundle. Flutter writes the AAB to
+    # build/app/outputs/bundle/release/app-release.aab.
+    sh "cd .. && flutter build appbundle --release " \
+       "--build-name=#{version_name} " \
+       "--build-number=#{build_number}"
+
+    phone_aab = Dir["../build/app/outputs/bundle/release/*.aab"].first
+    UI.user_error!("no phone AAB built") unless phone_aab
+
+    upload_to_play_store(
+      package_name: "com.thomaspeterson.bikerouter",
+      track: "internal",
+      aab: phone_aab,
+      json_key: "play-store-credentials.json",
+      release_status: "draft",
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+
+    # Wear OS bundle — separate Play Console listing under its own
+    # package name. The :wear gradle module produces the AAB at
+    # android/wear/build/outputs/bundle/release/wear-release.aab.
+    sh "./gradlew :wear:bundleRelease"
+
+    wear_aab = Dir["wear/build/outputs/bundle/release/*.aab"].first
+    if wear_aab.nil?
+      UI.important "no Wear OS AAB found — skipping upload (module may have failed)"
+    else
+      # Wear OS lives under its own Play Console app record; we have to
+      # publish it separately. Skip silently with a warning if the Wear
+      # Play listing isn't set up yet (first-time runs).
+      begin
+        upload_to_play_store(
+          package_name: "com.thomaspeterson.bikerouter.wear",
+          track: "internal",
+          aab: wear_aab,
+          json_key: "play-store-credentials.json",
+          release_status: "draft",
+          skip_upload_apk: true,
+          skip_upload_metadata: true,
+          skip_upload_changelogs: true,
+          skip_upload_images: true,
+          skip_upload_screenshots: true,
+        )
+      rescue => e
+        UI.important "Wear OS upload failed (likely listing not yet set up): #{e.message}"
+      end
+    end
+  end
+end

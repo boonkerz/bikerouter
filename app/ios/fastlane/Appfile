@@ -1,0 +1,4 @@
+app_identifier "com.thomaspeterson.bikerouter"
+
+# App Store Connect Team is auto-resolved from the API key — no need to
+# hardcode the team_id / itc_team_id here.

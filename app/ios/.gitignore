@@ -32,3 +32,13 @@ Runner/GeneratedPluginRegistrant.*
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
+
+# Fastlane scratch output — never useful in git.
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/*.cer
+fastlane/*.p12
+fastlane/*.mobileprovision
+fastlane/AuthKey_*.p8

@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'customprofiles/**'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: iOS — TestFlight
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 45
+    env:
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Fastlane bundle install
+        working-directory: app/ios
+        run: bundle install
+
+      - name: Fastlane release lane
+        working-directory: app/ios
+        run: bundle exec fastlane release
+
+      - name: Upload IPA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: app/build/ios/ipa/*.ipa
+          if-no-files-found: ignore
+          retention-days: 14
+
+  build-android:
+    name: Android — Play Console
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 45
+    needs: build-ios          # serialize so a single Mac runner can do both
+    if: always()              # … even if iOS failed (you might just have an iOS-cert issue)
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      PLAY_STORE_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Decode Android keystore
+        working-directory: app/android
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > release.keystore
+          cat > key.properties <<EOF
+          storeFile=$(pwd)/release.keystore
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Write Play service-account JSON
+        working-directory: app/android
+        run: echo "$PLAY_STORE_SERVICE_ACCOUNT_JSON" > play-store-credentials.json
+
+      - name: Fastlane bundle install
+        working-directory: app/android
+        run: bundle install
+
+      - name: Fastlane release lane
+        working-directory: app/android
+        run: bundle exec fastlane release
+
+      - name: Cleanup secrets
+        if: always()
+        working-directory: app/android
+        run: |
+          rm -f release.keystore key.properties play-store-credentials.json
+
+      - name: Upload AAB artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: |
+            app/build/app/outputs/bundle/release/*.aab
+            app/android/wear/build/outputs/bundle/release/*.aab
+          if-no-files-found: ignore
+          retention-days: 14
