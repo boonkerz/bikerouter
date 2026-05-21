@@ -3,8 +3,16 @@ import SwiftUI
 /// The single screen of the Wegwiesel watch app. Mirrors the
 /// iPhone's turn-by-turn glance: maneuver icon at top, distance to
 /// the next turn front-and-centre, remaining-trip ETA at the bottom.
+///
+/// Intentionally uses the older `foregroundColor` / `.system(size:)`
+/// APIs (watchOS 6+) instead of `foregroundStyle` (watchOS 10+) so
+/// the app remains installable on older watches and the target's
+/// deployment-target setting doesn't have to be raised.
 struct NavigationGlanceView: View {
   @EnvironmentObject var session: WatchSessionController
+
+  private static let brand = Color(red: 0.42, green: 0.29, blue: 0.16)
+  private static let muted = Color(red: 0.66, green: 0.66, blue: 0.66)
 
   var body: some View {
     VStack(spacing: 8) {
@@ -12,18 +20,18 @@ struct NavigationGlanceView: View {
         .resizable()
         .scaledToFit()
         .frame(width: 56, height: 56)
-        .foregroundStyle(Color(red: 0.42, green: 0.29, blue: 0.16))
+        .foregroundColor(NavigationGlanceView.brand)
 
       Text(formattedDistance)
         .font(.system(size: 32, weight: .bold, design: .rounded))
-        .foregroundStyle(.primary)
+        .foregroundColor(.primary)
         .minimumScaleFactor(0.6)
         .lineLimit(1)
 
       if let street = session.streetName, !street.isEmpty {
         Text(street)
-          .font(.caption2)
-          .foregroundStyle(.secondary)
+          .font(.system(size: 11))
+          .foregroundColor(NavigationGlanceView.muted)
           .lineLimit(1)
           .truncationMode(.tail)
       }
@@ -36,11 +44,10 @@ struct NavigationGlanceView: View {
         Text(formattedEta)
       }
       .font(.system(size: 12, weight: .medium))
-      .foregroundStyle(.secondary)
+      .foregroundColor(NavigationGlanceView.muted)
     }
     .padding(.horizontal, 6)
     .padding(.vertical, 4)
-    .containerBackground(.fill.tertiary, for: .navigation)
   }
 
   // MARK: - Formatting
