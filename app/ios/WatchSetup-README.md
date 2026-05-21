@@ -8,12 +8,16 @@ und würde Codemagic-Builds kaputt machen.
 ## Was hier liegt
 
 ```
-ios/WegwieselWatch/
-├── WegwieselWatchApp.swift     – @main-Entry, hält den WatchSessionController
-├── WatchSessionController.swift – WCSessionDelegate + @Published-State
-├── NavigationGlanceView.swift  – SwiftUI: Pfeil + Distanz + ETA
-└── Info.plist                  – WKApplication=true, Companion-Bundle-ID
+ios/WegwieselWatch Watch App/        ← Xcode-Standardname für Watch-only-Targets
+├── WegwieselWatchApp.swift          – @main-Entry, hält den WatchSessionController
+├── WatchSessionController.swift     – WCSessionDelegate + @Published-State
+├── NavigationGlanceView.swift       – SwiftUI: Pfeil + Distanz + ETA
+└── Info.plist                       – WKApplication=true, Companion-Bundle-ID
 ```
+
+Xcode setzt für „Watch-only App"-Targets per default einen Ordnernamen
+mit der `Watch App`-Suffix — Leerzeichen inklusive. Wir folgen dieser
+Convention, damit `project.pbxproj` und Filesystem konsistent bleiben.
 
 Plus, schon eingecheckt:
 
