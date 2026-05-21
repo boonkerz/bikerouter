@@ -35,6 +35,17 @@ final class WatchSessionController: NSObject, ObservableObject, WCSessionDelegat
     applyPayload(userInfo)
   }
 
+  // The two methods below are iOS-only required parts of WCSessionDelegate.
+  // watchOS doesn't include them in the protocol contract. We wrap in
+  // `#if os(iOS)` so the file stays conformant if it ever ends up compiled
+  // against the iOS SDK (e.g. wrong Target Membership) — defence in depth.
+  #if os(iOS)
+  func sessionDidBecomeInactive(_ session: WCSession) {}
+  func sessionDidDeactivate(_ session: WCSession) {
+    WCSession.default.activate()
+  }
+  #endif
+
   // MARK: - Payload routing
 
   private func applyPayload(_ payload: [String: Any]) {
