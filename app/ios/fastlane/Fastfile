@@ -11,6 +11,27 @@ def pubspec_version_components
 end
 
 platform :ios do
+  desc "Smoke-test the App Store Connect API key without touching builds"
+  lane :auth_check do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"],
+      is_key_content_base64: true,
+      in_house: false,
+    )
+    # The cheapest API call — just lists apps the key can see. If this
+    # fails, the credentials are wrong before any signing comes into play.
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_CONTENT"]),
+    )
+    apps = Spaceship::ConnectAPI::App.all(limit: 5)
+    UI.success "✓ API key works — visible apps: #{apps.map(&:bundle_id).join(', ')}"
+  end
+
+
   desc "Build the iOS IPA via Flutter and upload to TestFlight"
   lane :release do
     # The secret is stored as base64-encoded contents of the .p8 file —
