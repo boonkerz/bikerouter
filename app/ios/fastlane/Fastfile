@@ -57,25 +57,7 @@ platform :ios do
       development: false,  # false = distribution (App Store / Ad-Hoc)
     )
 
-    # Step 2: make sure both bundle IDs are registered in the Apple
-    # Developer Portal. `produce` is idempotent — if the App ID
-    # already exists, it just returns. skip_itc=true means we do NOT
-    # create a separate App Store Connect record for the Watch; the
-    # Watch ships as part of the iOS app's existing ASC record.
-    produce(
-      api_key: api_key,
-      app_identifier: "com.thomaspeterson.bikerouter",
-      app_name: "Wegwiesel",
-      skip_itc: true,
-    )
-    produce(
-      api_key: api_key,
-      app_identifier: "com.thomaspeterson.bikerouter.WegwieselWatch",
-      app_name: "Wegwiesel Watch Companion",
-      skip_itc: true,
-    )
-
-    # Step 3: make sure provisioning profiles exist for both bundles
+    # Step 2: make sure provisioning profiles exist for both bundles
     # (the iOS app and the embedded Watch companion). `match` would be
     # cleaner for multi-developer teams, but for a single-machine setup
     # `sigh` downloading App-Store profiles directly via the API key is

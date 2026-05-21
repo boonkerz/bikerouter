@@ -23,6 +23,22 @@ a Linux runner is negligible for our codebase.
 
 ## One-time setup
 
+### 0. Register the Watch bundle ID in the Apple Developer Portal
+
+One-time, ~30 seconds. fastlane's `produce` action can't auto-register
+identifiers via API key auth, so we do this by hand once:
+
+1. https://developer.apple.com/account/resources/identifiers/list
+2. **"+"** → **App IDs** → Continue
+3. **App** → Continue
+4. Description: `Wegwiesel Watch Companion`
+5. Bundle ID: **Explicit** → `com.thomaspeterson.bikerouter.WegwieselWatch`
+6. Capabilities: leave defaults
+7. Continue → **Register**
+
+The Phone bundle ID (`com.thomaspeterson.bikerouter`) already exists
+from earlier Codemagic builds, no action needed.
+
 ### 1. App Store Connect API Key
 
 1. Apple Developer Portal → **Users and Access** → **Integrations** →
