@@ -60,7 +60,7 @@ repository secret** for each:
 |---|---|
 | `APP_STORE_CONNECT_KEY_ID` | the `Key ID` from step 1 |
 | `APP_STORE_CONNECT_ISSUER_ID` | the `Issuer ID` from step 1 |
-| `APP_STORE_CONNECT_KEY_CONTENT` | the **entire content** of the `.p8` file (paste as-is, including the `-----BEGIN PRIVATE KEY-----` lines) |
+| `APP_STORE_CONNECT_KEY_CONTENT` | **base64-encoded** `.p8` file. Generate with `base64 -i AuthKey_XXXX.p8` (macOS) — paste the single-line output. We use base64 because GitHub Actions secrets occasionally mangle multi-line PEM content during paste, leading to opaque "Authentication credentials missing" errors at `sigh` time. |
 | `ANDROID_KEYSTORE_BASE64` | `base64 -i keystore.jks` output (single line) |
 | `ANDROID_KEYSTORE_PASSWORD` | keystore password |
 | `ANDROID_KEY_ALIAS` | key alias inside the keystore |
