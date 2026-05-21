@@ -5,6 +5,26 @@
 
 ---
 
+## v2.2.0 (DE) — „On your wrist"
+**Wegwiesel am Handgelenk.**
+
+• Apple-Watch- und Wear-OS-Companion: Während der Navigation siehst du die nächste Abbiegung, Distanz und Restzeit direkt an der Watch — Phone bleibt in der Tasche
+• Anhänger-Routing deutlich besser: zeit-proportionale Kostenfaktoren, Bundesstraßen werden ähnlich wie Google/ADAC bewertet (kein Autobahn-Umweg-Zwang mehr)
+• FTP-Test-Strecken-Finder für Sportler: findet im Umkreis steady-Climb- oder Flachstrecken mit Score je nach Test-Typ (20-min, 8-min, Ramp, Sweet Spot)
+• Menü entschlackt: oben neben A-B/Rundtour ein „Routen-Quellen"-Pill mit Gespeichert, Entdecken, GPX/URL-Import, Trainingsstrecke
+• POI-Foto-Coverage massiv besser: Wikipedia-PageImages-Fallback + Special-File-URL-Erkennung, CORS-Fixes für Web
+
+## v2.2.0 (EN) — "On your wrist"
+**Wegwiesel on your wrist.**
+
+• Apple Watch and Wear OS companion apps: next turn, distance and remaining time on the watch face during navigation — phone stays in the pocket
+• Trailer routing tuned: time-proportional cost factors, Bundesstraßen rate similar to Google/ADAC (no more forced motorway detours)
+• FTP test segment finder: searches for steady-climb or flat segments in a radius and scores them by test type (20-min, 8-min, Ramp, Sweet Spot)
+• Decluttered menu: next to the A-B / Round-trip toggle there's a new "Route sources" pill with Saved, Discover, GPX/URL import, FTP-finder
+• Much better POI photo coverage: Wikipedia PageImages fallback, Special-File-URL detection, CORS fixes for web build
+
+---
+
 ## v2.1.4 (DE) — „Mehr POI-Fotos"
 **OSM-Tag-Coverage für image=/wikimedia_commons= war dünn — jetzt holen wir uns Bilder auch über Wikipedia-Tags.**
 
