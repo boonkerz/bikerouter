@@ -1,3 +1,8 @@
 source "https://rubygems.org"
 
 gem "fastlane"
+# Pin CocoaPods to the same Ruby gemset as fastlane so `bundle exec
+# pod install` always uses a consistent binary — fixes "CocoaPods is
+# installed but broken" when system Ruby (2.6) and brew Ruby (3+)
+# both have pod installations.
+gem "cocoapods"
