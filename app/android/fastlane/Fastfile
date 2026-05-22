@@ -38,6 +38,10 @@ platform :android do
 
     phone_aab = Dir["../../build/app/outputs/bundle/release/*.aab"].first
     UI.user_error!("no phone AAB built") unless phone_aab
+    # upload_to_play_store validates the path from a different CWD than
+    # Dir.glob was evaluated in — give it the absolute path so the
+    # lookup doesn't fail with a "file not found" later.
+    phone_aab = File.expand_path(phone_aab)
 
     upload_to_play_store(
       package_name: "com.thomaspeterson.bikerouter",
@@ -60,7 +64,8 @@ platform :android do
     wear_aab = nil
     begin
       sh "cd .. && ./gradlew :wear:bundleRelease"
-      wear_aab = Dir["../wear/build/outputs/bundle/release/*.aab"].first
+      wear_aab_rel = Dir["../wear/build/outputs/bundle/release/*.aab"].first
+      wear_aab = File.expand_path(wear_aab_rel) if wear_aab_rel
     rescue => e
       UI.important "Wear OS build skipped: #{e.message}"
     end
