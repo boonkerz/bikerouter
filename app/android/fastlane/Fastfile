@@ -3,7 +3,9 @@ default_platform(:android)
 # Read the version string ("X.Y.Z") and the build number ("N") from the
 # Flutter pubspec.yaml — same source of truth as the iOS Fastfile.
 def pubspec_version_components
-  pubspec = File.read("../pubspec.yaml")
+  # Fastlane sets CWD to the Fastfile's directory (app/android/fastlane),
+  # so the Flutter pubspec is two levels up at app/pubspec.yaml.
+  pubspec = File.read("../../pubspec.yaml")
   match = pubspec.match(/^version:\s*([0-9]+(?:\.[0-9]+)*)(?:\+([0-9]+))?/)
   raise "could not parse version from pubspec.yaml" unless match
   [match[1], match[2] || "1"]
@@ -28,19 +30,20 @@ platform :android do
     UI.message "Building Android #{version_name}+#{build_number}"
 
     # Phone bundle. Flutter writes the AAB to
-    # build/app/outputs/bundle/release/app-release.aab.
-    sh "cd .. && flutter build appbundle --release " \
+    # build/app/outputs/bundle/release/app-release.aab relative to the
+    # Flutter project root (app/).
+    sh "cd ../.. && flutter build appbundle --release " \
        "--build-name=#{version_name} " \
        "--build-number=#{build_number}"
 
-    phone_aab = Dir["../build/app/outputs/bundle/release/*.aab"].first
+    phone_aab = Dir["../../build/app/outputs/bundle/release/*.aab"].first
     UI.user_error!("no phone AAB built") unless phone_aab
 
     upload_to_play_store(
       package_name: "com.thomaspeterson.bikerouter",
       track: "internal",
       aab: phone_aab,
-      json_key: "play-store-credentials.json",
+      json_key: "../play-store-credentials.json",
       release_status: "draft",
       skip_upload_apk: true,
       skip_upload_metadata: true,
@@ -52,9 +55,9 @@ platform :android do
     # Wear OS bundle — separate Play Console listing under its own
     # package name. The :wear gradle module produces the AAB at
     # android/wear/build/outputs/bundle/release/wear-release.aab.
-    sh "./gradlew :wear:bundleRelease"
+    sh "cd .. && ./gradlew :wear:bundleRelease"
 
-    wear_aab = Dir["wear/build/outputs/bundle/release/*.aab"].first
+    wear_aab = Dir["../wear/build/outputs/bundle/release/*.aab"].first
     if wear_aab.nil?
       UI.important "no Wear OS AAB found — skipping upload (module may have failed)"
     else
@@ -66,7 +69,7 @@ platform :android do
           package_name: "com.thomaspeterson.bikerouter.wear",
           track: "internal",
           aab: wear_aab,
-          json_key: "play-store-credentials.json",
+          json_key: "../play-store-credentials.json",
           release_status: "draft",
           skip_upload_apk: true,
           skip_upload_metadata: true,
