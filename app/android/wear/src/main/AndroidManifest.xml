@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-feature android:name="android.hardware.type.watch" />
+    <!-- required=true tells Play Store to only deliver this APK to
+         devices with watch hardware. The phone module's APK has no
+         such constraint, so Play Store routes correctly per device. -->
+    <uses-feature android:name="android.hardware.type.watch" android:required="true" />
 
     <application
         android:allowBackup="false"

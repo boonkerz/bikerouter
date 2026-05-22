@@ -90,4 +90,10 @@ dependencies {
     // Provides Task.await() for the Wearable client calls in WatchBridge.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+
+    // Embed the Wear OS companion APK into the Phone AAB. Play Store
+    // distributes a single bundle and delivers the watch APK to
+    // paired Wear devices via the auto-install pipeline — no second
+    // Play Console listing needed.
+    wearApp(project(":wear"))
 }

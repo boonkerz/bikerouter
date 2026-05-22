@@ -1,5 +1,8 @@
 // Wear OS companion app for Wegwiesel.
-// Standalone (Wear OS 3+) — ships as its own APK alongside the phone app.
+// Embedded into the Phone AAB via `wearApp(project(":wear"))` so it
+// ships under the same Play Console listing and same applicationId
+// as the Phone app. Play Store delivers this APK only to devices
+// matching `android.hardware.type.watch`.
 
 import java.io.FileInputStream
 import java.util.Properties
@@ -12,18 +15,13 @@ plugins {
 }
 
 // Load signing properties at file scope (same pattern as :app's
-// build.gradle.kts). Reading inside the signingConfigs closure has
-// caused subtle issues with Gradle's lazy evaluation order in this
-// multi-module setup.
+// build.gradle.kts).
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-// Helper: prefer property-file value, fall back to env var, treat
-// empty strings as absent so a "keyPassword=" line doesn't override
-// the env-var fallback with nothing.
 fun signingValue(propKey: String, envKey: String): String? {
     val fromProps = keystoreProperties[propKey] as String?
     if (!fromProps.isNullOrEmpty()) return fromProps
@@ -31,6 +29,21 @@ fun signingValue(propKey: String, envKey: String): String? {
     if (!fromEnv.isNullOrEmpty()) return fromEnv
     return null
 }
+
+// Pull version from the Flutter pubspec so phone + wear APKs are
+// always released together with the same version code. Avoids the
+// "version code mismatch" rejection in Play Console.
+fun pubspecVersion(): Pair<String, Int> {
+    val pubspecFile = rootProject.file("../pubspec.yaml")
+    val content = pubspecFile.readText()
+    val match = Regex("""^version:\s*([0-9]+(?:\.[0-9]+)*)(?:\+([0-9]+))?""",
+        RegexOption.MULTILINE).find(content)
+    val versionName = match?.groupValues?.get(1) ?: "1.0.0"
+    val versionCode = match?.groupValues?.get(2)?.toIntOrNull() ?: 1
+    return versionName to versionCode
+}
+
+val (pubspecVersionName, pubspecVersionCode) = pubspecVersion()
 
 android {
     namespace = "com.thomaspeterson.bikerouter.wear"
@@ -47,20 +60,16 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.thomaspeterson.bikerouter.wear"
-        // Wear OS 3 lower bound — covers the vast majority of currently
-        // active Wear devices and lets us ship Compose-for-Wear without
-        // worrying about the legacy material library.
+        // Must match the phone module's applicationId. Play Store
+        // delivers a single bundle and chooses the right APK based on
+        // the device's <uses-feature> filters (watch hardware here).
+        applicationId = "com.thomaspeterson.bikerouter"
         minSdk = 30
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = pubspecVersionCode
+        versionName = pubspecVersionName
     }
 
-    // Reuse the phone app's release keystore. Both modules read the
-    // same key.properties in android/, so the credentials stay in
-    // sync. keyPassword falls back to storePassword when no
-    // dedicated key password is supplied (common JKS convention).
     signingConfigs {
         create("release") {
             val storeFilePath = signingValue("storeFile", "CM_KEYSTORE_PATH")
@@ -94,9 +103,6 @@ kotlin {
 }
 
 dependencies {
-    // Compose-for-Wear keeps the UI a single-file affair; we don't need
-    // the broader Material 3 stack because the watch glance is essentially
-    // an icon + two text rows.
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
 
@@ -111,8 +117,6 @@ dependencies {
     implementation("androidx.wear.compose:compose-foundation:1.4.0")
     implementation("androidx.wear.compose:compose-material:1.4.0")
 
-    // Data Layer client — receives DataItem changes and Messages from the
-    // phone-side WatchBridge.
     implementation("com.google.android.gms:play-services-wearable:18.2.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")

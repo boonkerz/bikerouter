@@ -22,25 +22,24 @@ def export_signing_env
 end
 
 platform :android do
-  desc "Build Phone + Wear OS AABs and upload both to Google Play"
+  desc "Build the Phone AAB (with embedded Wear OS APK) and upload to Google Play"
   lane :release do
     export_signing_env
 
     version_name, build_number = pubspec_version_components
     UI.message "Building Android #{version_name}+#{build_number}"
 
-    # Phone bundle. Flutter writes the AAB to
-    # build/app/outputs/bundle/release/app-release.aab relative to the
-    # Flutter project root (app/).
+    # Single AAB that contains both the Phone APK and the embedded
+    # Wear OS APK. The phone module's build.gradle.kts declares
+    # `wearApp(project(":wear"))`, so AGP wires the wear APK into the
+    # bundle automatically. Play Store routes per device via the
+    # uses-feature filters in each module's manifest.
     sh "cd ../.. && flutter build appbundle --release " \
        "--build-name=#{version_name} " \
        "--build-number=#{build_number}"
 
     phone_aab = Dir["../../build/app/outputs/bundle/release/*.aab"].first
-    UI.user_error!("no phone AAB built") unless phone_aab
-    # upload_to_play_store validates the path from a different CWD than
-    # Dir.glob was evaluated in — give it the absolute path so the
-    # lookup doesn't fail with a "file not found" later.
+    UI.user_error!("no AAB built") unless phone_aab
     phone_aab = File.expand_path(phone_aab)
 
     upload_to_play_store(
@@ -55,51 +54,5 @@ platform :android do
       skip_upload_images: true,
       skip_upload_screenshots: true,
     )
-
-    # Wear OS bundle — built as a separate Gradle task because Flutter
-    # only emits :app:bundleRelease. The Flutter Gradle plugin remaps
-    # every module's buildDir into the Flutter project's central
-    # build/ directory, so the wear AAB ends up under
-    # app/build/wear/outputs/bundle/release/, NOT inside the android/
-    # subtree.
-    wear_aab = nil
-    begin
-      sh "cd .. && ./gradlew :wear:bundleRelease"
-      # Search both the Flutter-redirected location and the default
-      # gradle layout — covers either output convention.
-      candidates = Dir["../../build/wear/outputs/bundle/release/*.aab"] +
-                   Dir["../wear/build/outputs/bundle/release/*.aab"]
-      wear_aab_rel = candidates.first
-      wear_aab = File.expand_path(wear_aab_rel) if wear_aab_rel
-
-      unless wear_aab
-        UI.important "no AAB found — searching build trees:"
-        sh "find ../../build -name '*.aab' 2>/dev/null || true"
-        sh "find ../wear/build -name '*.aab' 2>/dev/null || true"
-      end
-    rescue => e
-      UI.important "Wear OS build failed: #{e.message}"
-    end
-
-    if wear_aab
-      begin
-        upload_to_play_store(
-          package_name: "com.thomaspeterson.bikerouter.wear",
-          track: "internal",
-          aab: wear_aab,
-          json_key: File.expand_path("../play-store-credentials.json", __dir__),
-          release_status: "draft",
-          skip_upload_apk: true,
-          skip_upload_metadata: true,
-          skip_upload_changelogs: true,
-          skip_upload_images: true,
-          skip_upload_screenshots: true,
-        )
-      rescue => e
-        UI.important "Wear OS upload failed (likely listing not yet set up): #{e.message}"
-      end
-    else
-      UI.important "no Wear OS AAB found — skipping upload"
-    end
   end
 end
