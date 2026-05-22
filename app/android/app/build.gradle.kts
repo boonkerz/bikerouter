@@ -14,6 +14,17 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+// Helper: prefer property-file value, fall back to env var, treat
+// empty strings as absent so a "keyPassword=" line doesn't override
+// the env-var fallback with nothing.
+fun signingValue(propKey: String, envKey: String): String? {
+    val fromProps = keystoreProperties[propKey] as String?
+    if (!fromProps.isNullOrEmpty()) return fromProps
+    val fromEnv = System.getenv(envKey)
+    if (!fromEnv.isNullOrEmpty()) return fromEnv
+    return null
+}
+
 android {
     namespace = "com.thomaspeterson.bikerouter"
     compileSdk = flutter.compileSdkVersion
@@ -38,16 +49,13 @@ android {
 
     signingConfigs {
         create("release") {
-            val storeFilePath = keystoreProperties["storeFile"] as String?
-                ?: System.getenv("CM_KEYSTORE_PATH")
+            val storeFilePath = signingValue("storeFile", "CM_KEYSTORE_PATH")
             if (storeFilePath != null) {
                 storeFile = file(storeFilePath)
-                storePassword = keystoreProperties["storePassword"] as String?
-                    ?: System.getenv("CM_KEYSTORE_PASSWORD")
-                keyAlias = keystoreProperties["keyAlias"] as String?
-                    ?: System.getenv("CM_KEY_ALIAS")
-                keyPassword = keystoreProperties["keyPassword"] as String?
-                    ?: System.getenv("CM_KEY_PASSWORD")
+                val storePw = signingValue("storePassword", "CM_KEYSTORE_PASSWORD")
+                storePassword = storePw
+                keyAlias = signingValue("keyAlias", "CM_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "CM_KEY_PASSWORD") ?: storePw
             }
         }
     }

@@ -11,6 +11,27 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Load signing properties at file scope (same pattern as :app's
+// build.gradle.kts). Reading inside the signingConfigs closure has
+// caused subtle issues with Gradle's lazy evaluation order in this
+// multi-module setup.
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
+// Helper: prefer property-file value, fall back to env var, treat
+// empty strings as absent so a "keyPassword=" line doesn't override
+// the env-var fallback with nothing.
+fun signingValue(propKey: String, envKey: String): String? {
+    val fromProps = keystoreProperties[propKey] as String?
+    if (!fromProps.isNullOrEmpty()) return fromProps
+    val fromEnv = System.getenv(envKey)
+    if (!fromEnv.isNullOrEmpty()) return fromEnv
+    return null
+}
+
 android {
     namespace = "com.thomaspeterson.bikerouter.wear"
     compileSdk = 35
@@ -36,25 +57,19 @@ android {
         versionName = "1.0"
     }
 
-    // Reuse the phone app's release keystore. The properties file is in
-    // the Android project root, alongside the phone module's gradle file.
+    // Reuse the phone app's release keystore. Both modules read the
+    // same key.properties in android/, so the credentials stay in
+    // sync. keyPassword falls back to storePassword when no
+    // dedicated key password is supplied (common JKS convention).
     signingConfigs {
         create("release") {
-            val props = Properties()
-            val propFile = rootProject.file("key.properties")
-            if (propFile.exists()) {
-                props.load(FileInputStream(propFile))
-            }
-            val storeFilePath = props["storeFile"] as String?
-                ?: System.getenv("CM_KEYSTORE_PATH")
+            val storeFilePath = signingValue("storeFile", "CM_KEYSTORE_PATH")
             if (storeFilePath != null) {
                 storeFile = file(storeFilePath)
-                storePassword = props["storePassword"] as String?
-                    ?: System.getenv("CM_KEYSTORE_PASSWORD")
-                keyAlias = props["keyAlias"] as String?
-                    ?: System.getenv("CM_KEY_ALIAS")
-                keyPassword = props["keyPassword"] as String?
-                    ?: System.getenv("CM_KEY_PASSWORD")
+                val storePw = signingValue("storePassword", "CM_KEYSTORE_PASSWORD")
+                storePassword = storePw
+                keyAlias = signingValue("keyAlias", "CM_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "CM_KEY_PASSWORD") ?: storePw
             }
         }
     }

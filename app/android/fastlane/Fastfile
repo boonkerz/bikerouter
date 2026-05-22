@@ -56,38 +56,37 @@ platform :android do
       skip_upload_screenshots: true,
     )
 
-    # Wear OS bundle — disabled. The :wear module is commented out in
-    # app/android/settings.gradle.kts because its signing currently
-    # fails ("Cannot recover key"). Re-enable both this block AND the
-    # `include(":wear")` line in settings.gradle.kts together once the
-    # signing issue is resolved.
-    #
-    # wear_aab = nil
-    # begin
-    #   sh "cd .. && ./gradlew :wear:bundleRelease"
-    #   wear_aab_rel = Dir["../wear/build/outputs/bundle/release/*.aab"].first
-    #   wear_aab = File.expand_path(wear_aab_rel) if wear_aab_rel
-    # rescue => e
-    #   UI.important "Wear OS build skipped: #{e.message}"
-    # end
-    #
-    # if wear_aab
-    #   begin
-    #     upload_to_play_store(
-    #       package_name: "com.thomaspeterson.bikerouter.wear",
-    #       track: "internal",
-    #       aab: wear_aab,
-    #       json_key: File.expand_path("../play-store-credentials.json", __dir__),
-    #       release_status: "draft",
-    #       skip_upload_apk: true,
-    #       skip_upload_metadata: true,
-    #       skip_upload_changelogs: true,
-    #       skip_upload_images: true,
-    #       skip_upload_screenshots: true,
-    #     )
-    #   rescue => e
-    #     UI.important "Wear OS upload failed: #{e.message}"
-    #   end
-    # end
+    # Wear OS bundle — built as a separate Gradle task because Flutter
+    # only emits :app:bundleRelease. Wrap in begin/rescue so a wear-side
+    # failure doesn't tank the already-uploaded phone release.
+    wear_aab = nil
+    begin
+      sh "cd .. && ./gradlew :wear:bundleRelease"
+      wear_aab_rel = Dir["../wear/build/outputs/bundle/release/*.aab"].first
+      wear_aab = File.expand_path(wear_aab_rel) if wear_aab_rel
+    rescue => e
+      UI.important "Wear OS build failed: #{e.message}"
+    end
+
+    if wear_aab
+      begin
+        upload_to_play_store(
+          package_name: "com.thomaspeterson.bikerouter.wear",
+          track: "internal",
+          aab: wear_aab,
+          json_key: File.expand_path("../play-store-credentials.json", __dir__),
+          release_status: "draft",
+          skip_upload_apk: true,
+          skip_upload_metadata: true,
+          skip_upload_changelogs: true,
+          skip_upload_images: true,
+          skip_upload_screenshots: true,
+        )
+      rescue => e
+        UI.important "Wear OS upload failed (likely listing not yet set up): #{e.message}"
+      end
+    else
+      UI.important "no Wear OS AAB found — skipping upload"
+    end
   end
 end
