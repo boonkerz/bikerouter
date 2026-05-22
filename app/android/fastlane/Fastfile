@@ -57,23 +57,25 @@ platform :android do
     )
 
     # Wear OS bundle — built as a separate Gradle task because Flutter
-    # only emits :app:bundleRelease. Force a clean build so gradle's
-    # incremental-build cache can't lie about the AAB being up-to-date
-    # when no signed artifact actually exists on disk.
+    # only emits :app:bundleRelease. The Flutter Gradle plugin remaps
+    # every module's buildDir into the Flutter project's central
+    # build/ directory, so the wear AAB ends up under
+    # app/build/wear/outputs/bundle/release/, NOT inside the android/
+    # subtree.
     wear_aab = nil
     begin
-      sh "cd .. && ./gradlew :wear:clean :wear:bundleRelease --no-build-cache"
-      # Broad glob — different AGP versions write to slightly different
-      # subdirs and the exact AAB basename derives from the module name.
-      Dir["../wear/build/outputs/**/*.aab"].each { |p| UI.message "wear artifact: #{p}" }
-      wear_aab_rel = Dir["../wear/build/outputs/**/*.aab"].first
+      sh "cd .. && ./gradlew :wear:bundleRelease"
+      # Search both the Flutter-redirected location and the default
+      # gradle layout — covers either output convention.
+      candidates = Dir["../../build/wear/outputs/bundle/release/*.aab"] +
+                   Dir["../wear/build/outputs/bundle/release/*.aab"]
+      wear_aab_rel = candidates.first
       wear_aab = File.expand_path(wear_aab_rel) if wear_aab_rel
 
       unless wear_aab
-        # Help future debugging: print what's actually present in the
-        # output tree so we can see whether the build produced anything.
-        UI.important "no AAB found — wear/build/outputs tree:"
-        sh "find ../wear/build/outputs -type f | sort || true"
+        UI.important "no AAB found — searching build trees:"
+        sh "find ../../build -name '*.aab' 2>/dev/null || true"
+        sh "find ../wear/build -name '*.aab' 2>/dev/null || true"
       end
     rescue => e
       UI.important "Wear OS build failed: #{e.message}"
