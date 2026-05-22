@@ -53,11 +53,18 @@ platform :android do
     )
 
     # Wear OS bundle — separate Play Console listing under its own
-    # package name. The :wear gradle module produces the AAB at
-    # android/wear/build/outputs/bundle/release/wear-release.aab.
-    sh "cd .. && ./gradlew :wear:bundleRelease"
+    # package name. Currently disabled in settings.gradle.kts because
+    # :wear's signing fails during the phone bundleRelease. Wrap the
+    # build in begin/rescue so transient wear-side issues never tank
+    # the phone-side release.
+    wear_aab = nil
+    begin
+      sh "cd .. && ./gradlew :wear:bundleRelease"
+      wear_aab = Dir["../wear/build/outputs/bundle/release/*.aab"].first
+    rescue => e
+      UI.important "Wear OS build skipped: #{e.message}"
+    end
 
-    wear_aab = Dir["../wear/build/outputs/bundle/release/*.aab"].first
     if wear_aab.nil?
       UI.important "no Wear OS AAB found — skipping upload (module may have failed)"
     else

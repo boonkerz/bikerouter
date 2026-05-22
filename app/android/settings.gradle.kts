@@ -27,4 +27,8 @@ plugins {
 include(":app")
 // Wear OS companion (v2.2 phase 2). Standalone Wear OS 3+ app talking
 // to the phone via the Wearable Data Layer.
-include(":wear")
+// Temporarily disabled — `flutter build appbundle` triggers a global
+// `bundleRelease` that runs in every included module, and :wear's
+// signing currently fails ("Cannot recover key"). Re-enable after the
+// wear signing issue is resolved.
+// include(":wear")
