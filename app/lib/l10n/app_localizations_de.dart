@@ -1903,4 +1903,66 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get profileSpeedReset => 'Zurücksetzen';
+
+  @override
+  String get routingFlagsTitle => 'Routen-Optionen';
+
+  @override
+  String routingFlagsShowMore(int n) {
+    return '$n weitere Optionen';
+  }
+
+  @override
+  String get routingFlagsHideMore => 'Weniger anzeigen';
+
+  @override
+  String get routingFlagLowElevation => 'Wenig Höhenmeter';
+
+  @override
+  String get routingFlagAvoidSteps => 'Treppen meiden';
+
+  @override
+  String get routingFlagAvoidFerries => 'Fähren meiden';
+
+  @override
+  String get routingFlagAvoidMainRoads => 'Bundesstraßen meiden';
+
+  @override
+  String get routingFlagPreferCycleRoutes => 'Radwege bevorzugen';
+
+  @override
+  String get routingFlagPreferQuiet => 'Ruhige Strecke';
+
+  @override
+  String get routingFlagPreferForest => 'Wald & Park bevorzugen';
+
+  @override
+  String get routingFlagPreferRiver => 'Am Fluss entlang';
+
+  @override
+  String get routingFlagAvoidTowns => 'Städte umfahren';
+
+  @override
+  String get routingFlagConsiderTraffic => 'Verkehr beachten';
+
+  @override
+  String get routingFlagAvoidPath => 'Schmale Pfade meiden';
+
+  @override
+  String get routingFlagAvoidSteep => 'Steile Anstiege meiden';
+
+  @override
+  String get routingFlagAvoidMotorways => 'Autobahn meiden';
+
+  @override
+  String get routingFlagAvoidToll => 'Maut meiden';
+
+  @override
+  String get routingFlagAvoidUnpaved => 'Unbefestigt meiden';
+
+  @override
+  String get routingFlagShortest => 'Kürzeste Route';
+
+  @override
+  String get routingFlagAvoidNaturalPaths => 'Naturwege meiden';
 }

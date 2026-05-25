@@ -14,6 +14,7 @@ assign   consider_elevation       1    # 0 as default, otherwise less interestin
 assign   shortest_way             0    # 0 as default
 
 assign   iswet                    0    # 0 as default, 1 tries to prevent muddy boots and wet buttocks
+assign   avoid_natural_paths      0    # 0 as default, 1 penalises ground/dirt/grass/mud/sand surfaces and low-visibility trails
 
 assign   prefer_hiking_routes     1    # 1 as default, gives penalty to way not being hiking route and cancels route turncost
 assign   stick_to_hiking_routes   0    # 0 as default, as above, but gives higher penalty costfactor + way/node initial costs
@@ -106,6 +107,12 @@ assign ismuddy 	and or isunpaved surface=
 				and iswet
 				not or surface=gravel surface=pebblestone
 
+# isnaturalsurface flags soft / overgrown / unstable surfaces — ground,
+# dirt, grass, mud, earth, sand. Used to add an extra penalty when the
+# hiker has asked us to avoid pure nature trails.
+assign isnaturalsurface or surface=ground|dirt|earth|mud|grass|sand surface=fine_gravel
+assign hastrailproblems or trail_visibility=bad|horrible|no trail_visibility=intermediate
+
 assign issidewalk not or sidewalk= or sidewalk=none sidewalk=no
 
 assign turncost   switch or shortest_way  is_ldhr   0 turncost_value  #v1.5
@@ -183,6 +190,10 @@ assign costfactor
 
   if shortest_way  then (   add 1 accesspenalty ) else
 
+  add  ( switch avoid_natural_paths
+                ( add ( switch isnaturalsurface 1.2 0.0 )
+                      ( switch hastrailproblems 1.8 0.0 ) )
+                0.0 )
   add  ( switch is_ldhr                             0.0    # hiking route, no non-hiking road penalty
               switch stick_to_hiking_routes       non_sticky_route_penalty
               switch prefer_hiking_routes         non_hiking_route_penalty

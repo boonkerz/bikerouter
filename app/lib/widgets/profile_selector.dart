@@ -3,6 +3,7 @@ import '../l10n/app_localizations.dart';
 import '../models/profile.dart';
 import '../services/hiking_prefs.dart';
 import '../services/profile_speed_prefs.dart';
+import '../services/routing_prefs.dart';
 
 class ProfileSelector extends StatelessWidget {
   final String selectedProfile;
@@ -117,7 +118,21 @@ class ProfileSelector extends StatelessWidget {
     );
   }
 
-  Future<void> _showSpeedDialog(BuildContext context, BikeProfile p) async {
+  /// Open the speed + routing-options dialog for a specific profile,
+  /// bypassing the profile-picker sheet. Used by the "tune" button next
+  /// to the current-profile pill on the map screen.
+  static Future<void> showOptionsDialog(
+      BuildContext context, String profileId) async {
+    final p = BikeProfile.byId(profileId);
+    if (p == null) return;
+    await _showSpeedDialogImpl(context, p);
+  }
+
+  Future<void> _showSpeedDialog(BuildContext context, BikeProfile p) =>
+      _showSpeedDialogImpl(context, p);
+
+  static Future<void> _showSpeedDialogImpl(
+      BuildContext context, BikeProfile p) async {
     final l = AppLocalizations.of(context);
     int value = ProfileSpeedPrefs.speedFor(p.id);
     final defaultSpeed = ProfileSpeedPrefs.defaultSpeedFor(p.id);
@@ -126,12 +141,19 @@ class ProfileSelector extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (ctx) {
+        // Fixed dialog width — AlertDialog otherwise shrinks to its
+        // content's intrinsic width, which made the hiking sheet (short
+        // labels, Wrap of 3 small chips) noticeably narrower than the
+        // gravel sheet (long labels in the routing-options accordion).
+        final width = (MediaQuery.of(ctx).size.width * 0.85).clamp(280.0, 360.0);
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
             backgroundColor: const Color(0xFFf5e9d8),
             title: Text('${p.icon} ${p.localizedName(l)}',
                 style: const TextStyle(color: Colors.black87)),
-            content: Column(
+            content: SizedBox(
+              width: width,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -188,7 +210,12 @@ class ProfileSelector extends StatelessWidget {
                     },
                   ),
                 ],
+                _RoutingFlagsSection(
+                  profileId: p.id,
+                  onChanged: () => setDialogState(() {}),
+                ),
               ],
+              ),
             ),
             actions: [
               if (ProfileSpeedPrefs.hasOverride(p.id))
@@ -227,7 +254,7 @@ class ProfileSelector extends StatelessWidget {
     );
   }
 
-  String _presetLabel(AppLocalizations l, HikingPreset preset) {
+  static String _presetLabel(AppLocalizations l, HikingPreset preset) {
     switch (preset) {
       case HikingPreset.comfortable:
         return l.hikingPresetComfortable;
@@ -235,6 +262,176 @@ class ProfileSelector extends StatelessWidget {
         return l.hikingPresetSporty;
       case HikingPreset.mountain:
         return l.hikingPresetMountain;
+    }
+  }
+}
+
+/// Chips for the 2-4 most useful flags per profile + collapsible
+/// accordion with the rest. Renders nothing when the profile exposes
+/// no flags (e.g. shortest, mtb-zossebart only has steps/ferries which
+/// are surfaced in the accordion).
+class _RoutingFlagsSection extends StatefulWidget {
+  final String profileId;
+  final VoidCallback onChanged;
+
+  const _RoutingFlagsSection({
+    required this.profileId,
+    required this.onChanged,
+  });
+
+  @override
+  State<_RoutingFlagsSection> createState() => _RoutingFlagsSectionState();
+}
+
+class _RoutingFlagsSectionState extends State<_RoutingFlagsSection> {
+  bool _expanded = false;
+
+  // Up to four flags rendered as prominent chips above the accordion.
+  // Picked per profile to surface the most-asked-for knobs first.
+  static const _quickFlags = <String, List<RoutingFlag>>{
+    'car': [RoutingFlag.avoidMotorways, RoutingFlag.avoidToll, RoutingFlag.shortestRoute],
+    'car-trailer': [RoutingFlag.avoidMotorways, RoutingFlag.avoidToll, RoutingFlag.avoidUnpaved],
+    'fastbike': [RoutingFlag.considerElevation, RoutingFlag.avoidSteepInclines, RoutingFlag.preferQuiet],
+    'fastbike-lowtraffic': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.avoidSteepInclines],
+    'fastbike-verylowtraffic': [RoutingFlag.avoidPath, RoutingFlag.considerElevation],
+    'trekking': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.avoidSteepInclines],
+    'safety': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.considerElevation],
+    'wegwiesel-ebike': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.avoidSteepInclines],
+    'hiking-beta': [RoutingFlag.avoidNaturalPaths],
+    'quaelnix-gravel': [RoutingFlag.avoidSteepInclines, RoutingFlag.preferCycleRoutes, RoutingFlag.considerElevation],
+    'm11n-gravel': [RoutingFlag.avoidPath, RoutingFlag.considerElevation],
+    'cxb-gravel': [RoutingFlag.avoidPath, RoutingFlag.considerElevation],
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final all = RoutingPrefs.applicableFlagsFor(widget.profileId);
+    if (all.isEmpty) return const SizedBox.shrink();
+
+    final quick = (_quickFlags[widget.profileId] ?? const <RoutingFlag>[])
+        .where(all.contains)
+        .toList();
+    final rest = all.where((f) => !quick.contains(f)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 24, color: Colors.black12),
+        Text(l.routingFlagsTitle,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            )),
+        const SizedBox(height: 6),
+        if (quick.isNotEmpty)
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final f in quick)
+                _PresetChip(
+                  label: _labelFor(l, f),
+                  active: RoutingPrefs.flagValue(widget.profileId, f),
+                  onTap: () async {
+                    final current =
+                        RoutingPrefs.flagValue(widget.profileId, f);
+                    await RoutingPrefs.setFlag(
+                        widget.profileId, f, !current);
+                    widget.onChanged();
+                    if (mounted) setState(() {});
+                  },
+                ),
+            ],
+          ),
+        if (rest.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    _expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 18,
+                    color: const Color(0xFF6a4a28),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _expanded
+                        ? l.routingFlagsHideMore
+                        : l.routingFlagsShowMore(rest.length),
+                    style: const TextStyle(
+                      color: Color(0xFF6a4a28),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            for (final f in rest)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                title: Text(_labelFor(l, f),
+                    style: const TextStyle(
+                        color: Colors.black87, fontSize: 13)),
+                value: RoutingPrefs.flagValue(widget.profileId, f),
+                activeThumbColor: const Color(0xFF6a4a28),
+                onChanged: (v) async {
+                  await RoutingPrefs.setFlag(widget.profileId, f, v);
+                  widget.onChanged();
+                  if (mounted) setState(() {});
+                },
+              ),
+        ],
+      ],
+    );
+  }
+
+  String _labelFor(AppLocalizations l, RoutingFlag f) {
+    switch (f) {
+      case RoutingFlag.considerElevation:
+        return l.routingFlagLowElevation;
+      case RoutingFlag.avoidSteps:
+        return l.routingFlagAvoidSteps;
+      case RoutingFlag.avoidFerries:
+        return l.routingFlagAvoidFerries;
+      case RoutingFlag.avoidMainRoads:
+        return l.routingFlagAvoidMainRoads;
+      case RoutingFlag.preferCycleRoutes:
+        return l.routingFlagPreferCycleRoutes;
+      case RoutingFlag.preferQuiet:
+        return l.routingFlagPreferQuiet;
+      case RoutingFlag.preferForest:
+        return l.routingFlagPreferForest;
+      case RoutingFlag.preferRiver:
+        return l.routingFlagPreferRiver;
+      case RoutingFlag.avoidTowns:
+        return l.routingFlagAvoidTowns;
+      case RoutingFlag.considerTraffic:
+        return l.routingFlagConsiderTraffic;
+      case RoutingFlag.avoidPath:
+        return l.routingFlagAvoidPath;
+      case RoutingFlag.avoidSteepInclines:
+        return l.routingFlagAvoidSteep;
+      case RoutingFlag.avoidMotorways:
+        return l.routingFlagAvoidMotorways;
+      case RoutingFlag.avoidToll:
+        return l.routingFlagAvoidToll;
+      case RoutingFlag.avoidUnpaved:
+        return l.routingFlagAvoidUnpaved;
+      case RoutingFlag.shortestRoute:
+        return l.routingFlagShortest;
+      case RoutingFlag.avoidNaturalPaths:
+        return l.routingFlagAvoidNaturalPaths;
     }
   }
 }

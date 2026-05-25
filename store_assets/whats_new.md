@@ -5,6 +5,106 @@
 
 ---
 
+## v2.2.0 KUMULATIV seit v1.8 (DE) — für App Store Release-Notes
+**Großes Update seit 1.8 — Wegwiesel ist jetzt offline-fähig, mit Watch am Handgelenk und vielen neuen Funktionen für Wanderer, Bikepacker und Sportler.**
+
+WATCH AM HANDGELENK
+• Apple-Watch-Companion: nächste Abbiegung, Distanz und Restzeit direkt am Handgelenk — Phone bleibt in der Tasche
+
+OFFLINE-FIRST
+• Karten-Kacheln werden automatisch im Hintergrund gecacht — was du einmal angeschaut hast, ist offline verfügbar; Offline-Karten-Menü mit Speicher-Limit
+• Gespeicherte Routen funktionieren ohne Netzwerk: komplette Strecke inkl. Turn-Hints lokal abgelegt
+• Echter Offline-Router mit Pure-Dart-A*-Suche und Trekking-MVP, sauberer Fallback auf BRouter-Server bei unvollständigen Daten
+• Bidirektionale A*-Suche: lange Touren etwa doppelt so schnell wie vorher
+
+WANDERN & BIKEPACKING
+• Neues Lauf-Profil 🏃 und vollwertiges Wanderprofil (kein Beta mehr)
+• Schwierigkeitsstufen Gemütlich/Sportlich/Bergtour, SAC-Skala T1–T6 prominent in der Routenanzeige
+• Pausen-Empfehlung: ein Picknickplatz oder eine Schutzhütte pro 1,5 h Gehzeit
+• Bikepacking-Modus mit Camping, Wasser, Schutzhütten und Bahnhöfen in der POI-Suche
+• Etappen-Planer mit Sonnenaufgang/-untergang, Wetter und automatischen Übernachtungs-Vorschlägen
+
+NAVIGATION LIVE
+• Sprach-Navigation: Turn-by-Turn wird laut angesagt (deutsch + englisch), in 500 m / 200 m / Jetzt-Phasen
+• Fahrt aufzeichnen: GPS-Tracking mit Live-Stats (Distanz, Tempo, Höhenmeter, Kalorien), Pause/Resume, GPX-Export — crash-sicher (alle 10 Punkte gesichert)
+• Live-Position teilen: 12 h gültiger Link, kein Account, kein Tracking
+• E-Bike-Profil mit Pedelec-Reisezeiten + Ladestationen-POI
+
+ROUTEN ENTDECKEN
+• Öffentliche Routen-Bibliothek: eigene Touren mit einem Tipp veröffentlichen
+• „Routen entdecken"-Bildschirm: Filter nach Distanz/Nähe/Suche
+• Wegwiesel-Heatmap: roter Overlay zeigt, wo die Community fährt
+
+HARDWARE-INTEGRATION
+• Routen direkt an die Wahoo Companion App (Bolt/Roam/Ace) übergeben
+• Garmin-Edge-Sync verbessert
+• Tour-URL importieren: Komoot-Tour-Link einfügen, GPX wird direkt geladen
+
+ANHÄNGER- & AUTO-ROUTING
+• Anhänger-Profil mit zeit-proportionalen Kostenfaktoren — Bundesstraßen wie bei Google/ADAC bewertet (keine Autobahn-Umwege mehr)
+
+SPORTLER-TOOL
+• FTP-Test-Strecken-Finder: steady-Climb- oder Flachstrecken im Umkreis mit Score je nach Test-Typ (20-min, 8-min, Ramp, Sweet Spot)
+
+POI-KONTEXT
+• POI-Fotos: image= / wikimedia_commons=-Tags und Wikipedia-Tags zeigen Vorschaubilder im POI-Sheet
+• Bahnhof als Notausstieg-POI, Schutzhütten und Picknickplätze für Wanderer
+
+PLUS
+• Menü entschlackt: oben neben A-B/Rundtour ein Routen-Quellen-Pill
+• Diverse Stabilitäts-, Performance- und Lesbarkeits-Verbesserungen
+
+## v2.2.0 KUMULATIV seit v1.8 (EN) — for App Store release notes
+**Major update since 1.8 — Wegwiesel now works offline, lives on your wrist, and packs new tools for hikers, bikepackers and athletes.**
+
+ON YOUR WRIST
+• Apple Watch companion: next turn, distance and remaining time on the watch face — phone stays in the pocket
+
+OFFLINE-FIRST
+• Map tiles are cached in the background — anything you've looked at is available offline; offline maps menu with storage limits
+• Saved routes work without a network: full geometry and turn hints stored locally
+• Real offline router with a pure-Dart A* core and trekking MVP, clean fallback to BRouter on incomplete data
+• Bidirectional A* search: long day-trips roughly twice as fast as before
+
+HIKING & BIKEPACKING
+• New running profile 🏃 and the hiking profile is no longer beta
+• Easy/Sporty/Mountain difficulty presets, prominent SAC T1–T6 grading
+• Pause recommendations: one picnic spot or shelter every 1.5 h of walking
+• Bikepacking mode with camping, water, shelters and train stations in the POI search
+• Stages planner with sunrise/sunset, weather forecast and automatic overnight suggestions
+
+LIVE NAVIGATION
+• Voice navigation: spoken turn-by-turn (German + English) at 500 m / 200 m / now phases
+• Record your ride: GPS tracking with live stats (distance, speed, ascent, calories), pause/resume, GPX export — crash-safe (flushed every 10 points)
+• Share your live position: 12-hour link, no account, no tracking
+• E-bike profile with pedelec-tuned travel times + charging-station POI category
+
+DISCOVER ROUTES
+• Public route library: publish your tours with one tap
+• "Discover routes" screen with distance / nearby / title filters
+• Wegwiesel heatmap: red overlay shows where the community plans routes
+
+HARDWARE INTEGRATION
+• Hand off routes to the Wahoo Companion app (Bolt/Roam/Ace)
+• Improved Garmin Edge sync
+• Import tour from URL: paste a Komoot tour link to load the GPX directly
+
+TRAILER & CAR ROUTING
+• Trailer profile with time-proportional cost factors — primary roads now rated similar to Google/ADAC (no forced motorway detours)
+
+ATHLETE TOOL
+• FTP test segment finder: searches for steady-climb or flat segments in a radius, scored by test type (20-min, 8-min, Ramp, Sweet Spot)
+
+POI CONTEXT
+• POI photos: image= / wikimedia_commons= tags and Wikipedia tags show thumbnails in the POI sheet
+• Train station as emergency-exit POI, shelters and picnic spots for hikers
+
+PLUS
+• Decluttered menu: a "Route sources" pill next to the A-B / Round-trip toggle
+• Various stability, performance and readability improvements
+
+---
+
 ## v2.2.0 (DE) — „On your wrist"
 **Wegwiesel am Handgelenk.**
 

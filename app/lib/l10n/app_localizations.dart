@@ -3643,6 +3643,126 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Zurücksetzen'**
   String get profileSpeedReset;
+
+  /// No description provided for @routingFlagsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Routen-Optionen'**
+  String get routingFlagsTitle;
+
+  /// No description provided for @routingFlagsShowMore.
+  ///
+  /// In de, this message translates to:
+  /// **'{n} weitere Optionen'**
+  String routingFlagsShowMore(int n);
+
+  /// No description provided for @routingFlagsHideMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Weniger anzeigen'**
+  String get routingFlagsHideMore;
+
+  /// No description provided for @routingFlagLowElevation.
+  ///
+  /// In de, this message translates to:
+  /// **'Wenig Höhenmeter'**
+  String get routingFlagLowElevation;
+
+  /// No description provided for @routingFlagAvoidSteps.
+  ///
+  /// In de, this message translates to:
+  /// **'Treppen meiden'**
+  String get routingFlagAvoidSteps;
+
+  /// No description provided for @routingFlagAvoidFerries.
+  ///
+  /// In de, this message translates to:
+  /// **'Fähren meiden'**
+  String get routingFlagAvoidFerries;
+
+  /// No description provided for @routingFlagAvoidMainRoads.
+  ///
+  /// In de, this message translates to:
+  /// **'Bundesstraßen meiden'**
+  String get routingFlagAvoidMainRoads;
+
+  /// No description provided for @routingFlagPreferCycleRoutes.
+  ///
+  /// In de, this message translates to:
+  /// **'Radwege bevorzugen'**
+  String get routingFlagPreferCycleRoutes;
+
+  /// No description provided for @routingFlagPreferQuiet.
+  ///
+  /// In de, this message translates to:
+  /// **'Ruhige Strecke'**
+  String get routingFlagPreferQuiet;
+
+  /// No description provided for @routingFlagPreferForest.
+  ///
+  /// In de, this message translates to:
+  /// **'Wald & Park bevorzugen'**
+  String get routingFlagPreferForest;
+
+  /// No description provided for @routingFlagPreferRiver.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Fluss entlang'**
+  String get routingFlagPreferRiver;
+
+  /// No description provided for @routingFlagAvoidTowns.
+  ///
+  /// In de, this message translates to:
+  /// **'Städte umfahren'**
+  String get routingFlagAvoidTowns;
+
+  /// No description provided for @routingFlagConsiderTraffic.
+  ///
+  /// In de, this message translates to:
+  /// **'Verkehr beachten'**
+  String get routingFlagConsiderTraffic;
+
+  /// No description provided for @routingFlagAvoidPath.
+  ///
+  /// In de, this message translates to:
+  /// **'Schmale Pfade meiden'**
+  String get routingFlagAvoidPath;
+
+  /// No description provided for @routingFlagAvoidSteep.
+  ///
+  /// In de, this message translates to:
+  /// **'Steile Anstiege meiden'**
+  String get routingFlagAvoidSteep;
+
+  /// No description provided for @routingFlagAvoidMotorways.
+  ///
+  /// In de, this message translates to:
+  /// **'Autobahn meiden'**
+  String get routingFlagAvoidMotorways;
+
+  /// No description provided for @routingFlagAvoidToll.
+  ///
+  /// In de, this message translates to:
+  /// **'Maut meiden'**
+  String get routingFlagAvoidToll;
+
+  /// No description provided for @routingFlagAvoidUnpaved.
+  ///
+  /// In de, this message translates to:
+  /// **'Unbefestigt meiden'**
+  String get routingFlagAvoidUnpaved;
+
+  /// No description provided for @routingFlagShortest.
+  ///
+  /// In de, this message translates to:
+  /// **'Kürzeste Route'**
+  String get routingFlagShortest;
+
+  /// No description provided for @routingFlagAvoidNaturalPaths.
+  ///
+  /// In de, this message translates to:
+  /// **'Naturwege meiden'**
+  String get routingFlagAvoidNaturalPaths;
 }
 
 class _AppLocalizationsDelegate

@@ -6,6 +6,7 @@ import '../models/nogo_area.dart';
 import '../models/route_result.dart';
 import 'hiking_prefs.dart';
 import 'profile_speed_prefs.dart';
+import 'routing_prefs.dart';
 import 'road_snap_service.dart';
 import 'offline_routing/offline_router.dart';
 
@@ -33,9 +34,26 @@ class BRouterService {
     if (profile == 'car' || profile == 'car-trailer') {
       final vmax = ProfileSpeedPrefs.speedFor(profile);
       final totalweight = profile == 'car-trailer' ? 2640 : 1640;
-      final avoidUnpaved = profile == 'car-trailer' ? 1 : 0;
-      final shortestRoute = shortestCarRoute ? 1 : 0;
-      final avoidMotorways = avoidMotorwaysCarRoute ? 1 : 0;
+      // User toggles override the trailer-default for unpaved. The
+      // alternative-route requests (shortest, avoid-motorways) still
+      // win when explicitly passed.
+      final trailerDefaultAvoidUnpaved = profile == 'car-trailer';
+      final flagAvoidUnpaved =
+          RoutingPrefs.flagValue(profile, RoutingFlag.avoidUnpaved);
+      final avoidUnpaved =
+          (flagAvoidUnpaved || trailerDefaultAvoidUnpaved) ? 1 : 0;
+      final shortestRoute = (shortestCarRoute ||
+              RoutingPrefs.flagValue(profile, RoutingFlag.shortestRoute))
+          ? 1
+          : 0;
+      final avoidMotorways = (avoidMotorwaysCarRoute ||
+              RoutingPrefs.flagValue(profile, RoutingFlag.avoidMotorways))
+          ? 1
+          : 0;
+      final avoidToll =
+          RoutingPrefs.flagValue(profile, RoutingFlag.avoidToll)
+              ? '&profile:avoid_toll=true'
+              : '';
       // The trailer profile bakes in stronger motorway/trunk preference,
       // trailer=/caravan=/maxweight= hard-blocks and Gespann-realistic
       // maxspeed defaults. Solo car keeps the lighter wegwiesel-car
@@ -52,6 +70,7 @@ class BRouterService {
           '&profile:avoid_motorways=$avoidMotorways'
           '&profile:avoid_unpaved=$avoidUnpaved'
           '&profile:shortest_route=$shortestRoute'
+          '$avoidToll'
           '&profile:add_beeline=1';
     }
     if (profile == 'hiking-beta') {
@@ -59,9 +78,10 @@ class BRouterService {
       final sac = HikingPrefs.sacScaleLimit;
       return 'profile=hiking-beta'
           '&profile:prefer_hiking_routes=$prefer'
-          '&profile:SAC_scale_limit=$sac';
+          '&profile:SAC_scale_limit=$sac'
+          '${RoutingPrefs.buildBRouterParams(profile)}';
     }
-    return 'profile=$profile';
+    return 'profile=$profile${RoutingPrefs.buildBRouterParams(profile)}';
   }
 
   static bool _isCar(String profile) =>

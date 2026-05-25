@@ -1904,4 +1904,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileSpeedReset => 'Reset';
+
+  @override
+  String get routingFlagsTitle => 'Routing options';
+
+  @override
+  String routingFlagsShowMore(int n) {
+    return '$n more options';
+  }
+
+  @override
+  String get routingFlagsHideMore => 'Show less';
+
+  @override
+  String get routingFlagLowElevation => 'Low elevation';
+
+  @override
+  String get routingFlagAvoidSteps => 'Avoid steps';
+
+  @override
+  String get routingFlagAvoidFerries => 'Avoid ferries';
+
+  @override
+  String get routingFlagAvoidMainRoads => 'Avoid main roads';
+
+  @override
+  String get routingFlagPreferCycleRoutes => 'Prefer cycle routes';
+
+  @override
+  String get routingFlagPreferQuiet => 'Prefer quiet';
+
+  @override
+  String get routingFlagPreferForest => 'Prefer forest & parks';
+
+  @override
+  String get routingFlagPreferRiver => 'Along rivers';
+
+  @override
+  String get routingFlagAvoidTowns => 'Bypass towns';
+
+  @override
+  String get routingFlagConsiderTraffic => 'Consider traffic';
+
+  @override
+  String get routingFlagAvoidPath => 'Avoid narrow paths';
+
+  @override
+  String get routingFlagAvoidSteep => 'Avoid steep inclines';
+
+  @override
+  String get routingFlagAvoidMotorways => 'Avoid motorways';
+
+  @override
+  String get routingFlagAvoidToll => 'Avoid toll';
+
+  @override
+  String get routingFlagAvoidUnpaved => 'Avoid unpaved';
+
+  @override
+  String get routingFlagShortest => 'Shortest route';
+
+  @override
+  String get routingFlagAvoidNaturalPaths => 'Avoid nature trails';
 }

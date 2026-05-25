@@ -19,8 +19,21 @@ import '../services/watch_sync_service.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_storage.dart';
 
-const double _offRouteThresholdM = 50.0;
 const double _arrivalThresholdM = 30.0;
+const double _initialNavZoom = 17.0;
+
+// Off-route threshold scales with speed so a wide motorway with parallel
+// OSM ways and ±10 m GPS jitter doesn't constantly trigger reroute.
+double _offRouteThresholdForSpeed(double speedMs) {
+  final kmh = speedMs * 3.6;
+  if (kmh >= 90) return 130.0; // Autobahn
+  if (kmh >= 50) return 80.0;  // Landstraße / Schnellstraße
+  return 50.0;                 // Stadt / Rad / Wandern
+}
+
+// Reroute only after this many consecutive off-route GPS samples, so a
+// single spurious fix on a parallel lane doesn't trigger a reroute.
+const int _offRouteConfirmSamples = 4;
 
 class NavigationScreen extends StatefulWidget {
   final RouteResult route;
@@ -54,9 +67,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
   DateTime? _lastReroute;
   // Smoothing to keep the map from twitching on every GPS sample.
   double? _smoothedHeading;
+  double? _smoothedLat;
+  double? _smoothedLon;
   double _lastRecenterLat = 0;
   double _lastRecenterLon = 0;
   double _lastAppliedRotation = 0;
+  int _consecutiveOffRoute = 0;
+  // Zoom the user has chosen via pinch / double-tap; preserved across
+  // every _recenter() so the map doesn't snap back to the default.
+  double _navZoom = _initialNavZoom;
   // Voice tracking: which (hintCoordIdx, phase) keys have already been
   // announced this session. Re-routes reset the set by clearing it in
   // _maybeReroute when a fresh route is installed.
@@ -109,8 +128,22 @@ class _NavigationScreenState extends State<NavigationScreen> {
   void _onPosition(Position pos) {
     if (!mounted || _route == null) return;
     final wasArrived = _arrived;
+    // Low-pass on lat/lon. Alpha leans on accuracy: a tight fix snaps
+    // forward, a sloppy fix gets dragged toward history. Cuts the
+    // lane-to-lane twitch on motorways without lagging the marker.
+    final accuracy = pos.accuracy.isFinite && pos.accuracy > 0
+        ? pos.accuracy
+        : 10.0;
+    final alpha = (accuracy <= 8) ? 0.7 : (accuracy >= 25 ? 0.25 : 0.45);
+    if (_smoothedLat == null) {
+      _smoothedLat = pos.latitude;
+      _smoothedLon = pos.longitude;
+    } else {
+      _smoothedLat = _smoothedLat! * (1 - alpha) + pos.latitude * alpha;
+      _smoothedLon = _smoothedLon! * (1 - alpha) + pos.longitude * alpha;
+    }
     _pos = pos;
-    _coordIdx = _nearestCoordIdx(pos.latitude, pos.longitude);
+    _coordIdx = _nearestCoordIdx(_smoothedLat!, _smoothedLon!);
     _checkArrival();
     _maybeReroute();
     _recenter();
@@ -201,16 +234,19 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   double _distanceToRouteM() {
-    if (_pos == null || _route == null) return 0;
+    if (_route == null || _smoothedLat == null) return 0;
     final c = _route!.coordinates[_coordIdx];
-    return _haversineM(_pos!.latitude, _pos!.longitude, c[1], c[0]);
+    return _haversineM(_smoothedLat!, _smoothedLon!, c[1], c[0]);
   }
 
   void _checkArrival() {
     if (_pos == null || _route == null || _arrived) return;
     final last = widget.waypoints.last;
-    final d = _haversineM(_pos!.latitude, _pos!.longitude,
-        last.latitude, last.longitude);
+    final d = _haversineM(
+        _smoothedLat ?? _pos!.latitude,
+        _smoothedLon ?? _pos!.longitude,
+        last.latitude,
+        last.longitude);
     if (d < _arrivalThresholdM) {
       _arrived = true;
       _gpsSub?.cancel();
@@ -219,20 +255,27 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   Future<void> _maybeReroute() async {
     if (_pos == null || _rerouting || _arrived) return;
-    if (_distanceToRouteM() < _offRouteThresholdM) return;
+    final threshold = _offRouteThresholdForSpeed(_pos!.speed);
+    if (_distanceToRouteM() < threshold) {
+      _consecutiveOffRoute = 0;
+      return;
+    }
+    _consecutiveOffRoute++;
+    if (_consecutiveOffRoute < _offRouteConfirmSamples) return;
     final now = DateTime.now();
     if (_lastReroute != null && now.difference(_lastReroute!).inSeconds < 15) {
       return;
     }
     _rerouting = true;
     _lastReroute = now;
+    _consecutiveOffRoute = 0;
     if (mounted) {
       final l = AppLocalizations.of(context);
       NavigationVoiceService.instance.speak(l.voiceRerouting);
     }
     try {
       final wpsLonLat = <List<double>>[
-        [_pos!.longitude, _pos!.latitude],
+        [_smoothedLon ?? _pos!.longitude, _smoothedLat ?? _pos!.latitude],
         [widget.waypoints.last.longitude, widget.waypoints.last.latitude],
       ];
       final newRoute = await BRouterService.calculateRoute(
@@ -255,14 +298,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   void _recenter() {
     if (_pos == null) return;
+    final lat = _smoothedLat ?? _pos!.latitude;
+    final lon = _smoothedLon ?? _pos!.longitude;
     // Heading from GPS is noisy below walking speed; only refresh when we're
-    // actually moving, and EMA-smooth what we keep.
+    // actually moving, and EMA-smooth what we keep. At highway speed the
+    // EMA gets stiffer so the map doesn't wobble at every lane change.
     if (_headingUp && _pos!.speed >= 1.5) {
       final raw = _pos!.heading;
+      final headingAlpha = _pos!.speed >= 15 ? 0.12 : 0.25;
       if (_smoothedHeading == null) {
         _smoothedHeading = raw;
       } else {
-        // Circular EMA via shortest-angle delta.
         var delta = raw - _smoothedHeading!;
         while (delta > 180) {
           delta -= 360;
@@ -270,19 +316,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
         while (delta < -180) {
           delta += 360;
         }
-        _smoothedHeading = (_smoothedHeading! + delta * 0.25) % 360;
+        _smoothedHeading = (_smoothedHeading! + delta * headingAlpha) % 360;
       }
     }
     final rotation = _headingUp ? -(_smoothedHeading ?? 0) : 0.0;
-    final movedM = _haversineM(
-        _lastRecenterLat, _lastRecenterLon, _pos!.latitude, _pos!.longitude);
+    final movedM =
+        _haversineM(_lastRecenterLat, _lastRecenterLon, lat, lon);
     final rotChanged = (rotation - _lastAppliedRotation).abs() > 6;
     if (movedM < 8 && !rotChanged && _lastRecenterLat != 0) return;
-    _lastRecenterLat = _pos!.latitude;
-    _lastRecenterLon = _pos!.longitude;
+    _lastRecenterLat = lat;
+    _lastRecenterLon = lon;
     _lastAppliedRotation = rotation;
-    final pt = LatLng(_pos!.latitude, _pos!.longitude);
-    _mapController.moveAndRotate(pt, 17, rotation);
+    _mapController.moveAndRotate(LatLng(lat, lon), _navZoom, rotation);
   }
 
   Duration _remainingDuration() {
@@ -363,10 +408,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: routeLatLngs.first,
-              initialZoom: 17,
+              initialZoom: _navZoom,
+              // Pinch + double-tap zoom only: panning is disabled so the
+              // map can't drift off the user during navigation.
               interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.none,
+                flags: InteractiveFlag.pinchZoom |
+                    InteractiveFlag.doubleTapZoom |
+                    InteractiveFlag.doubleTapDragZoom |
+                    InteractiveFlag.scrollWheelZoom,
               ),
+              onPositionChanged: (camera, hasGesture) {
+                if (hasGesture) _navZoom = camera.zoom;
+              },
             ),
             children: [
               TileLayer(
@@ -383,7 +436,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
               if (_pos != null)
                 MarkerLayer(markers: [
                   Marker(
-                    point: LatLng(_pos!.latitude, _pos!.longitude),
+                    point: LatLng(
+                        _smoothedLat ?? _pos!.latitude,
+                        _smoothedLon ?? _pos!.longitude),
                     width: 36,
                     height: 36,
                     child: Transform.rotate(
@@ -453,6 +508,30 @@ class _NavigationScreenState extends State<NavigationScreen> {
             child: SafeArea(
               child: Column(
                 children: [
+                  FloatingActionButton.small(
+                    heroTag: 'nav_zoom_in',
+                    onPressed: () {
+                      _navZoom = (_navZoom + 1).clamp(4.0, 19.0);
+                      _lastRecenterLat = 0; // force re-apply
+                      _recenter();
+                      setState(() {});
+                    },
+                    tooltip: '+',
+                    child: const Icon(Icons.add),
+                  ),
+                  const SizedBox(height: 8),
+                  FloatingActionButton.small(
+                    heroTag: 'nav_zoom_out',
+                    onPressed: () {
+                      _navZoom = (_navZoom - 1).clamp(4.0, 19.0);
+                      _lastRecenterLat = 0;
+                      _recenter();
+                      setState(() {});
+                    },
+                    tooltip: '-',
+                    child: const Icon(Icons.remove),
+                  ),
+                  const SizedBox(height: 8),
                   FloatingActionButton.small(
                     heroTag: 'nav_rotate',
                     onPressed: () {

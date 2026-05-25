@@ -38,6 +38,7 @@ import '../services/gpx_builder.dart';
 import '../services/nogo_storage.dart';
 import '../services/profile_speed_prefs.dart';
 import '../services/hiking_prefs.dart';
+import '../services/routing_prefs.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_session_store.dart';
@@ -160,6 +161,7 @@ class _MapScreenState extends State<MapScreen> {
     });
     ProfileSpeedPrefs.load();
     HikingPrefs.load();
+    RoutingPrefs.load();
     BikepackingPrefs.load();
     _recoverOrphanRide();
     GarminConnect.isAvailable().then((v) {
@@ -534,6 +536,24 @@ class _MapScreenState extends State<MapScreen> {
                         ],
                       ),
                     ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Routing-options button for the *current* profile —
+                // skips the picker sheet, opens the speed+flags dialog
+                // straight away.
+                GestureDetector(
+                  onTap: () async {
+                    await ProfileSelector.showOptionsDialog(context, _profile);
+                    if (mounted) setState(() {});
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.tune, color: Color(0xFF6a4a28), size: 20),
                   ),
                 ),
                 const SizedBox(width: 8),

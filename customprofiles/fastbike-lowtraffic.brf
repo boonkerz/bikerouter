@@ -31,13 +31,18 @@ assign allow_motorways          = false  # %allow_motorways% | Set to true to al
 
 # Change elevation parameters
 assign consider_elevation = true  # %consider_elevation% | Set to false to ignore elevation in routing | boolean
+assign avoid_steep_inclines = false  # %avoid_steep_inclines% | Penalise climbs above ~4% | boolean
 assign downhillcost       = 60    # %downhillcost% | Cost for going downhill | number
 assign downhillcutoff     = 1.5   # %downhillcutoff% | Gradients below this value in percents are not counted. | number
 assign uphillcost         = 0     # %uphillcost% | Cost for going uphill | number
 assign uphillcutoff       = 1.5   # %uphillcutoff% | Gradients below this value in percents are not counted.  | number
 
 assign downhillcost       = if consider_elevation then downhillcost else 0
-assign uphillcost         = if consider_elevation then uphillcost else 0
+# avoid_steep_inclines tightens uphill cost so the router prefers
+# detours over double-digit gradient ramps.
+assign uphillcost         = switch avoid_steep_inclines 150
+                              ( if consider_elevation then uphillcost else 0 )
+assign uphillcutoff       = switch avoid_steep_inclines 4 uphillcutoff
 
 # Kinematic model parameters (travel time computation)
 assign totalMass  = 90     # %totalMass% | Mass (in kg) of the bike + biker, for travel time computation | number
