@@ -33,6 +33,16 @@ assign turnInstructionMode          = 1     # %turnInstructionMode% | Mode for t
 
 assign   consider_elevation   0   # set to 1 to calculate an elevation_penalty in routing
 assign   avoid_path           0   # set to 1 to avoid path (a.e. to avoid conflicts with pedestrians!)
+# --- Wegwiesel: unified bike-profile knobs (parity with fastbike.brf) ---
+assign   allow_steps          1
+assign   allow_ferries        1
+assign   avoid_steep_inclines 0
+assign   consider_traffic     0
+assign   consider_noise       0
+assign   consider_river       0
+assign   consider_forest      0
+assign   consider_town        0
+# -----------------------------------------------------------------------
 assign turnInstructionCatchingRange 8 # 2 turn instructions are generated only when distance > 8 m
 assign turnInstructionRoundabouts = 0 # roundabout, no "take exit N" (as "N" may be confusing compared to car)
 assign considerTurnRestrictions true   # turn restrictions are considered
@@ -43,8 +53,9 @@ assign   validForBikes        1
 
 assign downhillcost switch consider_elevation 60 0
 assign downhillcutoff 1.5
-assign uphillcost switch consider_elevation 100 0
-assign uphillcutoff 1.5
+assign uphillcost switch avoid_steep_inclines 150
+                  ( switch consider_elevation 100 0 )
+assign uphillcutoff switch avoid_steep_inclines 4 1.5
 
 # extention...
 assign jonctionToLeftCost = 151
@@ -326,6 +337,58 @@ assign sum_cyclewaypenalty
        switch any_cycleway                                                    0      # 0 if cycleway exists
                                                                               10000  # no cycleway
 
+# --- Wegwiesel penalty blocks (copied from fastbike.brf) ---
+assign noise_penalty
+   switch consider_noise
+     switch estimated_noise_class=  0
+     switch estimated_noise_class=1  0.3
+     switch estimated_noise_class=2  0.5
+     switch estimated_noise_class=3  0.7
+     switch estimated_noise_class=4  1
+     switch estimated_noise_class=5  1.2
+     switch estimated_noise_class=6  1.5 0 0
+
+assign no_river_penalty
+   switch consider_river
+     switch estimated_river_class=  3
+     switch estimated_river_class=1  2
+     switch estimated_river_class=2  1.5
+     switch estimated_river_class=3  1
+     switch estimated_river_class=4  0.5
+     switch estimated_river_class=5  0.2
+     switch estimated_river_class=6  0 99 0
+
+assign no_forest_penalty
+   switch consider_forest
+     switch estimated_forest_class=  1
+     switch estimated_forest_class=1  0.5
+     switch estimated_forest_class=2  0.4
+     switch estimated_forest_class=3  0.25
+     switch estimated_forest_class=4  0.15
+     switch estimated_forest_class=5  0.1
+     switch estimated_forest_class=6  0 99 0
+
+assign town_penalty
+   switch consider_town
+     switch estimated_town_class=  0
+     switch estimated_town_class=1  0.2
+     switch estimated_town_class=2  0.4
+     switch estimated_town_class=3  0.6
+     switch estimated_town_class=4  0.7
+     switch estimated_town_class=5  0.8
+     switch estimated_town_class=6  1 99 0
+
+assign traffic_penalty
+   switch consider_traffic
+     switch estimated_traffic_class=  0
+     switch estimated_traffic_class=1  0.1
+     switch estimated_traffic_class=2  0.2
+     switch estimated_traffic_class=3  0.4
+     switch estimated_traffic_class=4  0.8
+     switch estimated_traffic_class=5  1.5
+     switch estimated_traffic_class=6  3 99 0
+# -----------------------------------------------------------
+
 assign costfactor
   add min sum_highwaypenalty sum_cyclewaypenalty
   switch or highway=proposed highway=abandoned 10000
@@ -333,6 +396,11 @@ assign costfactor
   add max onewaypenalty accesspenalty
   add segregated_penalty
   add footdesignated_penalty
+  add noise_penalty
+  add no_river_penalty
+  add no_forest_penalty
+  add town_penalty
+  add traffic_penalty
   switch or highway=motorway highway=motorway_link    10000
   switch or highway=trunk highway=trunk_link          30
   switch or highway=primary highway=primary_link      2.6
@@ -340,8 +408,8 @@ assign costfactor
   switch or highway=tertiary highway=tertiary_link    2.4
   switch    highway=unclassified                      1.5
   switch    highway=pedestrian                        8
-  switch    highway=steps                             100
-  switch    route=ferry                               11
+  switch    highway=steps   switch allow_steps        100 100000
+  switch    route=ferry     switch allow_ferries       11 100000
   switch    highway=bridleway                         31
   switch    highway=cycleway switch foot=yes          2 1.5
   switch    highway=living_street                     1.5
