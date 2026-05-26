@@ -541,11 +541,24 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(width: 4),
                 // Routing-options button for the *current* profile —
                 // skips the picker sheet, opens the speed+flags dialog
-                // straight away.
+                // straight away. If anything routing-relevant changed,
+                // re-run the current route so the user immediately sees
+                // the effect of the new settings.
                 GestureDetector(
                   onTap: () async {
-                    await ProfileSelector.showOptionsDialog(context, _profile);
-                    if (mounted) setState(() {});
+                    final changed = await ProfileSelector.showOptionsDialog(
+                        context, _profile);
+                    if (!mounted) return;
+                    setState(() {});
+                    if (!changed) return;
+                    if (_roundtripMode) {
+                      if (_lastRoundtripRequest != null &&
+                          _waypoints.isNotEmpty) {
+                        _calculateRoundtrip(_lastRoundtripRequest!);
+                      }
+                    } else if (_waypoints.length >= 2) {
+                      _calculateRoute();
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.all(8),

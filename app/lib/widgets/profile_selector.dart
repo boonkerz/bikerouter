@@ -121,24 +121,35 @@ class ProfileSelector extends StatelessWidget {
   /// Open the speed + routing-options dialog for a specific profile,
   /// bypassing the profile-picker sheet. Used by the "tune" button next
   /// to the current-profile pill on the map screen.
-  static Future<void> showOptionsDialog(
+  ///
+  /// Returns `true` when at least one routing-relevant setting was
+  /// changed (a routing flag, the hiking preset/waymarked-switch, or
+  /// the speed override on a car profile where vmax goes into the
+  /// BRouter URL). Callers use this to decide whether to re-run the
+  /// route.
+  static Future<bool> showOptionsDialog(
       BuildContext context, String profileId) async {
     final p = BikeProfile.byId(profileId);
-    if (p == null) return;
-    await _showSpeedDialogImpl(context, p);
+    if (p == null) return false;
+    return await _showSpeedDialogImpl(context, p);
   }
 
-  Future<void> _showSpeedDialog(BuildContext context, BikeProfile p) =>
+  Future<bool> _showSpeedDialog(BuildContext context, BikeProfile p) =>
       _showSpeedDialogImpl(context, p);
 
-  static Future<void> _showSpeedDialogImpl(
+  static Future<bool> _showSpeedDialogImpl(
       BuildContext context, BikeProfile p) async {
     final l = AppLocalizations.of(context);
     int value = ProfileSpeedPrefs.speedFor(p.id);
+    final originalSpeed = value;
     final defaultSpeed = ProfileSpeedPrefs.defaultSpeedFor(p.id);
     bool preferHiking = HikingPrefs.preferHikingRoutes;
     HikingPreset preset = HikingPrefs.preset;
-    await showDialog<void>(
+    // Tracks whether the user changed anything that affects routing.
+    // RoutingFlag toggles, hiking knobs and car-vmax all flip this on.
+    bool routingChanged = false;
+    final isCar = p.id == 'car' || p.id == 'car-trailer';
+    final result = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         // Fixed dialog width — AlertDialog otherwise shrinks to its
@@ -191,6 +202,7 @@ class ProfileSelector extends StatelessWidget {
                           label: _presetLabel(l, option),
                           active: preset == option,
                           onTap: () async {
+                            if (preset != option) routingChanged = true;
                             setDialogState(() => preset = option);
                             await HikingPrefs.setPreset(option);
                           },
@@ -205,6 +217,7 @@ class ProfileSelector extends StatelessWidget {
                     value: preferHiking,
                     activeThumbColor: const Color(0xFF6a4a28),
                     onChanged: (v) async {
+                      routingChanged = true;
                       setDialogState(() => preferHiking = v);
                       await HikingPrefs.setPreferHikingRoutes(v);
                     },
@@ -212,7 +225,10 @@ class ProfileSelector extends StatelessWidget {
                 ],
                 _RoutingFlagsSection(
                   profileId: p.id,
-                  onChanged: () => setDialogState(() {}),
+                  onChanged: () {
+                    routingChanged = true;
+                    setDialogState(() {});
+                  },
                 ),
               ],
               ),
@@ -222,13 +238,16 @@ class ProfileSelector extends StatelessWidget {
                 TextButton(
                   onPressed: () async {
                     await ProfileSpeedPrefs.clearOverride(p.id);
-                    if (ctx.mounted) Navigator.of(ctx).pop();
+                    // Speed reset only affects the route on car profiles
+                    // (vmax is part of the URL there).
+                    if (isCar) routingChanged = true;
+                    if (ctx.mounted) Navigator.of(ctx).pop(routingChanged);
                   },
                   child: Text(l.profileSpeedReset,
                       style: const TextStyle(color: Color(0xFFef5350))),
                 ),
               TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
+                onPressed: () => Navigator.of(ctx).pop(routingChanged),
                 child: Text(l.commonCancel,
                     style: const TextStyle(color: Colors.black54)),
               ),
@@ -243,7 +262,10 @@ class ProfileSelector extends StatelessWidget {
                   } else {
                     await ProfileSpeedPrefs.setOverride(p.id, value);
                   }
-                  if (ctx.mounted) Navigator.of(ctx).pop();
+                  // Car profiles bake speed into the BRouter URL — any
+                  // change there warrants a reroute.
+                  if (isCar && value != originalSpeed) routingChanged = true;
+                  if (ctx.mounted) Navigator.of(ctx).pop(routingChanged);
                 },
                 child: Text(l.commonSave),
               ),
@@ -252,6 +274,8 @@ class ProfileSelector extends StatelessWidget {
         );
       },
     );
+    // Dialog-dismiss-by-barrier returns null; treat as "no change".
+    return result ?? false;
   }
 
   static String _presetLabel(AppLocalizations l, HikingPreset preset) {
