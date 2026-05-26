@@ -112,6 +112,10 @@ assign ismuddy 	and or isunpaved surface=
 # hiker has asked us to avoid pure nature trails.
 assign isnaturalsurface or surface=ground|dirt|earth|mud|grass|sand surface=fine_gravel
 assign hastrailproblems or trail_visibility=bad|horrible|no trail_visibility=intermediate
+# Poorly-maintained farm/forest tracks — barely discernible (grade5) or
+# largely soil-on-soil (grade4). Routes through these often end up as
+# waist-high grass in summer.
+assign isovergrowntrack and highway=track or tracktype=grade4 tracktype=grade5
 
 assign issidewalk not or sidewalk= or sidewalk=none sidewalk=no
 
@@ -191,8 +195,9 @@ assign costfactor
   if shortest_way  then (   add 1 accesspenalty ) else
 
   add  ( switch avoid_natural_paths
-                ( add ( switch isnaturalsurface 1.2 0.0 )
-                      ( switch hastrailproblems 1.8 0.0 ) )
+                ( add ( add ( switch isnaturalsurface 1.2 0.0 )
+                            ( switch hastrailproblems 1.8 0.0 ) )
+                      ( switch isovergrowntrack 1.5 0.0 ) )
                 0.0 )
   add  ( switch is_ldhr                             0.0    # hiking route, no non-hiking road penalty
               switch stick_to_hiking_routes       non_sticky_route_penalty
