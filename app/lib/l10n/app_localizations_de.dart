@@ -1965,4 +1965,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get routingFlagAvoidNaturalPaths => 'Naturwege meiden';
+
+  @override
+  String get routingFlagAvoidFarmTracks => 'Wirtschaftswege meiden';
 }

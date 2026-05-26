@@ -15,6 +15,7 @@ assign   shortest_way             0    # 0 as default
 
 assign   iswet                    0    # 0 as default, 1 tries to prevent muddy boots and wet buttocks
 assign   avoid_natural_paths      0    # 0 as default, 1 penalises ground/dirt/grass/mud/sand surfaces and low-visibility trails
+assign   avoid_farm_tracks        0    # 0 as default, 1 routes around highway=track (farm/forest roads, often overgrown in summer)
 
 assign   prefer_hiking_routes     1    # 1 as default, gives penalty to way not being hiking route and cancels route turncost
 assign   stick_to_hiking_routes   0    # 0 as default, as above, but gives higher penalty costfactor + way/node initial costs
@@ -112,10 +113,21 @@ assign ismuddy 	and or isunpaved surface=
 # hiker has asked us to avoid pure nature trails.
 assign isnaturalsurface or surface=ground|dirt|earth|mud|grass|sand surface=fine_gravel
 assign hastrailproblems or trail_visibility=bad|horrible|no trail_visibility=intermediate
-# Poorly-maintained farm/forest tracks — barely discernible (grade5) or
-# largely soil-on-soil (grade4). Routes through these often end up as
-# waist-high grass in summer.
-assign isovergrowntrack and highway=track or tracktype=grade4 tracktype=grade5
+
+# Per-grade farm-track penalty when avoid_farm_tracks=1. grade1 is a
+# paved farm road (fine to walk), grade2 a hard-pack — both light
+# nudges. grade3 is unsealed dirt road, grade4+5 are soil-on-soil /
+# barely-discernible (= the "waist-high grass in summer" case).
+# tracktype= (no tag) is unknown so we go conservative-high.
+assign farmtrackpenalty
+   if highway=track then
+       ( if tracktype=grade1 then 0.3
+         else if tracktype=grade2 then 0.8
+         else if tracktype=grade3 then 1.5
+         else if tracktype=grade4 then 2.5
+         else if tracktype=grade5 then 3.0
+         else 2.0 )
+   else 0.0
 
 assign issidewalk not or sidewalk= or sidewalk=none sidewalk=no
 
@@ -195,10 +207,10 @@ assign costfactor
   if shortest_way  then (   add 1 accesspenalty ) else
 
   add  ( switch avoid_natural_paths
-                ( add ( add ( switch isnaturalsurface 1.2 0.0 )
-                            ( switch hastrailproblems 1.8 0.0 ) )
-                      ( switch isovergrowntrack 1.5 0.0 ) )
+                ( add ( switch isnaturalsurface 1.2 0.0 )
+                      ( switch hastrailproblems 1.8 0.0 ) )
                 0.0 )
+  add  ( switch avoid_farm_tracks farmtrackpenalty 0.0 )
   add  ( switch is_ldhr                             0.0    # hiking route, no non-hiking road penalty
               switch stick_to_hiking_routes       non_sticky_route_penalty
               switch prefer_hiking_routes         non_hiking_route_penalty

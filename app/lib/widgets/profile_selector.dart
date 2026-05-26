@@ -297,7 +297,7 @@ class _RoutingFlagsSectionState extends State<_RoutingFlagsSection> {
     'trekking': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.avoidSteepInclines],
     'safety': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.considerElevation],
     'wegwiesel-ebike': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.avoidSteepInclines],
-    'hiking-beta': [RoutingFlag.avoidNaturalPaths],
+    'hiking-beta': [RoutingFlag.avoidNaturalPaths, RoutingFlag.avoidFarmTracks],
     'quaelnix-gravel': [RoutingFlag.avoidSteepInclines, RoutingFlag.preferCycleRoutes, RoutingFlag.considerElevation],
     'm11n-gravel': [RoutingFlag.avoidPath, RoutingFlag.considerElevation],
     'cxb-gravel': [RoutingFlag.avoidPath, RoutingFlag.considerElevation],
@@ -432,6 +432,8 @@ class _RoutingFlagsSectionState extends State<_RoutingFlagsSection> {
         return l.routingFlagShortest;
       case RoutingFlag.avoidNaturalPaths:
         return l.routingFlagAvoidNaturalPaths;
+      case RoutingFlag.avoidFarmTracks:
+        return l.routingFlagAvoidFarmTracks;
     }
   }
 }

@@ -31,6 +31,7 @@ enum RoutingFlag {
 
   // Hike
   avoidNaturalPaths,    // ground/dirt/grass/mud + low-visibility trails
+  avoidFarmTracks,      // highway=track (farm/forest roads, often overgrown)
 }
 
 /// Which abstract flags each BRouter profile actually understands. The
@@ -148,6 +149,7 @@ const Map<String, Set<RoutingFlag>> _profileCapabilities = {
   // in Phase 2 of the routing-options work.
   'hiking-beta': {
     RoutingFlag.avoidNaturalPaths,
+    RoutingFlag.avoidFarmTracks,
   },
   'wegwiesel-running': {},
   'shortest': {},
@@ -279,6 +281,8 @@ class RoutingPrefs {
         return on ? 'profile:avoid_steep_inclines=1' : null;
       case RoutingFlag.avoidNaturalPaths:
         return on ? 'profile:avoid_natural_paths=1' : null;
+      case RoutingFlag.avoidFarmTracks:
+        return on ? 'profile:avoid_farm_tracks=1' : null;
       case RoutingFlag.avoidMotorways:
         return on ? 'profile:avoid_motorways=1' : null;
       case RoutingFlag.avoidToll:

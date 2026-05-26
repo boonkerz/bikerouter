@@ -3763,6 +3763,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Naturwege meiden'**
   String get routingFlagAvoidNaturalPaths;
+
+  /// No description provided for @routingFlagAvoidFarmTracks.
+  ///
+  /// In de, this message translates to:
+  /// **'Wirtschaftswege meiden'**
+  String get routingFlagAvoidFarmTracks;
 }
 
 class _AppLocalizationsDelegate

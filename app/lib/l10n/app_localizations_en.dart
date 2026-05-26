@@ -1966,4 +1966,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get routingFlagAvoidNaturalPaths => 'Avoid nature trails';
+
+  @override
+  String get routingFlagAvoidFarmTracks => 'Avoid farm tracks';
 }

@@ -722,5 +722,6 @@
   "routingFlagAvoidToll": "Maut meiden",
   "routingFlagAvoidUnpaved": "Unbefestigt meiden",
   "routingFlagShortest": "Kürzeste Route",
-  "routingFlagAvoidNaturalPaths": "Naturwege meiden"
+  "routingFlagAvoidNaturalPaths": "Naturwege meiden",
+  "routingFlagAvoidFarmTracks": "Wirtschaftswege meiden"
 }

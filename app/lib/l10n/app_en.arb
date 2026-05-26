@@ -722,5 +722,6 @@
   "routingFlagAvoidToll": "Avoid toll",
   "routingFlagAvoidUnpaved": "Avoid unpaved",
   "routingFlagShortest": "Shortest route",
-  "routingFlagAvoidNaturalPaths": "Avoid nature trails"
+  "routingFlagAvoidNaturalPaths": "Avoid nature trails",
+  "routingFlagAvoidFarmTracks": "Avoid farm tracks"
 }
