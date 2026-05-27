@@ -723,5 +723,10 @@
   "routingFlagAvoidUnpaved": "Avoid unpaved",
   "routingFlagShortest": "Shortest route",
   "routingFlagAvoidNaturalPaths": "Avoid nature trails",
-  "routingFlagAvoidFarmTracks": "Avoid farm tracks"
+  "routingFlagAvoidFarmTracks": "Avoid farm tracks",
+  "navigateDarkRide": "After sunset: {dur}",
+  "@navigateDarkRide": { "placeholders": { "dur": { "type": "String" } } },
+  "navigateUntilSunset": "Sunset in {dur}",
+  "@navigateUntilSunset": { "placeholders": { "dur": { "type": "String" } } },
+  "routeOverlayMyRoutes": "My tracks"
 }

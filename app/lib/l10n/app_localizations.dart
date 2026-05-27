@@ -3769,6 +3769,24 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Wirtschaftswege meiden'**
   String get routingFlagAvoidFarmTracks;
+
+  /// No description provided for @navigateDarkRide.
+  ///
+  /// In de, this message translates to:
+  /// **'Dunkelfahrt: {dur}'**
+  String navigateDarkRide(String dur);
+
+  /// No description provided for @navigateUntilSunset.
+  ///
+  /// In de, this message translates to:
+  /// **'Sonnenuntergang in {dur}'**
+  String navigateUntilSunset(String dur);
+
+  /// No description provided for @routeOverlayMyRoutes.
+  ///
+  /// In de, this message translates to:
+  /// **'Eigene Touren'**
+  String get routeOverlayMyRoutes;
 }
 
 class _AppLocalizationsDelegate

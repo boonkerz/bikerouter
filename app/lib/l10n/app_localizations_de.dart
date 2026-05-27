@@ -1968,4 +1968,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get routingFlagAvoidFarmTracks => 'Wirtschaftswege meiden';
+
+  @override
+  String navigateDarkRide(String dur) {
+    return 'Dunkelfahrt: $dur';
+  }
+
+  @override
+  String navigateUntilSunset(String dur) {
+    return 'Sonnenuntergang in $dur';
+  }
+
+  @override
+  String get routeOverlayMyRoutes => 'Eigene Touren';
 }

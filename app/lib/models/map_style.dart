@@ -60,6 +60,8 @@ class RouteOverlay {
         return l.routeOverlayHillshade;
       case 'heatmap':
         return l.routeOverlayHeatmap;
+      case 'my-routes':
+        return l.routeOverlayMyRoutes;
       default:
         return name;
     }
@@ -96,6 +98,15 @@ const routeOverlays = [
     name: 'Wegwiesel-Heatmap',
     icon: '🔥',
     urlTemplate: 'https://wegwiesel.app/api/heatmap/{z}/{x}/{y}.png',
+  ),
+  // Client-side overlay — map_screen renders the user's own recorded
+  // tracks as a polyline-stack instead of fetching a tile. urlTemplate
+  // is a sentinel ("local:my-routes") so it never fires a network call.
+  RouteOverlay(
+    id: 'my-routes',
+    name: 'Eigene Touren',
+    icon: '🛤️',
+    urlTemplate: 'local:my-routes',
   ),
 ];
 

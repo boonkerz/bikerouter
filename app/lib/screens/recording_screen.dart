@@ -340,6 +340,13 @@ class _RecordingScreenState extends State<RecordingScreen> {
                         _smallStat(
                             stats.currentSpeedKmh.toStringAsFixed(0),
                             'km/h'),
+                        // Slope-adjusted pace, only meaningful while
+                        // moving on foot. Runners/hikers care more
+                        // about min/km than km/h, and the Naismith
+                        // adjustment makes hilly and flat sections
+                        // comparable.
+                        if (_paceShown(stats))
+                          _smallStat(_paceText(stats), 'min/km*'),
                         _smallStat('${stats.ascentM}', '↑ m'),
                         _smallStat('${stats.descentM}', '↓ m'),
                         if (stats.kcal != null)
@@ -473,5 +480,32 @@ class _RecordingScreenState extends State<RecordingScreen> {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return h > 0 ? '$h:$m:$s' : '$m:$s';
+  }
+
+  // Pace only makes sense on foot — at bike speeds (>15 km/h) we'd
+  // show <4 min/km which is meaningless. The asterisk on the label
+  // hints that this is slope-adjusted (Naismith).
+  bool _paceShown(RideStats stats) =>
+      stats.distanceKm > 0.05 &&
+      stats.movingDuration.inSeconds > 30 &&
+      stats.avgSpeedKmh > 0 &&
+      stats.avgSpeedKmh < 15;
+
+  /// Returns slope-adjusted pace in MM:SS per km. Naismith's rule: each
+  /// 100 m of ascent equals ~10 min of additional flat walking time,
+  /// so we strip that overhead and divide by distance to get a
+  /// flat-equivalent pace ("you ran a 5:30/km effort even if your
+  /// raw pace says 7:00/km because of all that climbing").
+  String _paceText(RideStats stats) {
+    final movMin = stats.movingDuration.inSeconds / 60.0;
+    final flatEquivMin = (movMin - stats.ascentM / 10.0).clamp(0.1, 1e9);
+    final paceMinPerKm = flatEquivMin / stats.distanceKm;
+    if (!paceMinPerKm.isFinite || paceMinPerKm > 60) return '–';
+    final wholeMin = paceMinPerKm.floor();
+    final sec = ((paceMinPerKm - wholeMin) * 60).round();
+    final secStr = sec.toString().padLeft(2, '0');
+    // Guard against 5:60 from rounding
+    if (sec == 60) return '${wholeMin + 1}:00';
+    return '$wholeMin:$secStr';
   }
 }

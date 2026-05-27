@@ -15,6 +15,7 @@ import '../models/turn_hint.dart';
 import '../services/brouter_service.dart';
 import '../services/navigation_voice_service.dart';
 import '../services/profile_speed_prefs.dart';
+import '../services/solar_calc.dart';
 import '../services/watch_sync_service.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_storage.dart';
@@ -351,6 +352,60 @@ class _NavigationScreenState extends State<NavigationScreen> {
     return '${eta.hour.toString().padLeft(2, '0')}:${eta.minute.toString().padLeft(2, '0')}';
   }
 
+  /// One-line daylight hint shown below ETA. Returns null when there's
+  /// nothing useful to say (long tour, sunset already past, or the
+  /// remaining distance is so short that it doesn't matter).
+  ///
+  /// Cases:
+  ///   * ETA > sunset → "Dunkelfahrt: 1h 27min" (warning colour)
+  ///   * ETA < sunset, remaining > 30min → "Sonnenuntergang in 2h 12min" (info)
+  ///   * otherwise → null
+  ({String text, bool warn})? _daylightHint() {
+    if (_arrived || _route == null) return null;
+    final eta = DateTime.now().add(_remainingDuration());
+    final last = widget.waypoints.last;
+    final solar = SolarCalc.compute(
+      lat: last.latitude,
+      lon: last.longitude,
+      date: eta,
+    );
+    if (solar == null) return null;
+    final sunset = solar.sunsetLocal;
+    final remaining = _remainingDuration();
+    // Skip the hint for trivially short rides (< 30 min remaining) —
+    // sunset info adds noise when you're 5 min from the door.
+    if (remaining.inMinutes < 30) return null;
+
+    if (eta.isAfter(sunset)) {
+      final darkness = eta.difference(sunset);
+      return (text: _daylightDarkRideLabel(darkness), warn: true);
+    }
+    final untilSunset = sunset.difference(DateTime.now());
+    if (untilSunset.isNegative) return null;
+    // If sunset is far in the future relative to remaining-ride, it's
+    // not interesting either. Only show it if sunset falls within the
+    // current ride window + 90 min buffer.
+    if (untilSunset > remaining + const Duration(minutes: 90)) return null;
+    return (text: _daylightUntilSunsetLabel(untilSunset), warn: false);
+  }
+
+  String _daylightDarkRideLabel(Duration d) {
+    final l = AppLocalizations.of(context);
+    return l.navigateDarkRide(_formatHm(d));
+  }
+
+  String _daylightUntilSunsetLabel(Duration d) {
+    final l = AppLocalizations.of(context);
+    return l.navigateUntilSunset(_formatHm(d));
+  }
+
+  static String _formatHm(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    if (h == 0) return '${m}min';
+    return '${h}h ${m}min';
+  }
+
   TurnHint? get _nextHint {
     final r = _route;
     if (r == null) return null;
@@ -637,6 +692,38 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           ),
                           Text(l.navigateEta,
                               style: Theme.of(context).textTheme.bodySmall),
+                          () {
+                            final daylight = _daylightHint();
+                            if (daylight == null) return const SizedBox.shrink();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    daylight.warn
+                                        ? Icons.nightlight_round
+                                        : Icons.wb_twilight,
+                                    size: 12,
+                                    color: daylight.warn
+                                        ? const Color(0xFFef5350)
+                                        : const Color(0xFFff9800),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    daylight.text,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: daylight.warn
+                                          ? const Color(0xFFef5350)
+                                          : const Color(0xFFff9800),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }(),
                         ],
                       ),
                       const SizedBox(width: 12),

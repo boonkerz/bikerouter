@@ -1969,4 +1969,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get routingFlagAvoidFarmTracks => 'Avoid farm tracks';
+
+  @override
+  String navigateDarkRide(String dur) {
+    return 'After sunset: $dur';
+  }
+
+  @override
+  String navigateUntilSunset(String dur) {
+    return 'Sunset in $dur';
+  }
+
+  @override
+  String get routeOverlayMyRoutes => 'My tracks';
 }

@@ -116,6 +116,11 @@ class _MapScreenState extends State<MapScreen> {
   Set<String> _enabledSightTypes = allSightTypes;
   Set<String> _activeOverlays = {};
   double _overlayOpacity = 0.5;
+  // Polylines for the personal "my-routes" overlay, lazily loaded the
+  // first time the overlay is toggled on. Cleared when the overlay is
+  // turned off so cold-start memory stays unaffected.
+  List<List<LatLng>> _myRoutesTracks = const [];
+  bool _myRoutesLoading = false;
   bool _routeInspectMode = false;
   bool _loadingRouteInfo = false;
   RoundtripRequest? _lastRoundtripRequest;
@@ -150,7 +155,13 @@ class _MapScreenState extends State<MapScreen> {
     });
     SharedPreferences.getInstance().then((prefs) {
       final list = prefs.getStringList('active_route_overlays_v1');
-      if (list != null && mounted) setState(() => _activeOverlays = list.toSet());
+      if (list != null && mounted) {
+        setState(() => _activeOverlays = list.toSet());
+        // Restore the personal-tracks overlay if it was on last session.
+        if (_activeOverlays.contains('my-routes')) {
+          _loadMyRoutesOverlay();
+        }
+      }
       final mode = prefs.getString('route_viz_mode_v1');
       if (mode != null && mounted) setState(() => _routeVizMode = mode);
       final op = prefs.getDouble('overlay_opacity_v1');
@@ -302,7 +313,9 @@ class _MapScreenState extends State<MapScreen> {
                         maxZoom: _mapStyle.maxZoom.toDouble(),
                         userAgentPackageName: 'app.wegwiesel',
                       ),
-                    for (final ov in routeOverlays.where((o) => _activeOverlays.contains(o.id)))
+                    for (final ov in routeOverlays.where((o) =>
+                        _activeOverlays.contains(o.id) &&
+                        !o.urlTemplate.startsWith('local:')))
                       Opacity(
                         opacity: _overlayOpacity,
                         child: TileLayer(
@@ -310,6 +323,22 @@ class _MapScreenState extends State<MapScreen> {
                           maxZoom: 18,
                           userAgentPackageName: 'app.wegwiesel',
                         ),
+                      ),
+                    // Personal track heatmap — overlapping low-opacity
+                    // polylines from past recordings stack visually
+                    // into a "where I've been" map.
+                    if (_activeOverlays.contains('my-routes') &&
+                        _myRoutesTracks.isNotEmpty)
+                      PolylineLayer(
+                        polylines: [
+                          for (final track in _myRoutesTracks)
+                            Polyline(
+                              points: track,
+                              strokeWidth: 4,
+                              color: const Color(0xFFef5350)
+                                  .withValues(alpha: 0.35),
+                            ),
+                        ],
                       ),
                     if (_nogos.isNotEmpty)
                       CircleLayer(
@@ -1104,6 +1133,16 @@ class _MapScreenState extends State<MapScreen> {
                   });
                   setState(() {});
                   _saveOverlayPrefs();
+                  // Lazy-load the personal-tracks overlay when toggled on,
+                  // drop the cached polylines when toggled off so we don't
+                  // pin the recorded rides in RAM forever.
+                  if (ov.id == 'my-routes') {
+                    if (v) {
+                      _loadMyRoutesOverlay();
+                    } else {
+                      setState(() => _myRoutesTracks = const []);
+                    }
+                  }
                 },
               )),
               if (_activeOverlays.isNotEmpty)
@@ -2697,6 +2736,25 @@ class _MapScreenState extends State<MapScreen> {
         (dx * dx + dy * dy);
     t = t.clamp(0.0, 1.0);
     return LatLng(a.latitude + t * dy, a.longitude + t * dx);
+  }
+
+  Future<void> _loadMyRoutesOverlay() async {
+    if (_myRoutesLoading) return;
+    _myRoutesLoading = true;
+    try {
+      final rides = await RideStorage.loadAll();
+      // Convert each ride's recorded points to a LatLng polyline. Skip
+      // rides shorter than two points so we don't render dots.
+      final tracks = <List<LatLng>>[];
+      for (final r in rides) {
+        if (r.points.length < 2) continue;
+        tracks.add([for (final p in r.points) LatLng(p.lat, p.lon)]);
+      }
+      if (!mounted) return;
+      setState(() => _myRoutesTracks = tracks);
+    } finally {
+      _myRoutesLoading = false;
+    }
   }
 
   void _setProfile(String profile) {

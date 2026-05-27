@@ -81,7 +81,19 @@ class RoutePoiSearchService {
     PoiCategory.food: [
       '[amenity~"^(restaurant|cafe|fast_food|biergarten|ice_cream|pub)\$"]',
     ],
-    PoiCategory.water: ['[amenity=drinking_water]'],
+    // Drinking water in all forms hikers/runners/bikepackers actually
+    // rely on: public taps (drinking_water, water_point), private taps
+    // marked drinkable (man_made=water_tap with drinking_water=yes),
+    // and springs explicitly tagged as drinkable. We deliberately skip
+    // amenity=fountain because most decorative fountains are *not*
+    // drinkable in DE.
+    PoiCategory.water: [
+      '[amenity=drinking_water]',
+      '[amenity=water_point]',
+      '[man_made=water_tap][drinking_water=yes]',
+      '[natural=spring][drinking_water=yes]',
+      '[man_made=water_well][drinking_water=yes]',
+    ],
     PoiCategory.scenic: ['[tourism=viewpoint]'],
     PoiCategory.shelter: [
       // tourism-tagged huts (alpine + wilderness) are full POIs; amenity=shelter
@@ -316,7 +328,20 @@ class RoutePoiSearchService {
     final amenity = tags['amenity'];
     if (amenity == 'fuel') return PoiCategory.fuel;
     if (amenity == 'charging_station') return PoiCategory.charging;
-    if (amenity == 'drinking_water') return PoiCategory.water;
+    if (amenity == 'drinking_water' || amenity == 'water_point') {
+      return PoiCategory.water;
+    }
+    // Drinkable taps / springs / wells. The Overpass query already
+    // filters on drinking_water=yes so reaching here implies that, but
+    // we double-check to stay robust against tag drift.
+    final manMade = tags['man_made'];
+    if ((manMade == 'water_tap' || manMade == 'water_well') &&
+        tags['drinking_water'] == 'yes') {
+      return PoiCategory.water;
+    }
+    if (tags['natural'] == 'spring' && tags['drinking_water'] == 'yes') {
+      return PoiCategory.water;
+    }
     if (amenity == 'shelter' && tags['shelter_type'] != 'public_transport') {
       return PoiCategory.shelter;
     }
