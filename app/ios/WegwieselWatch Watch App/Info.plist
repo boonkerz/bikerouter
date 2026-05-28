@@ -33,5 +33,7 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Wegwiesel nutzt deinen Standort für die Standalone-Navigation auf der Uhr.</string>
 </dict>
 </plist>

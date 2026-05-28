@@ -107,11 +107,23 @@ struct RouteDetailView: View {
           .font(.caption)
           .foregroundStyle(.secondary)
 
-        // Phase 1 placeholder — standalone start lands in Phase 2.
-        Text("Standalone-Navigation kommt im nächsten Update.")
-          .font(.caption2)
-          .foregroundStyle(.secondary)
-          .padding(.top, 6)
+        // Phase 2: standalone navigation kicks off here.
+        NavigationLink {
+          StandaloneNavigationView(route: route)
+        } label: {
+          HStack {
+            Image(systemName: "play.fill")
+            Text("Navigation starten")
+              .font(.system(size: 14, weight: .semibold))
+          }
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 6)
+          .background(Color(red: 0.42, green: 0.29, blue: 0.16))
+          .foregroundStyle(Color(red: 0.96, green: 0.91, blue: 0.85))
+          .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 6)
       }
       .padding(8)
     }
