@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/body_weight_prefs.dart';
+import '../widgets/battery_budget_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -146,6 +147,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: l.settingsBodyWeight,
             subtitle: '$_weightKg kg',
             onTap: _editWeight,
+          ),
+          _tile(
+            icon: Icons.battery_charging_full,
+            title: l.settingsBatteryBudget,
+            subtitle: l.settingsBatteryBudgetSub,
+            onTap: () => showBatteryBudgetDialog(context),
           ),
           SwitchListTile(
             secondary: const Icon(Icons.local_florist_outlined, color: Color(0xFF6a4a28)),

@@ -1982,4 +1982,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get routeOverlayMyRoutes => 'My tracks';
+
+  @override
+  String get routePoiOnlyOpenNow => 'Open now';
+
+  @override
+  String get routePoiOpen => 'OPEN';
+
+  @override
+  String get routePoiClosed => 'CLOSED';
+
+  @override
+  String get settingsBatteryBudget => 'Battery budget';
+
+  @override
+  String get settingsBatteryBudgetSub =>
+      'Estimate power-bank capacity for your tour';
+
+  @override
+  String get batteryBudgetTitle => 'Battery budget';
+
+  @override
+  String batteryBudgetDuration(int h) {
+    return 'Tour duration: ${h}h';
+  }
+
+  @override
+  String batteryBudgetDisplayPct(int pct) {
+    return 'Display on: $pct% of the time';
+  }
+
+  @override
+  String get batteryBudgetNight => 'Night riding';
+
+  @override
+  String get batteryBudgetNightSub => 'Higher display brightness, more drain';
+
+  @override
+  String get batteryBudgetNeeded => 'Phone needs';
+
+  @override
+  String get batteryBudgetPowerbank => 'Power-bank recommendation';
+
+  @override
+  String get batteryBudgetDisclaimer =>
+      'Rough estimate — actual drain depends on phone, brightness, and background apps.';
 }

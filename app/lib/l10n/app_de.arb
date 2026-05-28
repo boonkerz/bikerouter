@@ -728,5 +728,20 @@
   "@navigateDarkRide": { "placeholders": { "dur": { "type": "String" } } },
   "navigateUntilSunset": "Sonnenuntergang in {dur}",
   "@navigateUntilSunset": { "placeholders": { "dur": { "type": "String" } } },
-  "routeOverlayMyRoutes": "Eigene Touren"
+  "routeOverlayMyRoutes": "Eigene Touren",
+  "routePoiOnlyOpenNow": "Nur jetzt offen",
+  "routePoiOpen": "OFFEN",
+  "routePoiClosed": "ZU",
+  "settingsBatteryBudget": "Akku-Budget",
+  "settingsBatteryBudgetSub": "Powerbank-Größe für deine Tour berechnen",
+  "batteryBudgetTitle": "Akku-Budget",
+  "batteryBudgetDuration": "Tour-Dauer: {h}h",
+  "@batteryBudgetDuration": { "placeholders": { "h": { "type": "int" } } },
+  "batteryBudgetDisplayPct": "Display an: {pct}% der Zeit",
+  "@batteryBudgetDisplayPct": { "placeholders": { "pct": { "type": "int" } } },
+  "batteryBudgetNight": "Nachtfahrt",
+  "batteryBudgetNightSub": "Display heller, höherer Verbrauch",
+  "batteryBudgetNeeded": "Phone-Bedarf",
+  "batteryBudgetPowerbank": "Powerbank-Empfehlung",
+  "batteryBudgetDisclaimer": "Grobe Schätzung — echter Verbrauch variiert je nach Phone, Helligkeit und Hintergrundprozessen."
 }

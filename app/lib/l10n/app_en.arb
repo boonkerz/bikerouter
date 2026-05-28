@@ -728,5 +728,20 @@
   "@navigateDarkRide": { "placeholders": { "dur": { "type": "String" } } },
   "navigateUntilSunset": "Sunset in {dur}",
   "@navigateUntilSunset": { "placeholders": { "dur": { "type": "String" } } },
-  "routeOverlayMyRoutes": "My tracks"
+  "routeOverlayMyRoutes": "My tracks",
+  "routePoiOnlyOpenNow": "Open now",
+  "routePoiOpen": "OPEN",
+  "routePoiClosed": "CLOSED",
+  "settingsBatteryBudget": "Battery budget",
+  "settingsBatteryBudgetSub": "Estimate power-bank capacity for your tour",
+  "batteryBudgetTitle": "Battery budget",
+  "batteryBudgetDuration": "Tour duration: {h}h",
+  "@batteryBudgetDuration": { "placeholders": { "h": { "type": "int" } } },
+  "batteryBudgetDisplayPct": "Display on: {pct}% of the time",
+  "@batteryBudgetDisplayPct": { "placeholders": { "pct": { "type": "int" } } },
+  "batteryBudgetNight": "Night riding",
+  "batteryBudgetNightSub": "Higher display brightness, more drain",
+  "batteryBudgetNeeded": "Phone needs",
+  "batteryBudgetPowerbank": "Power-bank recommendation",
+  "batteryBudgetDisclaimer": "Rough estimate — actual drain depends on phone, brightness, and background apps."
 }

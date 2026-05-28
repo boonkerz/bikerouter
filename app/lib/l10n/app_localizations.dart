@@ -3787,6 +3787,84 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Eigene Touren'**
   String get routeOverlayMyRoutes;
+
+  /// No description provided for @routePoiOnlyOpenNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur jetzt offen'**
+  String get routePoiOnlyOpenNow;
+
+  /// No description provided for @routePoiOpen.
+  ///
+  /// In de, this message translates to:
+  /// **'OFFEN'**
+  String get routePoiOpen;
+
+  /// No description provided for @routePoiClosed.
+  ///
+  /// In de, this message translates to:
+  /// **'ZU'**
+  String get routePoiClosed;
+
+  /// No description provided for @settingsBatteryBudget.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku-Budget'**
+  String get settingsBatteryBudget;
+
+  /// No description provided for @settingsBatteryBudgetSub.
+  ///
+  /// In de, this message translates to:
+  /// **'Powerbank-Größe für deine Tour berechnen'**
+  String get settingsBatteryBudgetSub;
+
+  /// No description provided for @batteryBudgetTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku-Budget'**
+  String get batteryBudgetTitle;
+
+  /// No description provided for @batteryBudgetDuration.
+  ///
+  /// In de, this message translates to:
+  /// **'Tour-Dauer: {h}h'**
+  String batteryBudgetDuration(int h);
+
+  /// No description provided for @batteryBudgetDisplayPct.
+  ///
+  /// In de, this message translates to:
+  /// **'Display an: {pct}% der Zeit'**
+  String batteryBudgetDisplayPct(int pct);
+
+  /// No description provided for @batteryBudgetNight.
+  ///
+  /// In de, this message translates to:
+  /// **'Nachtfahrt'**
+  String get batteryBudgetNight;
+
+  /// No description provided for @batteryBudgetNightSub.
+  ///
+  /// In de, this message translates to:
+  /// **'Display heller, höherer Verbrauch'**
+  String get batteryBudgetNightSub;
+
+  /// No description provided for @batteryBudgetNeeded.
+  ///
+  /// In de, this message translates to:
+  /// **'Phone-Bedarf'**
+  String get batteryBudgetNeeded;
+
+  /// No description provided for @batteryBudgetPowerbank.
+  ///
+  /// In de, this message translates to:
+  /// **'Powerbank-Empfehlung'**
+  String get batteryBudgetPowerbank;
+
+  /// No description provided for @batteryBudgetDisclaimer.
+  ///
+  /// In de, this message translates to:
+  /// **'Grobe Schätzung — echter Verbrauch variiert je nach Phone, Helligkeit und Hintergrundprozessen.'**
+  String get batteryBudgetDisclaimer;
 }
 
 class _AppLocalizationsDelegate

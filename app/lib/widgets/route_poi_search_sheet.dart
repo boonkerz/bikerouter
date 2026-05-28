@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/route_poi.dart';
+import '../services/opening_hours_parser.dart';
 import '../services/poi_image_resolver.dart';
 import '../services/route_poi_search_service.dart';
 
@@ -53,6 +54,10 @@ class _SheetState extends State<_Sheet> {
   bool _loading = false;
   String? _error;
   final Set<String> _picked = {};
+  // Resupply filter: hide POIs that are definitely closed right now.
+  // POIs without opening_hours stay visible — we don't punish missing
+  // metadata. Useful for ultra-cycling planning at 3 AM.
+  bool _onlyOpenNow = false;
 
   @override
   void initState() {
@@ -154,6 +159,34 @@ class _SheetState extends State<_Sheet> {
                 ),
               ),
             ),
+            // "Only open now" toggle — surfaces resupply planning for
+            // brevet / ultra-cycling. State is local; tapping the chip
+            // re-filters in-memory without re-querying Overpass.
+            FilterChip(
+              avatar: Icon(
+                _onlyOpenNow
+                    ? Icons.access_time_filled
+                    : Icons.access_time,
+                size: 16,
+                color: _onlyOpenNow
+                    ? const Color(0xFFf5e9d8)
+                    : const Color(0xFF6a4a28),
+              ),
+              label: Text(l.routePoiOnlyOpenNow),
+              selected: _onlyOpenNow,
+              onSelected: (v) => setState(() => _onlyOpenNow = v),
+              selectedColor: const Color(0xFF6a4a28),
+              backgroundColor: const Color(0xFFe8d5b8),
+              labelStyle: TextStyle(
+                color: _onlyOpenNow
+                    ? const Color(0xFFf5e9d8)
+                    : const Color(0xFF6a4a28),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              showCheckmark: false,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             IconButton(
               icon: const Icon(Icons.close, color: Color(0xFF6a4a28)),
               onPressed: () => Navigator.of(context).pop(),
@@ -222,7 +255,17 @@ class _SheetState extends State<_Sheet> {
         ),
       );
     }
-    final hits = _hits ?? const <RoutePoiHit>[];
+    final rawHits = _hits ?? const <RoutePoiHit>[];
+    final now = DateTime.now();
+    final hits = _onlyOpenNow
+        ? rawHits.where((h) {
+            // Keep hits without opening_hours visible — missing data
+            // shouldn't punish a POI in the only-open-now filter.
+            final st = OpeningHoursParser.evaluate(
+                h.tags['opening_hours'], now);
+            return st != OpenStatus.closed;
+          }).toList(growable: false)
+        : rawHits;
     if (hits.isEmpty) {
       return Center(
         child: Padding(
@@ -295,10 +338,51 @@ class _SheetState extends State<_Sheet> {
             ),
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Text(
-            '${l.routePoiSearchAt(kmText)} · ${l.routePoiSearchSide(h.sideMeters.round())}',
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
-          ),
+          subtitle: () {
+            final base = '${l.routePoiSearchAt(kmText)} · '
+                '${l.routePoiSearchSide(h.sideMeters.round())}';
+            final st = OpeningHoursParser.evaluate(
+                h.tags['opening_hours'], now);
+            if (st == OpenStatus.unknown) {
+              return Text(base,
+                  style: const TextStyle(
+                      color: Colors.black54, fontSize: 12));
+            }
+            final isOpen = st == OpenStatus.open;
+            return Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 1),
+                  margin: const EdgeInsets.only(right: 6),
+                  decoration: BoxDecoration(
+                    color: isOpen
+                        ? const Color(0xFF66bb6a).withValues(alpha: 0.2)
+                        : const Color(0xFFef5350).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    isOpen ? l.routePoiOpen : l.routePoiClosed,
+                    style: TextStyle(
+                      color: isOpen
+                          ? const Color(0xFF2e7d32)
+                          : const Color(0xFFc62828),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    base,
+                    style: const TextStyle(
+                        color: Colors.black54, fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            );
+          }(),
           trailing: IconButton(
             icon: Icon(
               picked ? Icons.check_circle : Icons.add_circle_outline,

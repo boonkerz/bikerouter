@@ -1981,4 +1981,49 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get routeOverlayMyRoutes => 'Eigene Touren';
+
+  @override
+  String get routePoiOnlyOpenNow => 'Nur jetzt offen';
+
+  @override
+  String get routePoiOpen => 'OFFEN';
+
+  @override
+  String get routePoiClosed => 'ZU';
+
+  @override
+  String get settingsBatteryBudget => 'Akku-Budget';
+
+  @override
+  String get settingsBatteryBudgetSub =>
+      'Powerbank-Größe für deine Tour berechnen';
+
+  @override
+  String get batteryBudgetTitle => 'Akku-Budget';
+
+  @override
+  String batteryBudgetDuration(int h) {
+    return 'Tour-Dauer: ${h}h';
+  }
+
+  @override
+  String batteryBudgetDisplayPct(int pct) {
+    return 'Display an: $pct% der Zeit';
+  }
+
+  @override
+  String get batteryBudgetNight => 'Nachtfahrt';
+
+  @override
+  String get batteryBudgetNightSub => 'Display heller, höherer Verbrauch';
+
+  @override
+  String get batteryBudgetNeeded => 'Phone-Bedarf';
+
+  @override
+  String get batteryBudgetPowerbank => 'Powerbank-Empfehlung';
+
+  @override
+  String get batteryBudgetDisclaimer =>
+      'Grobe Schätzung — echter Verbrauch variiert je nach Phone, Helligkeit und Hintergrundprozessen.';
 }
