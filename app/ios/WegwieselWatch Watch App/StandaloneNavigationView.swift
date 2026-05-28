@@ -1,14 +1,14 @@
 import SwiftUI
 
 /// Watch's standalone navigation screen — shown when the user taps
-/// "Start" on a stored route. Mirrors the phone's navigation glance
-/// (big maneuver icon, distance-to-turn, remaining km) and adds an
-/// off-route banner that the phone version doesn't have because the
-/// phone re-routes automatically.
+/// "Start" on a stored route. The engine is owned here as a
+/// @StateObject so the navigation lifecycle (start on appear, stop
+/// on disappear) lives with the screen, and the two sub-pages
+/// (turn glance + mini map) just read from the same source of truth.
 ///
-/// Wraps the NavigationEngine in @StateObject so SwiftUI re-renders
-/// on every published position update. The engine starts on appear
-/// and stops on disappear — no extra plumbing needed.
+/// Layout uses a horizontal TabView (page style) — Watch users are
+/// used to swiping between pages, and it keeps the Digital Crown
+/// free for in-page interactions (e.g. zooming the map).
 struct StandaloneNavigationView: View {
   let route: StoredRoute
   @StateObject private var engine: NavigationEngine
@@ -18,6 +18,35 @@ struct StandaloneNavigationView: View {
     self.route = route
     _engine = StateObject(wrappedValue: NavigationEngine(route: route))
   }
+
+  var body: some View {
+    TabView {
+      TurnGlancePage(engine: engine)
+        .tag(0)
+      RouteMapView(route: route, userLocation: engine.userLocation)
+        .tag(1)
+    }
+    .tabViewStyle(.verticalPage)
+    .navigationTitle(route.name)
+    .navigationBarTitleDisplayMode(.inline)
+    .onAppear { engine.start() }
+    .onDisappear { engine.stop() }
+    .onChange(of: engine.arrived) { _, arrived in
+      // Auto-dismiss back to the route detail screen ~3s after the
+      // arrival haptic so the user has time to see "Ziel".
+      if arrived {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+          dismiss()
+        }
+      }
+    }
+  }
+}
+
+/// The "big arrow + distance" page — same shape as the phone-driven
+/// glance view, just bound to the watch-local engine.
+private struct TurnGlancePage: View {
+  @ObservedObject var engine: NavigationEngine
 
   var body: some View {
     VStack(spacing: 6) {
@@ -50,19 +79,6 @@ struct StandaloneNavigationView: View {
     .padding(.horizontal, 6)
     .padding(.vertical, 4)
     .containerBackground(.fill.tertiary, for: .navigation)
-    .navigationTitle(route.name)
-    .navigationBarTitleDisplayMode(.inline)
-    .onAppear { engine.start() }
-    .onDisappear { engine.stop() }
-    .onChange(of: engine.arrived) { _, arrived in
-      // Auto-dismiss back to the route detail screen ~3s after the
-      // arrival haptic so the user has time to see "Ziel".
-      if arrived {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-          dismiss()
-        }
-      }
-    }
   }
 
   private var offRouteBanner: some View {

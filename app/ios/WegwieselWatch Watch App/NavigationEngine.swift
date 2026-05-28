@@ -22,6 +22,8 @@ final class NavigationEngine: NSObject, ObservableObject, CLLocationManagerDeleg
   @Published private(set) var offRoute: Bool = false
   @Published private(set) var arrived: Bool = false
   @Published private(set) var hasFix: Bool = false
+  /// Latest GPS coordinate, published for the map view.
+  @Published private(set) var userLocation: CLLocationCoordinate2D?
 
   private let route: StoredRoute
   private let coords: [CLLocationCoordinate2D]
@@ -71,6 +73,7 @@ final class NavigationEngine: NSObject, ObservableObject, CLLocationManagerDeleg
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
     guard let loc = locations.last else { return }
     hasFix = true
+    userLocation = loc.coordinate
     advance(with: loc)
   }
 
