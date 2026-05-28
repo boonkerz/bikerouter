@@ -35,6 +35,23 @@ final class WatchSessionController: NSObject, ObservableObject, WCSessionDelegat
     applyPayload(userInfo)
   }
 
+  /// File transfer arrives here — used for full-route pushes from the
+  /// phone (transferFile, not transferUserInfo, because routes can be
+  /// 50KB+ encoded). We parse and hand off to RouteStorage.
+  func session(_ session: WCSession, didReceive file: WCSessionFile) {
+    do {
+      let data = try Data(contentsOf: file.fileURL)
+      if let obj = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+        DispatchQueue.main.async {
+          RouteStorage.shared.saveFromPhonePayload(obj)
+        }
+      }
+    } catch {
+      // Best-effort. WatchConnectivity will retry on next reachability
+      // change if the phone re-queues.
+    }
+  }
+
   // The two methods below are iOS-only required parts of WCSessionDelegate.
   // watchOS doesn't include them in the protocol contract. We wrap in
   // `#if os(iOS)` so the file stays conformant if it ever ends up compiled

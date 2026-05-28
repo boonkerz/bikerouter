@@ -3865,6 +3865,30 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Grobe Schätzung — echter Verbrauch variiert je nach Phone, Helligkeit und Hintergrundprozessen.'**
   String get batteryBudgetDisclaimer;
+
+  /// No description provided for @shareToWatch.
+  ///
+  /// In de, this message translates to:
+  /// **'An Watch senden'**
+  String get shareToWatch;
+
+  /// No description provided for @shareToWatchSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Route auf die Apple Watch laden'**
+  String get shareToWatchSubtitle;
+
+  /// No description provided for @shareToWatchQueued.
+  ///
+  /// In de, this message translates to:
+  /// **'Route an Watch geschickt'**
+  String get shareToWatchQueued;
+
+  /// No description provided for @shareToWatchFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Watch nicht erreichbar'**
+  String get shareToWatchFailed;
 }
 
 class _AppLocalizationsDelegate

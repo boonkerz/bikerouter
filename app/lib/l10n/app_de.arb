@@ -743,5 +743,9 @@
   "batteryBudgetNightSub": "Display heller, höherer Verbrauch",
   "batteryBudgetNeeded": "Phone-Bedarf",
   "batteryBudgetPowerbank": "Powerbank-Empfehlung",
-  "batteryBudgetDisclaimer": "Grobe Schätzung — echter Verbrauch variiert je nach Phone, Helligkeit und Hintergrundprozessen."
+  "batteryBudgetDisclaimer": "Grobe Schätzung — echter Verbrauch variiert je nach Phone, Helligkeit und Hintergrundprozessen.",
+  "shareToWatch": "An Watch senden",
+  "shareToWatchSubtitle": "Route auf die Apple Watch laden",
+  "shareToWatchQueued": "Route an Watch geschickt",
+  "shareToWatchFailed": "Watch nicht erreichbar"
 }

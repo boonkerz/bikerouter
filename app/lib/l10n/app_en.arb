@@ -743,5 +743,9 @@
   "batteryBudgetNightSub": "Higher display brightness, more drain",
   "batteryBudgetNeeded": "Phone needs",
   "batteryBudgetPowerbank": "Power-bank recommendation",
-  "batteryBudgetDisclaimer": "Rough estimate — actual drain depends on phone, brightness, and background apps."
+  "batteryBudgetDisclaimer": "Rough estimate — actual drain depends on phone, brightness, and background apps.",
+  "shareToWatch": "Send to Watch",
+  "shareToWatchSubtitle": "Push the route to your Apple Watch",
+  "shareToWatchQueued": "Route sent to Watch",
+  "shareToWatchFailed": "Watch not reachable"
 }

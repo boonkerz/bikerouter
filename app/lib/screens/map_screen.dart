@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,6 +58,7 @@ import '../widgets/route_poi_search_sheet.dart';
 import '../services/route_poi_search_service.dart';
 import '../services/poi_image_resolver.dart';
 import '../services/ftp_route_finder.dart';
+import '../services/watch_route_sender.dart';
 import '../widgets/ftp_finder_sheet.dart';
 import '../widgets/stages_sheet.dart';
 import '../widgets/stats_bar.dart';
@@ -4105,6 +4107,13 @@ class _MapScreenState extends State<MapScreen> {
                 subtitle: Text(l.shareToWahooSubtitle),
                 onTap: () => Navigator.pop(ctx, 'wahoo'),
               ),
+            if (_route != null && Platform.isIOS)
+              ListTile(
+                leading: const Icon(Icons.watch),
+                title: Text(l.shareToWatch),
+                subtitle: Text(l.shareToWatchSubtitle),
+                onTap: () => Navigator.pop(ctx, 'watch'),
+              ),
             const SizedBox(height: 8),
           ],
         ),
@@ -4119,7 +4128,34 @@ class _MapScreenState extends State<MapScreen> {
       await _sendDirectToEdge();
     } else if (action == 'wahoo') {
       await _sendToWahoo();
+    } else if (action == 'watch') {
+      await _sendToWatch();
     }
+  }
+
+  /// Pushes the current route to the paired Apple Watch as a JSON
+  /// file via WCSession. The watch persists it and the user can
+  /// re-open the route there later — Phase 1, standalone navigation
+  /// lands in Phase 2.
+  Future<void> _sendToWatch() async {
+    final route = _route;
+    if (route == null || _waypoints.isEmpty) return;
+    final l = AppLocalizations.of(context);
+    final name = _waypointNames[_wpKey(_waypoints.last)] ??
+        '${_waypoints.first.latitude.toStringAsFixed(3)},'
+            '${_waypoints.first.longitude.toStringAsFixed(3)}';
+    final ok = await WatchRouteSender.instance.sendRoute(
+      route: route,
+      waypoints: _waypoints,
+      waypointNames: _waypointNames,
+      profile: _profile,
+      name: name,
+    );
+    if (!mounted) return;
+    final msg = ok ? l.shareToWatchQueued : l.shareToWatchFailed;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   Future<void> _copyShareLink() async {

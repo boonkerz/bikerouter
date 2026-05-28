@@ -2026,4 +2026,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get batteryBudgetDisclaimer =>
       'Grobe Schätzung — echter Verbrauch variiert je nach Phone, Helligkeit und Hintergrundprozessen.';
+
+  @override
+  String get shareToWatch => 'An Watch senden';
+
+  @override
+  String get shareToWatchSubtitle => 'Route auf die Apple Watch laden';
+
+  @override
+  String get shareToWatchQueued => 'Route an Watch geschickt';
+
+  @override
+  String get shareToWatchFailed => 'Watch nicht erreichbar';
 }

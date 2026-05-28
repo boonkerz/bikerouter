@@ -53,8 +53,47 @@ final class WatchBridge: NSObject, WCSessionDelegate, FlutterPlugin {
       sendNavigation(payload: ["direction": "idle"])
       result(nil)
 
+    case "sendRoute":
+      guard let args = call.arguments as? [String: Any] else {
+        result(FlutterError(code: "bad_args", message: "expected map", details: nil))
+        return
+      }
+      sendRoute(payload: args, result: result)
+
     default:
       result(FlutterMethodNotImplemented)
+    }
+  }
+
+  // MARK: - Route transfer (Phase 1 standalone)
+
+  /// Writes the route JSON to a temp file and ships it via
+  /// `transferFile`. `transferUserInfo` would cap at ~65KB which a 100km
+  /// route blows past — the file API has no such limit and survives the
+  /// watch being asleep / out of range.
+  private func sendRoute(payload: [String: Any], result: @escaping FlutterResult) {
+    guard let session = session, session.activationState == .activated else {
+      result(false)
+      return
+    }
+    do {
+      let data = try JSONSerialization.data(withJSONObject: payload, options: [])
+      // Tmp file under NSTemporaryDirectory — WatchConnectivity reads
+      // it lazily so we can't delete here, but iOS purges the dir.
+      let tmp = NSTemporaryDirectory()
+      let filename = "wegwiesel-route-\(UUID().uuidString).json"
+      let url = URL(fileURLWithPath: tmp).appendingPathComponent(filename)
+      try data.write(to: url)
+      // Metadata travels alongside the file so the watch can decide
+      // (e.g.) whether to overwrite by id without re-parsing JSON.
+      let meta: [String: Any] = [
+        "kind": "route",
+        "id": payload["id"] as? String ?? "",
+      ]
+      session.transferFile(url, metadata: meta)
+      result(true)
+    } catch {
+      result(FlutterError(code: "send_failed", message: "\(error)", details: nil))
     }
   }
 
