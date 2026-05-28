@@ -31,7 +31,7 @@ struct RoutesListView: View {
         .foregroundStyle(Color(red: 0.42, green: 0.29, blue: 0.16))
       Text("Keine Routen")
         .font(.headline)
-      Text("Plane eine Route am Phone und tippe auf „An Watch senden".")
+      Text("Plane eine Route am Phone und tippe auf \"An Watch senden\".")
         .font(.caption2)
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
