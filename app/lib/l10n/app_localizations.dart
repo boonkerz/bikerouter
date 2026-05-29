@@ -3925,6 +3925,42 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Akku reicht nicht'**
   String get ebikeRangeOver;
+
+  /// No description provided for @ebikePlanChargingStop.
+  ///
+  /// In de, this message translates to:
+  /// **'Ladestopp planen'**
+  String get ebikePlanChargingStop;
+
+  /// No description provided for @ebikePlanChargingSearching.
+  ///
+  /// In de, this message translates to:
+  /// **'Suche Ladestation…'**
+  String get ebikePlanChargingSearching;
+
+  /// No description provided for @ebikePlanChargingNoneFound.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Ladestation in Reichweite gefunden'**
+  String get ebikePlanChargingNoneFound;
+
+  /// No description provided for @ebikePlanChargingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Ladestopp vorgeschlagen'**
+  String get ebikePlanChargingTitle;
+
+  /// No description provided for @ebikePlanChargingDetails.
+  ///
+  /// In de, this message translates to:
+  /// **'{km} km auf der Route, {m} m Umweg'**
+  String ebikePlanChargingDetails(String km, int m);
+
+  /// No description provided for @ebikePlanChargingInsert.
+  ///
+  /// In de, this message translates to:
+  /// **'Einfügen'**
+  String get ebikePlanChargingInsert;
 }
 
 class _AppLocalizationsDelegate

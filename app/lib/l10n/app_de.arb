@@ -753,5 +753,12 @@
   "ebikeRangeComfortable": "reicht locker",
   "ebikeRangeTight": "wird knapp",
   "ebikeRangeBarely": "sehr knapp",
-  "ebikeRangeOver": "Akku reicht nicht"
+  "ebikeRangeOver": "Akku reicht nicht",
+  "ebikePlanChargingStop": "Ladestopp planen",
+  "ebikePlanChargingSearching": "Suche Ladestation…",
+  "ebikePlanChargingNoneFound": "Keine Ladestation in Reichweite gefunden",
+  "ebikePlanChargingTitle": "Ladestopp vorgeschlagen",
+  "ebikePlanChargingDetails": "{km} km auf der Route, {m} m Umweg",
+  "@ebikePlanChargingDetails": { "placeholders": { "km": { "type": "String" }, "m": { "type": "int" } } },
+  "ebikePlanChargingInsert": "Einfügen"
 }

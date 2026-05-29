@@ -753,5 +753,12 @@
   "ebikeRangeComfortable": "comfortable",
   "ebikeRangeTight": "getting tight",
   "ebikeRangeBarely": "barely enough",
-  "ebikeRangeOver": "won't make it"
+  "ebikeRangeOver": "won't make it",
+  "ebikePlanChargingStop": "Plan charging stop",
+  "ebikePlanChargingSearching": "Searching for a charging station…",
+  "ebikePlanChargingNoneFound": "No charging station found in range",
+  "ebikePlanChargingTitle": "Charging stop suggestion",
+  "ebikePlanChargingDetails": "{km} km along the route, {m} m off-route",
+  "@ebikePlanChargingDetails": { "placeholders": { "km": { "type": "String" }, "m": { "type": "int" } } },
+  "ebikePlanChargingInsert": "Insert"
 }

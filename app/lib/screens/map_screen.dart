@@ -41,6 +41,7 @@ import '../services/profile_speed_prefs.dart';
 import '../services/hiking_prefs.dart';
 import '../services/routing_prefs.dart';
 import '../services/ebike_prefs.dart';
+import '../services/ebike_charging_planner.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_session_store.dart';
@@ -510,6 +511,9 @@ class _MapScreenState extends State<MapScreen> {
                       _profile == 'wegwiesel-running',
                   showSacBadge: _profile == 'hiking-beta',
                   showEbikeBadge: _profile == 'wegwiesel-ebike',
+                  onPlanChargingStop: _profile == 'wegwiesel-ebike'
+                      ? _planEbikeChargingStop
+                      : null,
                 ),
               if (_route != null && _showElevation)
                 ElevationChart(
@@ -4134,6 +4138,96 @@ class _MapScreenState extends State<MapScreen> {
     } else if (action == 'watch') {
       await _sendToWatch();
     }
+  }
+
+  /// Searches for a charging-station along the current route that
+  /// makes sense as a mid-ride top-up stop and, if one is found,
+  /// asks the user to confirm before inserting it as a via-point
+  /// and recomputing. Triggered from the over-budget E-bike badge.
+  Future<void> _planEbikeChargingStop() async {
+    final route = _route;
+    if (route == null) return;
+    final l = AppLocalizations.of(context);
+    // Loading toast — Overpass + the planner together take 2-5s.
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l.ebikePlanChargingSearching),
+        duration: const Duration(seconds: 8),
+      ),
+    );
+    RoutePoiHit? hit;
+    try {
+      hit = await EbikeChargingPlanner.suggestStop(route);
+    } catch (_) {
+      // POI service is best-effort — surface a generic miss.
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    if (hit == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.ebikePlanChargingNoneFound)),
+      );
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFf5e9d8),
+        title: Row(
+          children: [
+            const Icon(Icons.ev_station, color: Color(0xFF6a4a28)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(l.ebikePlanChargingTitle)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              hit!.name ?? l.poiCatCharging,
+              style: const TextStyle(
+                color: Color(0xFF6a4a28),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l.ebikePlanChargingDetails(
+                hit.routeKm.toStringAsFixed(1),
+                hit.sideMeters.round(),
+              ),
+              style: const TextStyle(color: Colors.black87, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF6a4a28),
+              foregroundColor: const Color(0xFFf5e9d8),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.ebikePlanChargingInsert),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    // Insert the station as a via-point at the correct order — the
+    // existing helper finds the right slot based on geometry.
+    final stop = LatLng(hit.lat, hit.lon);
+    _insertViaPoint(stop);
+    if (hit.name != null) {
+      _waypointNames[_wpKey(stop)] = hit.name!;
+    }
+    setState(() => _draggingWaypointIndex = null);
+    await _calculateRoute();
   }
 
   /// Pushes the current route to the paired Apple Watch as a JSON

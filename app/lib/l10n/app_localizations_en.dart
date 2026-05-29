@@ -2057,4 +2057,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ebikeRangeOver => 'won\'t make it';
+
+  @override
+  String get ebikePlanChargingStop => 'Plan charging stop';
+
+  @override
+  String get ebikePlanChargingSearching => 'Searching for a charging station…';
+
+  @override
+  String get ebikePlanChargingNoneFound => 'No charging station found in range';
+
+  @override
+  String get ebikePlanChargingTitle => 'Charging stop suggestion';
+
+  @override
+  String ebikePlanChargingDetails(String km, int m) {
+    return '$km km along the route, $m m off-route';
+  }
+
+  @override
+  String get ebikePlanChargingInsert => 'Insert';
 }

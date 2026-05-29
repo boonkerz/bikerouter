@@ -34,6 +34,10 @@ class StatsBar extends StatelessWidget {
   /// When true, render a pedelec battery-budget badge below the stats.
   /// Set by the map screen on E-bike profiles only.
   final bool showEbikeBadge;
+  /// Callback fired when the user taps the "plan charging stop"
+  /// button shown inside the over-budget e-bike badge. Map screen
+  /// kicks off the suggestion + waypoint insertion from here.
+  final VoidCallback? onPlanChargingStop;
 
   const StatsBar({
     super.key,
@@ -43,6 +47,7 @@ class StatsBar extends StatelessWidget {
     this.highlightAscent = false,
     this.showSacBadge = false,
     this.showEbikeBadge = false,
+    this.onPlanChargingStop,
   });
 
   @override
@@ -97,6 +102,7 @@ class StatsBar extends StatelessWidget {
                   ascentM: route.ascent.round(),
                 ),
                 capacityWh: EbikePrefs.capacityWh,
+                onPlanChargingStop: onPlanChargingStop,
               ),
             ),
           if (actions.isNotEmpty)
@@ -250,14 +256,22 @@ class _SacBadge extends StatelessWidget {
 class _EbikeBadge extends StatelessWidget {
   final int whNeeded;
   final int capacityWh;
+  final VoidCallback? onPlanChargingStop;
 
-  const _EbikeBadge({required this.whNeeded, required this.capacityWh});
+  const _EbikeBadge({
+    required this.whNeeded,
+    required this.capacityWh,
+    this.onPlanChargingStop,
+  });
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final pct = capacityWh > 0 ? (whNeeded * 100 / capacityWh).round() : 0;
     final color = _colorFor(pct);
+    // Only over-budget tours get the "Ladestopp planen" CTA — for
+    // anything under capacity it would be noise.
+    final showCta = pct >= 100 && onPlanChargingStop != null;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -265,43 +279,76 @@ class _EbikeBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_iconFor(pct), color: color, size: 18),
-          const SizedBox(width: 8),
-          Text(
-            '$whNeeded / $capacityWh Wh',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF6a4a28),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_iconFor(pct), color: color, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                '$whNeeded / $capacityWh Wh',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF6a4a28),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '$pct%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  _labelFor(l, pct),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF6a4a28)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color,
+          if (showCta) ...[
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: onPlanChargingStop,
               borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              '$pct%',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.ev_station, color: color, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      l.ebikePlanChargingStop,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              _labelFor(l, pct),
-              style: const TextStyle(fontSize: 11, color: Color(0xFF6a4a28)),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          ],
         ],
       ),
     );
