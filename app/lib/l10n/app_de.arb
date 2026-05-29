@@ -775,5 +775,6 @@
   "activityHiking": "Wandern",
   "activityRunning": "Laufen",
   "activityUltra": "Ultra",
-  "activityCar": "Auto"
+  "activityCar": "Auto",
+  "statsBarTapToExpand": "Tippen für Details"
 }

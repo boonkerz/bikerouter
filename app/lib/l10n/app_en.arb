@@ -775,5 +775,6 @@
   "activityHiking": "Hiking",
   "activityRunning": "Running",
   "activityUltra": "Ultra",
-  "activityCar": "Car"
+  "activityCar": "Car",
+  "statsBarTapToExpand": "Tap for details"
 }

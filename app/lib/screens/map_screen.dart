@@ -104,6 +104,11 @@ class _MapScreenState extends State<MapScreen> {
   int _rtDistanceKm = 20;
   int _rtDirection = 0;
   bool _showElevation = true;
+  // Peek mode collapses the whole bottom panel (stats + elevation) to a
+  // slim one-line summary so the map gets near-full-screen room. The
+  // user toggles it via the drag handle above the stats bar. Distinct
+  // from _showElevation, which only hides the chart.
+  bool _statsPeek = false;
   bool _showControls = false;
   int? _highlightIndex;
   LatLng? _currentPosition;
@@ -513,28 +518,7 @@ class _MapScreenState extends State<MapScreen> {
               ),),
               if (_showAlternativesBar)
                 _buildAlternativesBar(),
-              if (_route != null)
-                StatsBar(
-                  route: _route!,
-                  actions: _buildStatsActions(context),
-                  userSpeedKmh: ProfileSpeedPrefs.speedFor(_profile),
-                  highlightAscent: _profile == 'hiking-beta' ||
-                      _profile == 'wegwiesel-running',
-                  showSacBadge: _profile == 'hiking-beta',
-                  showEbikeBadge: _profile == 'wegwiesel-ebike',
-                  onPlanChargingStop: _profile == 'wegwiesel-ebike'
-                      ? _planEbikeChargingStop
-                      : null,
-                ),
-              if (_route != null && _showElevation)
-                ElevationChart(
-                  coordinates: _route!.coordinates,
-                  segments: _route!.segments,
-                  waypoints: [
-                    for (final wp in _waypoints) [wp.latitude, wp.longitude],
-                  ],
-                  onHover: (index) => setState(() => _highlightIndex = index),
-                ),
+              if (_route != null) _buildBottomPanel(context),
             ],
           ),
 
@@ -719,14 +703,7 @@ class _MapScreenState extends State<MapScreen> {
           // Action buttons
           Positioned(
             right: 12,
-            bottom: (_route != null
-                    ? (_showElevation
-                        ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
-                        : 94)
-                    : 0) +
-                (_showAlternativesBar ? 56 : 0) +
-                bottomPadding +
-                12,
+            bottom: _fabBottomOffset(bottomPadding),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -757,14 +734,7 @@ class _MapScreenState extends State<MapScreen> {
           // stats bar) and route actions sit visibly stacked above it.
           Positioned(
             left: 12,
-            bottom: (_route != null
-                    ? (_showElevation
-                        ? 254 + (_route!.segments.isNotEmpty ? 90 : 0)
-                        : 94)
-                    : 0) +
-                (_showAlternativesBar ? 56 : 0) +
-                bottomPadding +
-                12,
+            bottom: _fabBottomOffset(bottomPadding),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1107,6 +1077,155 @@ class _MapScreenState extends State<MapScreen> {
     final p = BikeProfile.byId(_profile);
     if (p == null) return _profile;
     return p.localizedName(AppLocalizations.of(context));
+  }
+
+  // --- Bottom-panel geometry (single source of truth) ---------------
+  // The drag handle, the stats bar, and the optional elevation chart
+  // make up the bottom panel. Both the panel itself and the floating
+  // FAB columns derive their vertical extent from these so a layout
+  // tweak only ever touches one place (the old code hard-coded 254 /
+  // 94 / 90 in three spots and drifted out of sync).
+  static const double _handleHeight = 22;
+  static const double _statsBarHeight = 94;
+  static const double _elevationHeight = 160;
+  static const double _surfaceLegendHeight = 90;
+  static const double _peekHeight = 40;
+
+  /// Height of the bottom panel (handle + content) for the current
+  /// route + toggle state. Zero when there's no route.
+  double _bottomPanelHeight() {
+    if (_route == null) return 0;
+    if (_statsPeek) return _handleHeight + _peekHeight;
+    var h = _handleHeight + _statsBarHeight;
+    if (_showElevation) {
+      h += _elevationHeight;
+      if (_route!.segments.isNotEmpty) h += _surfaceLegendHeight;
+    }
+    return h;
+  }
+
+  /// Vertical offset for the floating FAB columns so they always sit
+  /// just above the bottom panel + alternatives bar + safe-area.
+  double _fabBottomOffset(double bottomPadding) {
+    return _bottomPanelHeight() +
+        (_showAlternativesBar ? 56 : 0) +
+        bottomPadding +
+        12;
+  }
+
+  /// The collapsible bottom panel: a drag handle on top, then either a
+  /// one-line peek summary or the full stats bar + elevation chart.
+  Widget _buildBottomPanel(BuildContext context) {
+    final route = _route!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Drag handle — tap or vertical-drag toggles peek/expanded.
+        GestureDetector(
+          onTap: () => setState(() => _statsPeek = !_statsPeek),
+          onVerticalDragEnd: (d) {
+            final v = d.primaryVelocity ?? 0;
+            // Swipe down → peek, swipe up → expand.
+            if (v > 100 && !_statsPeek) {
+              setState(() => _statsPeek = true);
+            } else if (v < -100 && _statsPeek) {
+              setState(() => _statsPeek = false);
+            }
+          },
+          child: Container(
+            height: _handleHeight,
+            width: double.infinity,
+            color: const Color(0xFFf5e9d8),
+            alignment: Alignment.center,
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ),
+        if (_statsPeek)
+          _buildPeekSummary(context, route)
+        else ...[
+          StatsBar(
+            route: route,
+            actions: _buildStatsActions(context),
+            userSpeedKmh: ProfileSpeedPrefs.speedFor(_profile),
+            highlightAscent: _profile == 'hiking-beta' ||
+                _profile == 'wegwiesel-running',
+            showSacBadge: _profile == 'hiking-beta',
+            showEbikeBadge: _profile == 'wegwiesel-ebike',
+            onPlanChargingStop:
+                _profile == 'wegwiesel-ebike' ? _planEbikeChargingStop : null,
+          ),
+          if (_showElevation)
+            ElevationChart(
+              coordinates: route.coordinates,
+              segments: route.segments,
+              waypoints: [
+                for (final wp in _waypoints) [wp.latitude, wp.longitude],
+              ],
+              onHover: (index) => setState(() => _highlightIndex = index),
+            ),
+        ],
+      ],
+    );
+  }
+
+  /// Compact one-line summary shown when the panel is peeked — the
+  /// three numbers a rider glances at most (distance, ascent, time).
+  Widget _buildPeekSummary(BuildContext context, RouteResult route) {
+    final l = AppLocalizations.of(context);
+    final speed = ProfileSpeedPrefs.speedFor(_profile);
+    final seconds = speed > 0 ? (route.distance / speed) * 3600 : route.time;
+    final h = (seconds / 3600).floor();
+    final m = ((seconds % 3600) / 60).round();
+    final timeStr = h > 0 ? '${h}h ${m}min' : '$m min';
+    final distStr = route.distance < 10
+        ? '${route.distance.toStringAsFixed(1)} km'
+        : '${route.distance.round()} km';
+    return Container(
+      height: _peekHeight,
+      width: double.infinity,
+      color: const Color(0xFFf5e9d8),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _peekStat(Icons.straighten, distStr),
+          _peekStat(Icons.trending_up, '${route.ascent.round()} m'),
+          _peekStat(Icons.schedule, timeStr),
+          Text(
+            l.statsBarTapToExpand,
+            style: TextStyle(
+              color: Colors.black.withValues(alpha: 0.4),
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _peekStat(IconData icon, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF6a4a28)),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFF6a4a28),
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
   }
 
   void _showProfileSheet(BuildContext context) {

@@ -2122,4 +2122,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get activityCar => 'Auto';
+
+  @override
+  String get statsBarTapToExpand => 'Tippen für Details';
 }

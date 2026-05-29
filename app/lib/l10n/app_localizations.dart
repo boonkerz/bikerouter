@@ -4051,6 +4051,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Auto'**
   String get activityCar;
+
+  /// No description provided for @statsBarTapToExpand.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippen für Details'**
+  String get statsBarTapToExpand;
 }
 
 class _AppLocalizationsDelegate
