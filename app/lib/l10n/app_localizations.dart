@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Persönlich'**
   String get settingsSectionPersonal;
 
+  /// No description provided for @settingsSectionEnergy.
+  ///
+  /// In de, this message translates to:
+  /// **'Energie & Akku'**
+  String get settingsSectionEnergy;
+
   /// No description provided for @settingsSectionAbout.
   ///
   /// In de, this message translates to:
@@ -3961,6 +3967,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Einfügen'**
   String get ebikePlanChargingInsert;
+
+  /// No description provided for @newPill.
+  ///
+  /// In de, this message translates to:
+  /// **'NEU'**
+  String get newPill;
 }
 
 class _AppLocalizationsDelegate

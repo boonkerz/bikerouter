@@ -42,6 +42,8 @@ import '../services/hiking_prefs.dart';
 import '../services/routing_prefs.dart';
 import '../services/ebike_prefs.dart';
 import '../services/ebike_charging_planner.dart';
+import '../services/new_feature_prefs.dart';
+import '../widgets/new_pill.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_session_store.dart';
@@ -178,6 +180,9 @@ class _MapScreenState extends State<MapScreen> {
     HikingPrefs.load();
     RoutingPrefs.load();
     EbikePrefs.load();
+    NewFeaturePrefs.load().then((_) {
+      if (mounted) setState(() {});
+    });
     BikepackingPrefs.load();
     _recoverOrphanRide();
     GarminConnect.isAvailable().then((v) {
@@ -584,6 +589,7 @@ class _MapScreenState extends State<MapScreen> {
                 // the effect of the new settings.
                 GestureDetector(
                   onTap: () async {
+                    NewFeaturePrefs.markSeen(NewFeature.routingOptionsDialog);
                     final changed = await ProfileSelector.showOptionsDialog(
                         context, _profile);
                     if (!mounted) return;
@@ -598,13 +604,25 @@ class _MapScreenState extends State<MapScreen> {
                       _calculateRoute();
                     }
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.tune, color: Color(0xFF6a4a28), size: 20),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.tune,
+                            color: Color(0xFF6a4a28), size: 20),
+                      ),
+                      const Positioned(
+                        top: -4,
+                        right: -4,
+                        child: NewPill(
+                            feature: NewFeature.routingOptionsDialog),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -4117,7 +4135,13 @@ class _MapScreenState extends State<MapScreen> {
             if (_route != null && Platform.isIOS)
               ListTile(
                 leading: const Icon(Icons.watch),
-                title: Text(l.shareToWatch),
+                title: Row(
+                  children: [
+                    Text(l.shareToWatch),
+                    const SizedBox(width: 6),
+                    const NewPill(feature: NewFeature.watchSend),
+                  ],
+                ),
                 subtitle: Text(l.shareToWatchSubtitle),
                 onTap: () => Navigator.pop(ctx, 'watch'),
               ),
@@ -4147,6 +4171,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _planEbikeChargingStop() async {
     final route = _route;
     if (route == null) return;
+    NewFeaturePrefs.markSeen(NewFeature.ebikeChargingPlanner);
     final l = AppLocalizations.of(context);
     // Loading toast — Overpass + the planner together take 2-5s.
     ScaffoldMessenger.of(context).showSnackBar(
@@ -4237,6 +4262,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _sendToWatch() async {
     final route = _route;
     if (route == null || _waypoints.isEmpty) return;
+    NewFeaturePrefs.markSeen(NewFeature.watchSend);
     final l = AppLocalizations.of(context);
     final name = _waypointNames[_wpKey(_waypoints.last)] ??
         '${_waypoints.first.latitude.toStringAsFixed(3)},'

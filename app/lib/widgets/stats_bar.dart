@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/route_result.dart';
 import '../services/ebike_prefs.dart';
+import '../services/new_feature_prefs.dart';
+import 'new_pill.dart';
 
 class StatsAction {
   final IconData icon;
@@ -272,6 +274,9 @@ class _EbikeBadge extends StatelessWidget {
     // Only over-budget tours get the "Ladestopp planen" CTA — for
     // anything under capacity it would be noise.
     final showCta = pct >= 100 && onPlanChargingStop != null;
+    // Seeing the badge once counts as "discovered" — no need for a
+    // pill on top of the badge itself, the colour does the work.
+    NewFeaturePrefs.markSeen(NewFeature.ebikeBatteryBadge);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -344,6 +349,8 @@ class _EbikeBadge extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(width: 6),
+                    const NewPill(feature: NewFeature.ebikeChargingPlanner),
                   ],
                 ),
               ),

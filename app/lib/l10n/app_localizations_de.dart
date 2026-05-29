@@ -69,6 +69,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsSectionPersonal => 'Persönlich';
 
   @override
+  String get settingsSectionEnergy => 'Energie & Akku';
+
+  @override
   String get settingsSectionAbout => 'Über';
 
   @override
@@ -2077,4 +2080,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get ebikePlanChargingInsert => 'Einfügen';
+
+  @override
+  String get newPill => 'NEU';
 }

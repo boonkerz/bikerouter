@@ -5,7 +5,9 @@ import '../l10n/app_localizations.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/body_weight_prefs.dart';
 import '../services/ebike_prefs.dart';
+import '../services/new_feature_prefs.dart';
 import '../widgets/battery_budget_dialog.dart';
+import '../widgets/new_pill.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -155,48 +157,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          _sectionHeader(l.settingsSectionLegal),
-          _tile(
-            icon: Icons.info_outline,
-            title: l.settingsImpressum,
-            onTap: () => _openUrl(_impressumUrl),
-          ),
-          _tile(
-            icon: Icons.privacy_tip_outlined,
-            title: l.settingsPrivacy,
-            onTap: () => _openUrl(_datenschutzUrl),
-          ),
-          _sectionHeader(l.settingsSectionFeedback),
-          _tile(
-            icon: Icons.lightbulb_outline,
-            title: l.settingsFeedbackForm,
-            subtitle: l.settingsFeedbackFormSub,
-            onTap: () => _openUrl(_feedbackUrl),
-          ),
-          _tile(
-            icon: Icons.mail_outline,
-            title: l.settingsContactMail,
-            subtitle: _supportEmail,
-            onTap: _openMail,
-          ),
+          // Reordered for v2.4 — tour-relevant settings first
+          // (people open this screen mostly to tweak their tour,
+          // not to read the imprint), legal + about move to the
+          // bottom.
           _sectionHeader(l.settingsSectionPersonal),
           _tile(
             icon: Icons.monitor_weight_outlined,
             title: l.settingsBodyWeight,
             subtitle: '$_weightKg kg',
             onTap: _editWeight,
-          ),
-          _tile(
-            icon: Icons.battery_charging_full,
-            title: l.settingsBatteryBudget,
-            subtitle: l.settingsBatteryBudgetSub,
-            onTap: () => showBatteryBudgetDialog(context),
-          ),
-          _tile(
-            icon: Icons.electric_bike,
-            title: l.settingsEbikeCapacity,
-            subtitle: '$_ebikeCapacityWh Wh',
-            onTap: _editEbikeCapacity,
           ),
           SwitchListTile(
             secondary: const Icon(Icons.local_florist_outlined, color: Color(0xFF6a4a28)),
@@ -214,6 +184,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await BikepackingPrefs.markWildCampDisclaimerSeen();
               }
             },
+          ),
+          _sectionHeader(l.settingsSectionEnergy),
+          _tile(
+            icon: Icons.battery_charging_full,
+            title: l.settingsBatteryBudget,
+            subtitle: l.settingsBatteryBudgetSub,
+            onTap: () => showBatteryBudgetDialog(context),
+            newFeature: NewFeature.batteryBudgetPhone,
+          ),
+          _tile(
+            icon: Icons.electric_bike,
+            title: l.settingsEbikeCapacity,
+            subtitle: '$_ebikeCapacityWh Wh',
+            onTap: _editEbikeCapacity,
+            newFeature: NewFeature.ebikeBatteryBadge,
+          ),
+          _sectionHeader(l.settingsSectionFeedback),
+          _tile(
+            icon: Icons.lightbulb_outline,
+            title: l.settingsFeedbackForm,
+            subtitle: l.settingsFeedbackFormSub,
+            onTap: () => _openUrl(_feedbackUrl),
+          ),
+          _tile(
+            icon: Icons.mail_outline,
+            title: l.settingsContactMail,
+            subtitle: _supportEmail,
+            onTap: _openMail,
+          ),
+          _sectionHeader(l.settingsSectionLegal),
+          _tile(
+            icon: Icons.info_outline,
+            title: l.settingsImpressum,
+            onTap: () => _openUrl(_impressumUrl),
+          ),
+          _tile(
+            icon: Icons.privacy_tip_outlined,
+            title: l.settingsPrivacy,
+            onTap: () => _openUrl(_datenschutzUrl),
           ),
           _sectionHeader(l.settingsSectionAbout),
           FutureBuilder<PackageInfo>(
@@ -279,17 +288,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     String? subtitle,
     VoidCallback? onTap,
+    NewFeature? newFeature,
   }) {
+    final showPill = newFeature != null && NewFeaturePrefs.isFresh(newFeature);
     return ListTile(
       leading: Icon(icon, color: const Color(0xFF6a4a28)),
-      title: Text(title, style: const TextStyle(color: Colors.black87)),
+      title: showPill
+          ? Row(
+              children: [
+                Text(title,
+                    style: const TextStyle(color: Colors.black87)),
+                const SizedBox(width: 6),
+                NewPill(feature: newFeature),
+              ],
+            )
+          : Text(title, style: const TextStyle(color: Colors.black87)),
       subtitle: subtitle != null
           ? Text(subtitle, style: const TextStyle(color: Colors.black54, fontSize: 12))
           : null,
       trailing: onTap != null
           ? const Icon(Icons.chevron_right, color: Colors.black38)
           : null,
-      onTap: onTap,
+      onTap: onTap != null
+          ? () {
+              if (newFeature != null) {
+                NewFeaturePrefs.markSeen(newFeature);
+              }
+              onTap();
+            }
+          : null,
     );
   }
 }

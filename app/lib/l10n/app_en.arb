@@ -21,6 +21,7 @@
   "settingsSectionLegal": "Legal",
   "settingsSectionFeedback": "Feedback",
   "settingsSectionPersonal": "Personal",
+  "settingsSectionEnergy": "Energy & Battery",
   "settingsSectionAbout": "About",
   "settingsBodyWeight": "Body weight",
   "settingsBodyWeightEdit": "Set body weight",
@@ -760,5 +761,6 @@
   "ebikePlanChargingTitle": "Charging stop suggestion",
   "ebikePlanChargingDetails": "{km} km along the route, {m} m off-route",
   "@ebikePlanChargingDetails": { "placeholders": { "km": { "type": "String" }, "m": { "type": "int" } } },
-  "ebikePlanChargingInsert": "Insert"
+  "ebikePlanChargingInsert": "Insert",
+  "newPill": "NEW"
 }
