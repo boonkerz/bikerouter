@@ -762,5 +762,18 @@
   "ebikePlanChargingDetails": "{km} km auf der Route, {m} m Umweg",
   "@ebikePlanChargingDetails": { "placeholders": { "km": { "type": "String" }, "m": { "type": "int" } } },
   "ebikePlanChargingInsert": "Einfügen",
-  "newPill": "NEU"
+  "newPill": "NEU",
+  "activityPickerTitle": "Was machst du heute?",
+  "activityPickerAdvanced": "Erweitert (alle Profile)",
+  "activityTour": "Tour",
+  "activityCommute": "Pendeln",
+  "activityRoad": "Rennrad",
+  "activityGravel": "Gravel",
+  "activityMtb": "MTB",
+  "activityEbike": "E-Bike",
+  "activityBikepacking": "Bikepacking",
+  "activityHiking": "Wandern",
+  "activityRunning": "Laufen",
+  "activityUltra": "Ultra",
+  "activityCar": "Auto"
 }

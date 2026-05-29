@@ -43,7 +43,10 @@ import '../services/routing_prefs.dart';
 import '../services/ebike_prefs.dart';
 import '../services/ebike_charging_planner.dart';
 import '../services/new_feature_prefs.dart';
+import '../services/activity_service.dart';
+import '../models/activity.dart';
 import '../widgets/new_pill.dart';
+import '../widgets/activity_picker.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_session_store.dart';
@@ -180,6 +183,9 @@ class _MapScreenState extends State<MapScreen> {
     HikingPrefs.load();
     RoutingPrefs.load();
     EbikePrefs.load();
+    ActivityService.load().then((_) {
+      if (mounted) setState(() {});
+    });
     NewFeaturePrefs.load().then((_) {
       if (mounted) setState(() {});
     });
@@ -558,7 +564,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _showProfileSheet(context),
+                    onTap: () => _showActivityPicker(context),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -567,15 +573,31 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       child: Row(
                         children: [
+                          if (_activityIcon() != null) ...[
+                            Text(_activityIcon()!,
+                                style: const TextStyle(fontSize: 15)),
+                            const SizedBox(width: 6),
+                          ],
                           Expanded(
                             child: Text(
-                              _profileLabel(context),
+                              _activityOrProfileLabel(context),
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(color: Color(0xFF6a4a28), fontSize: 13, fontWeight: FontWeight.w600),
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.expand_more, color: Color(0xFF6a4a28), size: 18),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              const Icon(Icons.expand_more,
+                                  color: Color(0xFF6a4a28), size: 18),
+                              const Positioned(
+                                top: -6,
+                                right: -6,
+                                child: NewPill(feature: NewFeature.activityPicker),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -1092,6 +1114,51 @@ class _MapScreenState extends State<MapScreen> {
       selectedProfile: _profile,
       onChanged: _setProfile,
     ).showSheet(context);
+  }
+
+  /// Primary front door: the activity picker. Selecting an activity
+  /// applies its profile + routing-flag + bikepacking bundle and
+  /// reroutes. "Erweitert" inside the picker falls through to the raw
+  /// profile sheet for power users.
+  Future<void> _showActivityPicker(BuildContext context) async {
+    NewFeaturePrefs.markSeen(NewFeature.activityPicker);
+    final chosen = await showActivityPicker(
+      context,
+      currentProfileId: _profile,
+      onAdvanced: () => _showProfileSheet(context),
+    );
+    if (chosen == null || !mounted) return;
+    final profileId = await ActivityService.apply(chosen);
+    // _setProfile owns the profile-string state + reroute; the prefs
+    // (flags, bikepacking) were already written by ActivityService.
+    _setProfile(profileId);
+    if (mounted) setState(() {});
+  }
+
+  /// Label for the top-bar pill — prefers the friendly activity name
+  /// when the current profile maps to one, falling back to the raw
+  /// profile name (e.g. after loading a saved route on an exotic
+  /// profile with no activity).
+  String _activityOrProfileLabel(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final lastId = ActivityService.lastActivityId;
+    if (lastId != null) {
+      final a = Activity.byId(lastId);
+      if (a != null && a.profileId == _profile) return a.localizedName(l);
+    }
+    final a = Activity.forProfile(_profile);
+    if (a != null) return a.localizedName(l);
+    return _profileLabel(context);
+  }
+
+  /// Icon for the top-bar pill — the activity emoji when available.
+  String? _activityIcon() {
+    final lastId = ActivityService.lastActivityId;
+    if (lastId != null) {
+      final a = Activity.byId(lastId);
+      if (a != null && a.profileId == _profile) return a.icon;
+    }
+    return Activity.forProfile(_profile)?.icon;
   }
 
   void _showMapStyleSheet(BuildContext context) {

@@ -3973,6 +3973,84 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'NEU'**
   String get newPill;
+
+  /// No description provided for @activityPickerTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Was machst du heute?'**
+  String get activityPickerTitle;
+
+  /// No description provided for @activityPickerAdvanced.
+  ///
+  /// In de, this message translates to:
+  /// **'Erweitert (alle Profile)'**
+  String get activityPickerAdvanced;
+
+  /// No description provided for @activityTour.
+  ///
+  /// In de, this message translates to:
+  /// **'Tour'**
+  String get activityTour;
+
+  /// No description provided for @activityCommute.
+  ///
+  /// In de, this message translates to:
+  /// **'Pendeln'**
+  String get activityCommute;
+
+  /// No description provided for @activityRoad.
+  ///
+  /// In de, this message translates to:
+  /// **'Rennrad'**
+  String get activityRoad;
+
+  /// No description provided for @activityGravel.
+  ///
+  /// In de, this message translates to:
+  /// **'Gravel'**
+  String get activityGravel;
+
+  /// No description provided for @activityMtb.
+  ///
+  /// In de, this message translates to:
+  /// **'MTB'**
+  String get activityMtb;
+
+  /// No description provided for @activityEbike.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Bike'**
+  String get activityEbike;
+
+  /// No description provided for @activityBikepacking.
+  ///
+  /// In de, this message translates to:
+  /// **'Bikepacking'**
+  String get activityBikepacking;
+
+  /// No description provided for @activityHiking.
+  ///
+  /// In de, this message translates to:
+  /// **'Wandern'**
+  String get activityHiking;
+
+  /// No description provided for @activityRunning.
+  ///
+  /// In de, this message translates to:
+  /// **'Laufen'**
+  String get activityRunning;
+
+  /// No description provided for @activityUltra.
+  ///
+  /// In de, this message translates to:
+  /// **'Ultra'**
+  String get activityUltra;
+
+  /// No description provided for @activityCar.
+  ///
+  /// In de, this message translates to:
+  /// **'Auto'**
+  String get activityCar;
 }
 
 class _AppLocalizationsDelegate

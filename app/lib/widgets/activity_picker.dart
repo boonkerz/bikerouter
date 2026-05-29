@@ -1,0 +1,135 @@
+import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
+import '../models/activity.dart';
+
+/// "Was machst du heute?" grid picker. Replaces the bare BRouter-
+/// profile list as the primary front door — each tile is an everyday
+/// activity, not a routing-engine profile name. Power users still
+/// reach raw profiles + flags through the tune button.
+///
+/// Returns the chosen [Activity] via the sheet's pop value, or null
+/// if dismissed. The caller is responsible for applying it (profile +
+/// prefs) and the "advanced" escape hatch into the raw profile sheet.
+Future<Activity?> showActivityPicker(
+  BuildContext context, {
+  required String currentProfileId,
+  required VoidCallback onAdvanced,
+}) {
+  return showModalBottomSheet<Activity>(
+    context: context,
+    backgroundColor: const Color(0xFFf5e9d8),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) {
+      final l = AppLocalizations.of(ctx);
+      final active = Activity.forProfile(currentProfileId);
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Text(
+                  l.activityPickerTitle,
+                  style: const TextStyle(
+                    color: Color(0xFF2a2014),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.0,
+                children: [
+                  for (final a in activities)
+                    _ActivityTile(
+                      activity: a,
+                      selected: a.id == active?.id,
+                      label: a.localizedName(l),
+                      onTap: () => Navigator.of(ctx).pop(a),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    onAdvanced();
+                  },
+                  icon: const Icon(Icons.tune,
+                      size: 18, color: Color(0xFF6a4a28)),
+                  label: Text(
+                    l.activityPickerAdvanced,
+                    style: const TextStyle(color: Color(0xFF6a4a28)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _ActivityTile extends StatelessWidget {
+  final Activity activity;
+  final bool selected;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActivityTile({
+    required this.activity,
+    required this.selected,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? const Color(0xFF6a4a28)
+          : const Color(0xFF6a4a28).withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(activity.icon, style: const TextStyle(fontSize: 28)),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected
+                      ? const Color(0xFFf5e9d8)
+                      : const Color(0xFF6a4a28),
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

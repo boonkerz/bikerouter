@@ -2083,4 +2083,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newPill => 'NEW';
+
+  @override
+  String get activityPickerTitle => 'What are you doing today?';
+
+  @override
+  String get activityPickerAdvanced => 'Advanced (all profiles)';
+
+  @override
+  String get activityTour => 'Tour';
+
+  @override
+  String get activityCommute => 'Commute';
+
+  @override
+  String get activityRoad => 'Road bike';
+
+  @override
+  String get activityGravel => 'Gravel';
+
+  @override
+  String get activityMtb => 'MTB';
+
+  @override
+  String get activityEbike => 'E-bike';
+
+  @override
+  String get activityBikepacking => 'Bikepacking';
+
+  @override
+  String get activityHiking => 'Hiking';
+
+  @override
+  String get activityRunning => 'Running';
+
+  @override
+  String get activityUltra => 'Ultra';
+
+  @override
+  String get activityCar => 'Car';
 }

@@ -12,7 +12,8 @@ enum NewFeature {
   watchSend('watch_send_v1'),
   batteryBudgetPhone('battery_budget_phone_v1'),
   myRoutesOverlay('my_routes_overlay_v1'),
-  resupplyOpenNow('resupply_open_now_v1');
+  resupplyOpenNow('resupply_open_now_v1'),
+  activityPicker('activity_picker_v1');
 
   const NewFeature(this.key);
   final String key;
