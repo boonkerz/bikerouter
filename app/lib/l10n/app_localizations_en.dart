@@ -2039,4 +2039,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareToWatchFailed => 'Watch not reachable';
+
+  @override
+  String get settingsEbikeCapacity => 'E-bike battery';
+
+  @override
+  String get settingsEbikeCapacityEdit => 'Battery capacity';
+
+  @override
+  String get ebikeRangeComfortable => 'comfortable';
+
+  @override
+  String get ebikeRangeTight => 'getting tight';
+
+  @override
+  String get ebikeRangeBarely => 'barely enough';
+
+  @override
+  String get ebikeRangeOver => 'won\'t make it';
 }

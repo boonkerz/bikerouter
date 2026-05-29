@@ -747,5 +747,11 @@
   "shareToWatch": "Send to Watch",
   "shareToWatchSubtitle": "Push the route to your Apple Watch",
   "shareToWatchQueued": "Route sent to Watch",
-  "shareToWatchFailed": "Watch not reachable"
+  "shareToWatchFailed": "Watch not reachable",
+  "settingsEbikeCapacity": "E-bike battery",
+  "settingsEbikeCapacityEdit": "Battery capacity",
+  "ebikeRangeComfortable": "comfortable",
+  "ebikeRangeTight": "getting tight",
+  "ebikeRangeBarely": "barely enough",
+  "ebikeRangeOver": "won't make it"
 }

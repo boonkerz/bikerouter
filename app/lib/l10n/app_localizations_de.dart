@@ -2038,4 +2038,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shareToWatchFailed => 'Watch nicht erreichbar';
+
+  @override
+  String get settingsEbikeCapacity => 'E-Bike-Akku';
+
+  @override
+  String get settingsEbikeCapacityEdit => 'Akkukapazität';
+
+  @override
+  String get ebikeRangeComfortable => 'reicht locker';
+
+  @override
+  String get ebikeRangeTight => 'wird knapp';
+
+  @override
+  String get ebikeRangeBarely => 'sehr knapp';
+
+  @override
+  String get ebikeRangeOver => 'Akku reicht nicht';
 }

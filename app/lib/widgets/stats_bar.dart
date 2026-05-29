@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/route_result.dart';
+import '../services/ebike_prefs.dart';
 
 class StatsAction {
   final IconData icon;
@@ -30,6 +31,9 @@ class StatsBar extends StatelessWidget {
   /// When true, render a SAC-difficulty badge below the stats if the route
   /// touches any SAC-tagged segment. Set on hiking profiles only.
   final bool showSacBadge;
+  /// When true, render a pedelec battery-budget badge below the stats.
+  /// Set by the map screen on E-bike profiles only.
+  final bool showEbikeBadge;
 
   const StatsBar({
     super.key,
@@ -38,6 +42,7 @@ class StatsBar extends StatelessWidget {
     this.userSpeedKmh,
     this.highlightAscent = false,
     this.showSacBadge = false,
+    this.showEbikeBadge = false,
   });
 
   @override
@@ -82,6 +87,17 @@ class StatsBar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: _SacBadge(level: sacLevel),
+            ),
+          if (showEbikeBadge)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: _EbikeBadge(
+                whNeeded: EbikePrefs.estimateWhForRoute(
+                  distanceKm: route.distance,
+                  ascentM: route.ascent.round(),
+                ),
+                capacityWh: EbikePrefs.capacityWh,
+              ),
             ),
           if (actions.isNotEmpty)
             Container(
@@ -225,6 +241,91 @@ class _SacBadge extends StatelessWidget {
         return l.sacT6;
     }
     return '';
+  }
+}
+
+/// Pedelec battery-budget badge. Shows the route's estimated Wh draw
+/// versus the user's pack capacity, with a colour band that flips to
+/// orange/red when the tour exceeds 90% of the pack.
+class _EbikeBadge extends StatelessWidget {
+  final int whNeeded;
+  final int capacityWh;
+
+  const _EbikeBadge({required this.whNeeded, required this.capacityWh});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final pct = capacityWh > 0 ? (whNeeded * 100 / capacityWh).round() : 0;
+    final color = _colorFor(pct);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_iconFor(pct), color: color, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            '$whNeeded / $capacityWh Wh',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6a4a28),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '$pct%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              _labelFor(l, pct),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF6a4a28)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _colorFor(int pct) {
+    if (pct < 70) return const Color(0xFF66bb6a); // green — comfortable
+    if (pct < 90) return const Color(0xFFffa726); // amber — tight
+    if (pct < 100) return const Color(0xFFef6c00); // dark amber — barely
+    return const Color(0xFFc62828); // red — over-budget
+  }
+
+  IconData _iconFor(int pct) {
+    if (pct < 70) return Icons.battery_full;
+    if (pct < 90) return Icons.battery_5_bar;
+    if (pct < 100) return Icons.battery_3_bar;
+    return Icons.battery_alert;
+  }
+
+  String _labelFor(AppLocalizations l, int pct) {
+    if (pct < 70) return l.ebikeRangeComfortable;
+    if (pct < 90) return l.ebikeRangeTight;
+    if (pct < 100) return l.ebikeRangeBarely;
+    return l.ebikeRangeOver;
   }
 }
 

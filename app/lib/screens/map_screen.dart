@@ -40,6 +40,7 @@ import '../services/nogo_storage.dart';
 import '../services/profile_speed_prefs.dart';
 import '../services/hiking_prefs.dart';
 import '../services/routing_prefs.dart';
+import '../services/ebike_prefs.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/ride_recorder.dart';
 import '../services/ride_session_store.dart';
@@ -175,6 +176,7 @@ class _MapScreenState extends State<MapScreen> {
     ProfileSpeedPrefs.load();
     HikingPrefs.load();
     RoutingPrefs.load();
+    EbikePrefs.load();
     BikepackingPrefs.load();
     _recoverOrphanRide();
     GarminConnect.isAvailable().then((v) {
@@ -507,6 +509,7 @@ class _MapScreenState extends State<MapScreen> {
                   highlightAscent: _profile == 'hiking-beta' ||
                       _profile == 'wegwiesel-running',
                   showSacBadge: _profile == 'hiking-beta',
+                  showEbikeBadge: _profile == 'wegwiesel-ebike',
                 ),
               if (_route != null && _showElevation)
                 ElevationChart(

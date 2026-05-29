@@ -3889,6 +3889,42 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Watch nicht erreichbar'**
   String get shareToWatchFailed;
+
+  /// No description provided for @settingsEbikeCapacity.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Bike-Akku'**
+  String get settingsEbikeCapacity;
+
+  /// No description provided for @settingsEbikeCapacityEdit.
+  ///
+  /// In de, this message translates to:
+  /// **'Akkukapazität'**
+  String get settingsEbikeCapacityEdit;
+
+  /// No description provided for @ebikeRangeComfortable.
+  ///
+  /// In de, this message translates to:
+  /// **'reicht locker'**
+  String get ebikeRangeComfortable;
+
+  /// No description provided for @ebikeRangeTight.
+  ///
+  /// In de, this message translates to:
+  /// **'wird knapp'**
+  String get ebikeRangeTight;
+
+  /// No description provided for @ebikeRangeBarely.
+  ///
+  /// In de, this message translates to:
+  /// **'sehr knapp'**
+  String get ebikeRangeBarely;
+
+  /// No description provided for @ebikeRangeOver.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku reicht nicht'**
+  String get ebikeRangeOver;
 }
 
 class _AppLocalizationsDelegate

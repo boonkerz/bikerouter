@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/body_weight_prefs.dart';
+import '../services/ebike_prefs.dart';
 import '../widgets/battery_budget_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   int _weightKg = BodyWeightPrefs.defaultKg;
   bool _bikepacking = BikepackingPrefs.active;
+  int _ebikeCapacityWh = EbikePrefs.capacityWh;
 
   @override
   void initState() {
@@ -23,6 +25,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BodyWeightPrefs.get().then((kg) {
       if (mounted) setState(() => _weightKg = kg);
     });
+  }
+
+  Future<void> _editEbikeCapacity() async {
+    final l = AppLocalizations.of(context);
+    final ctrl = TextEditingController(text: _ebikeCapacityWh.toString());
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.settingsEbikeCapacityEdit),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(suffix: Text('Wh')),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l.urlImportCancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              // 100..2000 Wh is the realistic pedelec range (small
+              // city bike up to a long-travel e-MTB with a dual battery).
+              final v = int.tryParse(ctrl.text.trim());
+              if (v != null && v >= 100 && v <= 2000) Navigator.of(ctx).pop(v);
+            },
+            child: Text(l.recordingSave),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      await EbikePrefs.setCapacityWh(result);
+      if (mounted) setState(() => _ebikeCapacityWh = result);
+    }
   }
 
   Future<void> _editWeight() async {
@@ -153,6 +191,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: l.settingsBatteryBudget,
             subtitle: l.settingsBatteryBudgetSub,
             onTap: () => showBatteryBudgetDialog(context),
+          ),
+          _tile(
+            icon: Icons.electric_bike,
+            title: l.settingsEbikeCapacity,
+            subtitle: '$_ebikeCapacityWh Wh',
+            onTap: _editEbikeCapacity,
           ),
           SwitchListTile(
             secondary: const Icon(Icons.local_florist_outlined, color: Color(0xFF6a4a28)),
