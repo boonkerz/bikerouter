@@ -36,6 +36,15 @@ class StatsBar extends StatelessWidget {
   /// When true, render a pedelec battery-budget badge below the stats.
   /// Set by the map screen on E-bike profiles only.
   final bool showEbikeBadge;
+  /// Wh the relevant leg of the route draws — whole tour when there
+  /// are no charging stops, otherwise the worst single leg between
+  /// charges. Computed by the map screen so the badge reflects an
+  /// inserted charging stop immediately. Ignored unless
+  /// [showEbikeBadge] is set.
+  final int ebikeWhNeeded;
+  /// True when the route already contains at least one charging stop,
+  /// so the badge can say "längste Etappe" instead of "Tour".
+  final bool ebikeHasChargingStops;
   /// Callback fired when the user taps the "plan charging stop"
   /// button shown inside the over-budget e-bike badge. Map screen
   /// kicks off the suggestion + waypoint insertion from here.
@@ -49,6 +58,8 @@ class StatsBar extends StatelessWidget {
     this.highlightAscent = false,
     this.showSacBadge = false,
     this.showEbikeBadge = false,
+    this.ebikeWhNeeded = 0,
+    this.ebikeHasChargingStops = false,
     this.onPlanChargingStop,
   });
 
@@ -99,11 +110,9 @@ class StatsBar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: _EbikeBadge(
-                whNeeded: EbikePrefs.estimateWhForRoute(
-                  distanceKm: route.distance,
-                  ascentM: route.ascent.round(),
-                ),
+                whNeeded: ebikeWhNeeded,
                 capacityWh: EbikePrefs.capacityWh,
+                hasChargingStops: ebikeHasChargingStops,
                 onPlanChargingStop: onPlanChargingStop,
               ),
             ),
@@ -258,11 +267,13 @@ class _SacBadge extends StatelessWidget {
 class _EbikeBadge extends StatelessWidget {
   final int whNeeded;
   final int capacityWh;
+  final bool hasChargingStops;
   final VoidCallback? onPlanChargingStop;
 
   const _EbikeBadge({
     required this.whNeeded,
     required this.capacityWh,
+    this.hasChargingStops = false,
     this.onPlanChargingStop,
   });
 
@@ -272,7 +283,8 @@ class _EbikeBadge extends StatelessWidget {
     final pct = capacityWh > 0 ? (whNeeded * 100 / capacityWh).round() : 0;
     final color = _colorFor(pct);
     // Only over-budget tours get the "Ladestopp planen" CTA — for
-    // anything under capacity it would be noise.
+    // anything under capacity it would be noise. Once stops exist and
+    // every leg fits, there's nothing left to plan.
     final showCta = pct >= 100 && onPlanChargingStop != null;
     // Seeing the badge once counts as "discovered" — no need for a
     // pill on top of the badge itself, the colour does the work.
@@ -294,7 +306,9 @@ class _EbikeBadge extends StatelessWidget {
               Icon(_iconFor(pct), color: color, size: 18),
               const SizedBox(width: 8),
               Text(
-                '$whNeeded / $capacityWh Wh',
+                hasChargingStops
+                    ? '${l.ebikeWorstLeg}: $whNeeded / $capacityWh Wh'
+                    : '$whNeeded / $capacityWh Wh',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,

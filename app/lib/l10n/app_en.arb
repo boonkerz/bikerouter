@@ -776,5 +776,10 @@
   "activityRunning": "Running",
   "activityUltra": "Ultra",
   "activityCar": "Car",
-  "statsBarTapToExpand": "Tap for details"
+  "statsBarTapToExpand": "Tap for details",
+  "ebikeWorstLeg": "Longest leg",
+  "ebikePlanChargingOneStop": "1 charging stop suggested",
+  "ebikePlanChargingManyStops": "{n} charging stops suggested",
+  "@ebikePlanChargingManyStops": { "placeholders": { "n": { "type": "int" } } },
+  "ebikePlanChargingIncomplete": "Heads up: one leg has no reachable charging station — the battery still won't last everywhere."
 }

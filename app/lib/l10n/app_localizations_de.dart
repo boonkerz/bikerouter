@@ -2125,4 +2125,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get statsBarTapToExpand => 'Tippen für Details';
+
+  @override
+  String get ebikeWorstLeg => 'Längste Etappe';
+
+  @override
+  String get ebikePlanChargingOneStop => '1 Ladestopp vorgeschlagen';
+
+  @override
+  String ebikePlanChargingManyStops(int n) {
+    return '$n Ladestopps vorgeschlagen';
+  }
+
+  @override
+  String get ebikePlanChargingIncomplete =>
+      'Achtung: Auf einer Etappe gibt es keine erreichbare Ladestation — der Akku reicht trotzdem nicht überall.';
 }

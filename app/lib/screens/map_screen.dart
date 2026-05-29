@@ -135,6 +135,10 @@ class _MapScreenState extends State<MapScreen> {
   // turned off so cold-start memory stays unaffected.
   List<List<LatLng>> _myRoutesTracks = const [];
   bool _myRoutesLoading = false;
+  // Waypoint keys (see _wpKey) that are e-bike charging stops, so the
+  // battery badge can compute per-leg energy and the planner doesn't
+  // re-suggest an existing stop. Cleared with the route.
+  final Set<String> _chargingStopKeys = {};
   bool _routeInspectMode = false;
   bool _loadingRouteInfo = false;
   RoundtripRequest? _lastRoundtripRequest;
@@ -1158,6 +1162,8 @@ class _MapScreenState extends State<MapScreen> {
                 _profile == 'wegwiesel-running',
             showSacBadge: _profile == 'hiking-beta',
             showEbikeBadge: _profile == 'wegwiesel-ebike',
+            ebikeWhNeeded: _ebikeWhNeeded(route),
+            ebikeHasChargingStops: _chargingStopLatLngs().isNotEmpty,
             onPlanChargingStop:
                 _profile == 'wegwiesel-ebike' ? _planEbikeChargingStop : null,
           ),
@@ -4350,9 +4356,35 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// Searches for a charging-station along the current route that
-  /// makes sense as a mid-ride top-up stop and, if one is found,
-  /// asks the user to confirm before inserting it as a via-point
+  /// Current charging-stop waypoints as [lat, lon] pairs, in waypoint
+  /// order — fed to the worst-leg energy estimate.
+  List<List<double>> _chargingStopLatLngs() {
+    if (_chargingStopKeys.isEmpty) return const [];
+    return [
+      for (final w in _waypoints)
+        if (_chargingStopKeys.contains(_wpKey(w))) [w.latitude, w.longitude],
+    ];
+  }
+
+  /// Wh figure for the e-bike badge: whole-tour estimate normally, or
+  /// the worst single leg between charges once charging stops exist.
+  int _ebikeWhNeeded(RouteResult route) {
+    final stops = _chargingStopLatLngs();
+    if (stops.isEmpty) {
+      return EbikePrefs.estimateWhForRoute(
+        distanceKm: route.distance,
+        ascentM: route.ascent.round(),
+      );
+    }
+    return EbikePrefs.estimateWorstLegWh(
+      coords: route.coordinates,
+      stopLatLngs: stops,
+    );
+  }
+
+  /// Searches for charging stations along the current route and plans
+  /// as many stops as it takes so no single leg exceeds the pack,
+  /// then asks the user to confirm before inserting them as via-points
   /// and recomputing. Triggered from the over-budget E-bike badge.
   Future<void> _planEbikeChargingStop() async {
     final route = _route;
@@ -4366,20 +4398,22 @@ class _MapScreenState extends State<MapScreen> {
         duration: const Duration(seconds: 8),
       ),
     );
-    RoutePoiHit? hit;
+    ChargingPlan? plan;
     try {
-      hit = await EbikeChargingPlanner.suggestStop(route);
+      plan = await EbikeChargingPlanner.plan(route);
     } catch (_) {
       // POI service is best-effort — surface a generic miss.
     }
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    if (hit == null) {
+    if (plan == null || plan.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l.ebikePlanChargingNoneFound)),
       );
       return;
     }
+    final resolvedPlan = plan;
+    final stops = resolvedPlan.stops;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -4395,22 +4429,41 @@ class _MapScreenState extends State<MapScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Headline: how many stops we're proposing.
             Text(
-              hit!.name ?? l.poiCatCharging,
+              stops.length == 1
+                  ? l.ebikePlanChargingOneStop
+                  : l.ebikePlanChargingManyStops(stops.length),
               style: const TextStyle(
                 color: Color(0xFF6a4a28),
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              l.ebikePlanChargingDetails(
-                hit.routeKm.toStringAsFixed(1),
-                hit.sideMeters.round(),
+            const SizedBox(height: 8),
+            for (final s in stops)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  '• ${s.name ?? l.poiCatCharging} '
+                  '(${l.ebikePlanChargingDetails(
+                    s.routeKm.toStringAsFixed(1),
+                    s.sideMeters.round(),
+                  )})',
+                  style: const TextStyle(color: Colors.black87, fontSize: 13),
+                ),
               ),
-              style: const TextStyle(color: Colors.black87, fontSize: 13),
-            ),
+            if (resolvedPlan.incomplete) ...[
+              const SizedBox(height: 6),
+              Text(
+                l.ebikePlanChargingIncomplete,
+                style: const TextStyle(
+                  color: Color(0xFFc62828),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
@@ -4430,12 +4483,16 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    // Insert the station as a via-point at the correct order — the
-    // existing helper finds the right slot based on geometry.
-    final stop = LatLng(hit.lat, hit.lon);
-    _insertViaPoint(stop);
-    if (hit.name != null) {
-      _waypointNames[_wpKey(stop)] = hit.name!;
+    // Insert every stop as a via-point. _insertViaPoint slots each
+    // into the right place by geometry, so inserting in route order
+    // keeps them ordered. Track each key so the badge computes
+    // per-leg energy and a re-plan won't duplicate them.
+    for (final s in stops) {
+      final stop = LatLng(s.lat, s.lon);
+      _insertViaPoint(stop);
+      final key = _wpKey(stop);
+      _chargingStopKeys.add(key);
+      if (s.name != null) _waypointNames[key] = s.name!;
     }
     setState(() => _draggingWaypointIndex = null);
     await _calculateRoute();
@@ -4850,6 +4907,7 @@ class _MapScreenState extends State<MapScreen> {
     _waypoints.clear();
     _anchorIndices.clear();
     _pois.clear();
+    _chargingStopKeys.clear();
     _sights = [];
     setState(() {
       _route = null;

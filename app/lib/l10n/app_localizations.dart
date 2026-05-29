@@ -4057,6 +4057,30 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Tippen für Details'**
   String get statsBarTapToExpand;
+
+  /// No description provided for @ebikeWorstLeg.
+  ///
+  /// In de, this message translates to:
+  /// **'Längste Etappe'**
+  String get ebikeWorstLeg;
+
+  /// No description provided for @ebikePlanChargingOneStop.
+  ///
+  /// In de, this message translates to:
+  /// **'1 Ladestopp vorgeschlagen'**
+  String get ebikePlanChargingOneStop;
+
+  /// No description provided for @ebikePlanChargingManyStops.
+  ///
+  /// In de, this message translates to:
+  /// **'{n} Ladestopps vorgeschlagen'**
+  String ebikePlanChargingManyStops(int n);
+
+  /// No description provided for @ebikePlanChargingIncomplete.
+  ///
+  /// In de, this message translates to:
+  /// **'Achtung: Auf einer Etappe gibt es keine erreichbare Ladestation — der Akku reicht trotzdem nicht überall.'**
+  String get ebikePlanChargingIncomplete;
 }
 
 class _AppLocalizationsDelegate

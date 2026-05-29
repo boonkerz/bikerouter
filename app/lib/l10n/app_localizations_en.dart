@@ -2125,4 +2125,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsBarTapToExpand => 'Tap for details';
+
+  @override
+  String get ebikeWorstLeg => 'Longest leg';
+
+  @override
+  String get ebikePlanChargingOneStop => '1 charging stop suggested';
+
+  @override
+  String ebikePlanChargingManyStops(int n) {
+    return '$n charging stops suggested';
+  }
+
+  @override
+  String get ebikePlanChargingIncomplete =>
+      'Heads up: one leg has no reachable charging station — the battery still won\'t last everywhere.';
 }

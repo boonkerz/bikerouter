@@ -776,5 +776,10 @@
   "activityRunning": "Laufen",
   "activityUltra": "Ultra",
   "activityCar": "Auto",
-  "statsBarTapToExpand": "Tippen für Details"
+  "statsBarTapToExpand": "Tippen für Details",
+  "ebikeWorstLeg": "Längste Etappe",
+  "ebikePlanChargingOneStop": "1 Ladestopp vorgeschlagen",
+  "ebikePlanChargingManyStops": "{n} Ladestopps vorgeschlagen",
+  "@ebikePlanChargingManyStops": { "placeholders": { "n": { "type": "int" } } },
+  "ebikePlanChargingIncomplete": "Achtung: Auf einer Etappe gibt es keine erreichbare Ladestation — der Akku reicht trotzdem nicht überall."
 }
