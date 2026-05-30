@@ -23,6 +23,11 @@ const List<PoiCategory> _availableCategories = [
 Future<List<RoutePoiHit>?> showRoutePoiSearchSheet(
   BuildContext context, {
   required List<List<double>> coordinates,
+  /// Categories to pre-select. When null the search opens with every
+  /// category on (general-purpose). The map screen passes the active
+  /// activity's preferred set here so e.g. "Wandern" opens straight
+  /// to water + shelters.
+  Set<PoiCategory>? initialCategories,
 }) {
   return showModalBottomSheet<List<RoutePoiHit>>(
     context: context,
@@ -31,25 +36,34 @@ Future<List<RoutePoiHit>?> showRoutePoiSearchSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
-    builder: (ctx) => _Sheet(coordinates: coordinates),
+    builder: (ctx) => _Sheet(
+      coordinates: coordinates,
+      initialCategories: initialCategories,
+    ),
   );
 }
 
 class _Sheet extends StatefulWidget {
   final List<List<double>> coordinates;
+  final Set<PoiCategory>? initialCategories;
 
-  const _Sheet({required this.coordinates});
+  const _Sheet({required this.coordinates, this.initialCategories});
 
   @override
   State<_Sheet> createState() => _SheetState();
 }
 
 class _SheetState extends State<_Sheet> {
-  // Default to all searchable categories — easier UX than guessing the
-  // "right" subset per profile. Users uncheck what they don't want; the
-  // per-category Overpass calls are batched into one query so the cost
-  // of "everything on" is small.
-  late final Set<PoiCategory> _selected = _availableCategories.toSet();
+  // Pre-select the activity's preferred categories when given,
+  // otherwise default to all searchable categories. Users toggle
+  // freely from there; the per-category Overpass calls are batched
+  // into one query so "everything on" stays cheap.
+  late final Set<PoiCategory> _selected = (widget.initialCategories == null ||
+          widget.initialCategories!.isEmpty)
+      ? _availableCategories.toSet()
+      : widget.initialCategories!
+          .where(_availableCategories.contains)
+          .toSet();
   List<RoutePoiHit>? _hits;
   bool _loading = false;
   String? _error;

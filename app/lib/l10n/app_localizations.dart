@@ -4058,6 +4058,12 @@ abstract class AppLocalizations {
   /// **'Auto + Anhänger'**
   String get activityCarTrailer;
 
+  /// No description provided for @activitySafety.
+  ///
+  /// In de, this message translates to:
+  /// **'Sicher'**
+  String get activitySafety;
+
   /// No description provided for @statsBarTapToExpand.
   ///
   /// In de, this message translates to:

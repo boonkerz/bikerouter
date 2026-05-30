@@ -3619,6 +3619,8 @@ class _MapScreenState extends State<MapScreen> {
     final picks = await showRoutePoiSearchSheet(
       context,
       coordinates: route.coordinates,
+      initialCategories:
+          activePoiCategories(ActivityService.lastActivityId, _profile),
     );
     if (picks == null || picks.isEmpty) return;
     setState(() {

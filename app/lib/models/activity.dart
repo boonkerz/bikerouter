@@ -1,4 +1,5 @@
 import '../l10n/app_localizations.dart';
+import '../models/route_poi.dart';
 import '../services/routing_prefs.dart';
 
 /// A user-facing "what are you doing today?" preset. Selecting an
@@ -23,6 +24,13 @@ class Activity {
   final Set<RoutingFlag> enableFlags;
   /// Whether bikepacking mode (multi-day POI bias) should be on.
   final bool bikepacking;
+  /// POI categories to pre-select in the along-route search when this
+  /// activity is active. Empty = no opinion (the search defaults to
+  /// all categories, the general-purpose behaviour). This is what
+  /// makes an activity feel like a *mode* rather than just a profile
+  /// switch — "Wandern" surfaces water + shelters, "E-Bike" surfaces
+  /// charging, etc.
+  final Set<PoiCategory> poiCategories;
 
   const Activity({
     required this.id,
@@ -30,6 +38,7 @@ class Activity {
     required this.profileId,
     this.enableFlags = const {},
     this.bikepacking = false,
+    this.poiCategories = const {},
   });
 
   String localizedName(AppLocalizations l) {
@@ -58,6 +67,8 @@ class Activity {
         return l.activityCar;
       case 'car-trailer':
         return l.activityCarTrailer;
+      case 'safety':
+        return l.activitySafety;
     }
     return id;
   }
@@ -121,6 +132,16 @@ const activities = [
     icon: '⚡',
     profileId: 'wegwiesel-ebike',
     enableFlags: {RoutingFlag.preferCycleRoutes},
+    poiCategories: {PoiCategory.charging, PoiCategory.water, PoiCategory.food},
+  ),
+  Activity(
+    id: 'safety',
+    icon: '🛡️',
+    profileId: 'safety',
+    enableFlags: {
+      RoutingFlag.avoidMainRoads,
+      RoutingFlag.preferCycleRoutes,
+    },
   ),
   Activity(
     id: 'bikepacking',
@@ -128,31 +149,68 @@ const activities = [
     profileId: 'trekking',
     enableFlags: {RoutingFlag.preferCycleRoutes},
     bikepacking: true,
+    poiCategories: {
+      PoiCategory.camping,
+      PoiCategory.water,
+      PoiCategory.shelter,
+      PoiCategory.picnic,
+      PoiCategory.station,
+      PoiCategory.sights,
+    },
   ),
   Activity(
     id: 'hiking',
     icon: '🥾',
     profileId: 'hiking-beta',
+    poiCategories: {
+      PoiCategory.water,
+      PoiCategory.shelter,
+      PoiCategory.picnic,
+      PoiCategory.scenic,
+    },
   ),
   Activity(
     id: 'running',
     icon: '🏃',
     profileId: 'wegwiesel-running',
+    poiCategories: {PoiCategory.water, PoiCategory.scenic},
   ),
   Activity(
     id: 'ultra',
     icon: '🌙',
     profileId: 'fastbike-lowtraffic',
     enableFlags: {RoutingFlag.avoidMainRoads},
+    poiCategories: {
+      PoiCategory.fuel,
+      PoiCategory.shop,
+      PoiCategory.water,
+      PoiCategory.charging,
+    },
   ),
   Activity(
     id: 'car',
     icon: '🚗',
     profileId: 'car',
+    poiCategories: {PoiCategory.fuel, PoiCategory.charging},
   ),
   Activity(
     id: 'car-trailer',
     icon: '🚙',
     profileId: 'car-trailer',
+    poiCategories: {PoiCategory.fuel},
   ),
 ];
+
+/// POI categories preferred by the currently-active activity, or null
+/// when no activity is set / the activity has no opinion (search then
+/// defaults to all). Resolved from the last-applied activity id.
+Set<PoiCategory>? activePoiCategories(String? lastActivityId, String profileId) {
+  Activity? a;
+  if (lastActivityId != null) {
+    final byId = Activity.byId(lastActivityId);
+    if (byId != null && byId.profileId == profileId) a = byId;
+  }
+  a ??= Activity.forProfile(profileId);
+  if (a == null || a.poiCategories.isEmpty) return null;
+  return a.poiCategories;
+}
