@@ -4052,6 +4052,12 @@ abstract class AppLocalizations {
   /// **'Auto'**
   String get activityCar;
 
+  /// No description provided for @activityCarTrailer.
+  ///
+  /// In de, this message translates to:
+  /// **'Auto + Anhänger'**
+  String get activityCarTrailer;
+
   /// No description provided for @statsBarTapToExpand.
   ///
   /// In de, this message translates to:

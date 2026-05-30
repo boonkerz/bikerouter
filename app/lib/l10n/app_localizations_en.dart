@@ -2124,6 +2124,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityCar => 'Car';
 
   @override
+  String get activityCarTrailer => 'Car + trailer';
+
+  @override
   String get statsBarTapToExpand => 'Tap for details';
 
   @override

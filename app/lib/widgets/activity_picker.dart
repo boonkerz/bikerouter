@@ -19,48 +19,69 @@ Future<Activity?> showActivityPicker(
   return showModalBottomSheet<Activity>(
     context: context,
     backgroundColor: const Color(0xFFf5e9d8),
+    // Scroll-controlled so the grid can use up to ~85% of the screen
+    // and scroll on small devices instead of overflowing / clipping.
+    isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (ctx) {
       final l = AppLocalizations.of(ctx);
       final active = Activity.forProfile(currentProfileId);
+      final maxHeight = MediaQuery.of(ctx).size.height * 0.85;
       return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Fixed drag handle + title so they stay put while the
+              // grid below scrolls.
+              const SizedBox(height: 8),
               Center(
-                child: Text(
-                  l.activityPickerTitle,
-                  style: const TextStyle(
-                    color: Color(0xFF2a2014),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.0,
-                children: [
-                  for (final a in activities)
-                    _ActivityTile(
-                      activity: a,
-                      selected: a.id == active?.id,
-                      label: a.localizedName(l),
-                      onTap: () => Navigator.of(ctx).pop(a),
-                    ),
-                ],
+              const SizedBox(height: 12),
+              Text(
+                l.activityPickerTitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF2a2014),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 1.0,
+                    children: [
+                      for (final a in activities)
+                        _ActivityTile(
+                          activity: a,
+                          selected: a.id == active?.id,
+                          label: a.localizedName(l),
+                          onTap: () => Navigator.of(ctx).pop(a),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
               Center(
                 child: TextButton.icon(
                   onPressed: () {
@@ -75,6 +96,7 @@ Future<Activity?> showActivityPicker(
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
             ],
           ),
         ),

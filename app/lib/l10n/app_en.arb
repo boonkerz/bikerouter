@@ -776,6 +776,7 @@
   "activityRunning": "Running",
   "activityUltra": "Ultra",
   "activityCar": "Car",
+  "activityCarTrailer": "Car + trailer",
   "statsBarTapToExpand": "Tap for details",
   "ebikeWorstLeg": "Longest leg",
   "ebikePlanChargingOneStop": "1 charging stop suggested",

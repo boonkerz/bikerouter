@@ -776,6 +776,7 @@
   "activityRunning": "Laufen",
   "activityUltra": "Ultra",
   "activityCar": "Auto",
+  "activityCarTrailer": "Auto + Anhänger",
   "statsBarTapToExpand": "Tippen für Details",
   "ebikeWorstLeg": "Längste Etappe",
   "ebikePlanChargingOneStop": "1 Ladestopp vorgeschlagen",

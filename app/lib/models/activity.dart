@@ -56,6 +56,8 @@ class Activity {
         return l.activityUltra;
       case 'car':
         return l.activityCar;
+      case 'car-trailer':
+        return l.activityCarTrailer;
     }
     return id;
   }
@@ -147,5 +149,10 @@ const activities = [
     id: 'car',
     icon: '🚗',
     profileId: 'car',
+  ),
+  Activity(
+    id: 'car-trailer',
+    icon: '🚙',
+    profileId: 'car-trailer',
   ),
 ];
