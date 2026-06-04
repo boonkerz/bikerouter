@@ -19,11 +19,6 @@ jobs:
     name: iOS — Phone + Watch
     runs-on: [self-hosted, macOS]
     timeout-minutes: 45
-    env:
-      # Preferred simulator (defines screenshot resolution). The script falls
-      # back to / creates any Pro Max if this exact name isn't on the runner.
-      # The seeded routes live in scripts/ios-screenshots.sh.
-      IOS_SIM: iPhone 17 Pro Max
     steps:
       - uses: actions/checkout@v4
 
@@ -31,15 +26,26 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: Phone screenshots (flutter drive)
-        working-directory: app
+      # iPhone phone shots are rendered from the deployed web build at 6.9"
+      # resolution (1290×2796). True iOS-simulator capture is impossible on the
+      # GPU-less Proxmox macOS VM (the simulator needs Metal → renders black);
+      # scripts/ios-screenshots.sh remains in the repo for when/if GPU
+      # passthrough is set up. Note: web render shows whatever is live.
+      - name: Phone screenshots (web runner, iPhone 6.9")
+        continue-on-error: true
+        working-directory: scripts/screenshot-runner
         env:
           SHOT_OUT: ${{ github.workspace }}/app/build/screenshots/ios
-        run: bash ../scripts/ios-screenshots.sh
+          SHOT_W: "1290"
+          SHOT_H: "2796"
+        run: |
+          npm ci || npm install
+          npx playwright install chromium
+          node run.mjs
 
       # Watch screenshots: the watch app's env-gated screenshot mode shows one
-      # seeded screen, captured via `simctl io screenshot` (watchOS has no
-      # usable XCUITest). Best-effort: a failure here must not lose phone shots.
+      # seeded screen, captured via `simctl io screenshot`. The watch is native
+      # SwiftUI, which renders fine under the simulator's software rendering.
       - name: Watch screenshots (simctl)
         id: watch
         continue-on-error: true

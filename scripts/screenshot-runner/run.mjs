@@ -1,13 +1,19 @@
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 
-// Output dir and target site are env-configurable so the same runner works
-// locally and on CI. Defaults keep the original local behaviour.
-//   SHOT_OUT  — where PNGs land (created if missing)
-//   SHOT_BASE — site to screenshot (defaults to production)
+// Output dir, target site and viewport are env-configurable so the same runner
+// produces both Android (1080×1920) and iPhone 6.9" (1290×2796) store shots.
+// Defaults keep the original local Android behaviour.
+//   SHOT_OUT          — where PNGs land (created if missing)
+//   SHOT_BASE         — site to screenshot (defaults to production)
+//   SHOT_W / SHOT_H   — viewport in px (defaults 1080×1920)
 const out = process.env.SHOT_OUT
   || '/home/thomas/projekte/bikerouter/store_assets/android/screenshots';
 const baseUrl = process.env.SHOT_BASE || 'https://wegwiesel.app';
+const viewport = {
+  width: Number(process.env.SHOT_W) || 1080,
+  height: Number(process.env.SHOT_H) || 1920,
+};
 
 await mkdir(out, { recursive: true });
 
@@ -43,7 +49,7 @@ const shots = [
 ];
 
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1080, height: 1920 } });
+const ctx = await browser.newContext({ viewport });
 
 // Each shot runs on a fresh page so a hung/detached page can't cascade into
 // the following shots — important for unattended CI runs.

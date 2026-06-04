@@ -52,11 +52,11 @@ eines GitHub-Releases). Artefakte: `ios-screenshots` (Phone 1290×2796 + Watch),
 `android-screenshots` (Phone aus `wegwiesel.app` + Wear).
 
 Vier Oberflächen, je eigener Mechanismus:
-- **iOS-Phone** — `scripts/ios-screenshots.sh` baut die App für den
-  iPhone-16-Pro-Max-Simulator, startet sie je Shot mit einer anderen Route
-  (Launch-Env `WW_SHARE`, zur Laufzeit gelesen in `share_url_stub.dart`) und nimmt
-  via `xcrun simctl io screenshot` auf. Kein `integration_test` — dessen
-  `takeScreenshot` liefert auf dem iOS-Sim schwarze Bilder.
+- **iOS-Phone** — aus dem Web-Build (`wegwiesel.app`) in iPhone-6.9"-Auflösung
+  (1290×2796), via `scripts/screenshot-runner` (`SHOT_W/SHOT_H`-env). Echte
+  iOS-Simulator-Shots sind auf der **GPU-losen Proxmox-macOS-VM nicht möglich**:
+  der Simulator braucht Metal und rendert sonst schwarz. `scripts/ios-screenshots.sh`
+  (Sim-Weg) bleibt im Repo für den Fall, dass GPU-Passthrough eingerichtet wird.
 - **Apple Watch** — `scripts/watch-screenshots.sh`: env-gated Screenshot-Modus der
   Watch-App (`WW_WATCH_SHOTS=1`, `ScreenshotSupport.swift`) zeigt je einen Screen,
   `xcrun simctl io … screenshot` nimmt auf.
