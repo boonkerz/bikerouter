@@ -44,7 +44,29 @@ Man kann dieselben 6.9"-Shots auch für 6.5" hochladen (wird akzeptiert).
    Profil-Dropdown offen (Rennrad/Gravel/Trekking/MTB), GPX-Button sichtbar.
    → „Für jedes Rad das passende Profil"
 
-## Wie erzeugen
+## Wie erzeugen (automatisiert, empfohlen)
+Der GitHub-Actions-Workflow **`.github/workflows/screenshots.yml`** erzeugt alle
+Screenshots auf dem self-hosted Mac-Runner und hängt sie als Artefakte an. Manuell
+auslösen: GitHub → Actions → **Screenshots** → *Run workflow* (oder beim Veröffentlichen
+eines GitHub-Releases). Artefakte: `ios-screenshots` (Phone 1290×2796 + Watch),
+`android-screenshots` (Phone aus `wegwiesel.app` + Wear).
+
+Vier Oberflächen, je eigener Mechanismus:
+- **iOS-Phone** — `flutter drive` treibt die App im iPhone-16-Pro-Max-Simulator
+  (`app/integration_test/screenshots_test.dart`). Route wird per
+  `--dart-define=WW_SHARE=<base64>` geseedet (decodiert in `share_url_stub.dart`).
+- **Apple Watch** — `scripts/watch-screenshots.sh`: env-gated Screenshot-Modus der
+  Watch-App (`WW_WATCH_SHOTS=1`, `ScreenshotSupport.swift`) zeigt je einen Screen,
+  `xcrun simctl io … screenshot` nimmt auf.
+- **Android-Phone** — `scripts/screenshot-runner` rendert `wegwiesel.app` headless in
+  Chromium (kein Gerät nötig; zeigt den **deployten** Stand).
+- **Wear OS** — `scripts/wear-screenshots.sh`: Compose Preview Screenshot Testing
+  rendert `@Preview`s (`wear/src/screenshotTest/…`) ohne Emulator zu PNG.
+
+Watch- und Wear-Schritte sind `continue-on-error` und beim ersten echten Lauf noch zu
+validieren (Simulator-Name, Plugin-Version).
+
+## Wie erzeugen (manuell, Fallback)
 - iOS-Simulator mit iPhone 16 Pro Max Target starten, App installieren, Screenshots via `xcrun simctl io booted screenshot` oder einfach Cmd+S im Simulator.
 - Alternativ auf echtem iPhone 16 Pro Max: Side-Button + Lauter kurz drücken.
 - Hintergrund-Route: sinnvolle Testrouten (z.B. Bodensee-Rundtour für Shot 5, Alpencross-Stück für Shot 1, Hamburger Stadttour für Shot 6).

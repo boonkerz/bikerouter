@@ -1,0 +1,117 @@
+name: Screenshots
+
+# Generates up-to-date store screenshots on the self-hosted Mac runner and
+# attaches them as downloadable artifacts. Runs alongside release.yml on every
+# push to main that touches the app, so a release build and fresh screenshots
+# are produced together. Can also be triggered manually or on a GitHub Release.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/screenshots.yml'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  ios:
+    name: iOS — Phone + Watch
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 45
+    env:
+      # Demo route seeded into the app via the WW_SHARE compile-time define
+      # (Munich trekking route). Decoded by share_url_stub.dart.
+      WW_SHARE: eyJ3IjpbWzQ4LjEzNywxMS41NzVdLFs0OC4xNjUsMTEuNTJdXSwicCI6InRyZWtraW5nIn0
+      # Simulator the phone screenshots are taken on → defines their resolution.
+      IOS_SIM: iPhone 16 Pro Max
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Boot iPhone simulator
+        run: |
+          xcrun simctl boot "$IOS_SIM" || true
+          xcrun simctl bootstatus "$IOS_SIM" -b || true
+
+      - name: Phone screenshots (flutter drive)
+        working-directory: app
+        env:
+          SHOT_OUT: ${{ github.workspace }}/app/build/screenshots/ios
+        run: |
+          flutter drive \
+            --driver=test_driver/screenshot_driver.dart \
+            --target=integration_test/screenshots_test.dart \
+            -d "$IOS_SIM" \
+            --dart-define=WW_SHARE="$WW_SHARE"
+
+      # Watch screenshots: the watch app's env-gated screenshot mode shows one
+      # seeded screen, captured via `simctl io screenshot` (watchOS has no
+      # usable XCUITest). Best-effort: a failure here must not lose phone shots.
+      - name: Watch screenshots (simctl)
+        id: watch
+        continue-on-error: true
+        working-directory: app/ios
+        env:
+          SHOT_OUT: ${{ github.workspace }}/app/build/screenshots/watch
+        run: bash ../../scripts/watch-screenshots.sh
+
+      - name: Upload iOS screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: app/build/screenshots/**
+          if-no-files-found: warn
+          retention-days: 30
+
+  android:
+    name: Android — Phone + Wear
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
+    needs: ios          # serialize on the single Mac runner
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      # Generates app/android/local.properties (flutter.sdk), which
+      # settings.gradle.kts requires before the :wear Gradle build can run.
+      - name: Flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      # Phone shots come from the deployed web build (wegwiesel.app) rendered
+      # at phone resolution — no device or emulator needed. Note: this shows
+      # whatever is currently live, not necessarily this commit.
+      - name: Phone screenshots (web runner)
+        id: phone
+        continue-on-error: true
+        working-directory: scripts/screenshot-runner
+        env:
+          SHOT_OUT: ${{ github.workspace }}/app/build/screenshots/android-phone
+        run: |
+          npm ci || npm install
+          npx playwright install chromium
+          node run.mjs
+
+      # Wear shots are rendered from Compose @Preview composables without an
+      # emulator. Best-effort so a Gradle hiccup doesn't lose the phone shots.
+      - name: Wear screenshots (Compose preview)
+        id: wear
+        continue-on-error: true
+        working-directory: app/android
+        env:
+          SHOT_OUT: ${{ github.workspace }}/app/build/screenshots/wear
+        run: bash ../../scripts/wear-screenshots.sh
+
+      - name: Upload Android screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-screenshots
+          path: app/build/screenshots/**
+          if-no-files-found: warn
+          retention-days: 30

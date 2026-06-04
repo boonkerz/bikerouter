@@ -41,7 +41,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun NavigationGlance() {
     val snapshot by NavigationStateHolder.state.collectAsState()
+    NavigationGlance(snapshot)
+}
 
+/**
+ * Stateless render of the glance, split out so screenshot previews
+ * (src/screenshotTest) can feed it deterministic demo snapshots.
+ */
+@Composable
+internal fun NavigationGlance(snapshot: NavigationSnapshot) {
     Column(
         modifier = Modifier
             .fillMaxSize()

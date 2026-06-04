@@ -1,7 +1,15 @@
 import { chromium } from 'playwright';
+import { mkdir } from 'node:fs/promises';
 
-const out = '/home/thomas/projekte/bikerouter/store_assets/android/screenshots';
-const baseUrl = 'https://wegwiesel.app';
+// Output dir and target site are env-configurable so the same runner works
+// locally and on CI. Defaults keep the original local behaviour.
+//   SHOT_OUT  — where PNGs land (created if missing)
+//   SHOT_BASE — site to screenshot (defaults to production)
+const out = process.env.SHOT_OUT
+  || '/home/thomas/projekte/bikerouter/store_assets/android/screenshots';
+const baseUrl = process.env.SHOT_BASE || 'https://wegwiesel.app';
+
+await mkdir(out, { recursive: true });
 
 function encode(obj) {
   return Buffer.from(JSON.stringify(obj)).toString('base64url').replace(/=+$/, '');
@@ -24,7 +32,7 @@ const shots = [
     file: '04-roundtrip-20km.png',
     desc: '20 km roundtrip from Munich, fastbike',
     url: `${baseUrl}/?r=${encode({ w: [[48.137, 11.575]], p: 'fastbike', rt: 1, d: 20, dir: 90 })}`,
-    wait: 14000,
+    wait: 22000,
   },
   {
     file: '05-mtb-alps.png',
@@ -36,24 +44,44 @@ const shots = [
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1080, height: 1920 } });
-const page = await ctx.newPage();
-page.setDefaultTimeout(120000);
 
+// Each shot runs on a fresh page so a hung/detached page can't cascade into
+// the following shots — important for unattended CI runs.
+let saved = 0;
 for (const s of shots) {
   console.log(`→ ${s.file} (${s.desc})`);
+  const page = await ctx.newPage();
+  page.setDefaultTimeout(120000);
   try {
-    await page.goto(s.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  } catch (e) {
-    console.log(`  goto warn: ${e.message.split('\n')[0]}`);
-  }
-  await page.waitForTimeout(s.wait);
-  try {
-    await page.screenshot({ path: `${out}/${s.file}`, fullPage: false, timeout: 60000 });
-    console.log(`  saved ${s.file}`);
-  } catch (e) {
-    console.log(`  screenshot failed: ${e.message.split('\n')[0]}`);
+    try {
+      await page.goto(s.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    } catch (e) {
+      console.log(`  goto warn: ${e.message.split('\n')[0]}`);
+    }
+    await page.waitForTimeout(s.wait);
+    try {
+      await page.screenshot({ path: `${out}/${s.file}`, fullPage: false, timeout: 60000 });
+      console.log(`  saved ${s.file}`);
+      saved++;
+    } catch (e) {
+      // A busy renderer (e.g. roundtrip still calculating) can make the first
+      // screenshot time out; give it one more breather and retry once.
+      console.log(`  screenshot retry after: ${e.message.split('\n')[0]}`);
+      await page.waitForTimeout(8000);
+      try {
+        await page.screenshot({ path: `${out}/${s.file}`, fullPage: false, timeout: 60000 });
+        console.log(`  saved ${s.file} (retry)`);
+        saved++;
+      } catch (e2) {
+        console.log(`  screenshot failed: ${e2.message.split('\n')[0]}`);
+      }
+    }
+  } finally {
+    await page.close().catch(() => {});
   }
 }
 
 await browser.close();
-console.log('done');
+console.log(`done — ${saved}/${shots.length} screenshots saved to ${out}`);
+// Non-zero exit if nothing was produced, so CI surfaces a total failure.
+if (saved === 0) process.exit(1);

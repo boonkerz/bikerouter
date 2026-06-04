@@ -63,6 +63,25 @@ final class WatchSessionController: NSObject, ObservableObject, WCSessionDelegat
   }
   #endif
 
+  /// Synchronously injects a navigation snapshot for screenshot generation.
+  /// Never used in normal operation — only by the screenshot mode gated on the
+  /// WW_WATCH_SHOTS launch environment (see ScreenshotSupport.swift). Setting
+  /// the `private(set)` published values is allowed here because we're inside
+  /// the owning type.
+  func seedForScreenshots(
+    direction: TurnDirection,
+    distanceMeters: Int,
+    remainingKm: Double,
+    remainingMinutes: Int,
+    streetName: String?
+  ) {
+    self.direction = direction
+    self.distanceToTurnMeters = distanceMeters
+    self.remainingKm = remainingKm
+    self.remainingMinutes = remainingMinutes
+    self.streetName = streetName
+  }
+
   // MARK: - Payload routing
 
   private func applyPayload(_ payload: [String: Any]) {

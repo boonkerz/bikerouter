@@ -23,13 +23,23 @@ struct WegwieselWatchApp: App {
 
   var body: some Scene {
     WindowGroup {
-      RootView()
-        .environmentObject(session)
-        .environmentObject(storage)
-        .onAppear {
-          session.activate()
-          storage.reload()
-        }
+      if WatchScreenshotMode.isEnabled {
+        // Screenshot generation: show one seeded screen, skip live session.
+        ScreenshotRootView()
+          .environmentObject(session)
+          .environmentObject(storage)
+          .onAppear {
+            WatchScreenshotMode.seed(session: session, storage: storage)
+          }
+      } else {
+        RootView()
+          .environmentObject(session)
+          .environmentObject(storage)
+          .onAppear {
+            session.activate()
+            storage.reload()
+          }
+      }
     }
   }
 }
