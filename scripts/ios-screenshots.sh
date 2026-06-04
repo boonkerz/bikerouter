@@ -52,7 +52,22 @@ echo "ios-screenshots: using simulator $UDID"
 xcrun simctl boot "$UDID" 2>/dev/null || true
 xcrun simctl bootstatus "$UDID" -b || true
 
-echo "ios-screenshots: building app for the simulator …"
+# The app pins FLTEnableImpeller=true in Info.plist, but Impeller renders an
+# all-black screen on the iOS simulator (notably with flutter_map). Force it off
+# for this simulator-only build, then restore the committed value so production
+# builds keep Impeller. The explicit plist value overrides --no-enable-impeller,
+# so we must edit the plist itself.
+PLIST="ios/Runner/Info.plist"
+ORIG_IMPELLER="$(/usr/libexec/PlistBuddy -c 'Print :FLTEnableImpeller' "$PLIST" 2>/dev/null || echo "")"
+restore_plist() {
+  [ -n "$ORIG_IMPELLER" ] && \
+    /usr/libexec/PlistBuddy -c "Set :FLTEnableImpeller $ORIG_IMPELLER" "$PLIST" 2>/dev/null || true
+}
+trap restore_plist EXIT
+/usr/libexec/PlistBuddy -c "Set :FLTEnableImpeller false" "$PLIST" 2>/dev/null \
+  || /usr/libexec/PlistBuddy -c "Add :FLTEnableImpeller bool false" "$PLIST"
+
+echo "ios-screenshots: building app for the simulator (Impeller off) …"
 # -d is required because the app embeds a watchOS companion: flutter needs a
 # concrete simulator to build the paired watch app against.
 flutter build ios --simulator --debug -d "$UDID" | tail -20
