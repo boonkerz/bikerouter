@@ -32,21 +32,11 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: Boot iPhone simulator
-        run: |
-          xcrun simctl boot "$IOS_SIM" || true
-          xcrun simctl bootstatus "$IOS_SIM" -b || true
-
       - name: Phone screenshots (flutter drive)
         working-directory: app
         env:
           SHOT_OUT: ${{ github.workspace }}/app/build/screenshots/ios
-        run: |
-          flutter drive \
-            --driver=test_driver/screenshot_driver.dart \
-            --target=integration_test/screenshots_test.dart \
-            -d "$IOS_SIM" \
-            --dart-define=WW_SHARE="$WW_SHARE"
+        run: bash ../scripts/ios-screenshots.sh
 
       # Watch screenshots: the watch app's env-gated screenshot mode shows one
       # seeded screen, captured via `simctl io screenshot` (watchOS has no

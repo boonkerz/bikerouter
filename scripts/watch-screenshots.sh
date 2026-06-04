@@ -33,6 +33,15 @@ else
 fi
 
 if [ -z "${UDID:-}" ]; then
+  echo "watch-screenshots: no watch simulator exists — creating one"
+  RUNTIME="$(xcrun simctl list runtimes watchos | grep -oE 'com.apple.CoreSimulator.SimRuntime.watchOS-[0-9-]+' | tail -1)"
+  DEVTYPE="$(xcrun simctl list devicetypes | grep -i 'Apple Watch' | grep -oE 'com.apple.CoreSimulator.SimDeviceType.[^)]+' | tail -1)"
+  if [ -n "$RUNTIME" ] && [ -n "$DEVTYPE" ]; then
+    UDID="$(xcrun simctl create ww-watch-shots "$DEVTYPE" "$RUNTIME" 2>/dev/null)"
+  fi
+fi
+
+if [ -z "${UDID:-}" ]; then
   echo "watch-screenshots: no watchOS simulator available — skipping" >&2
   exit 1
 fi
