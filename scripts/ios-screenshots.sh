@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 #
-# Boots an iPhone simulator and drives the Flutter app to capture store
-# screenshots into $SHOT_OUT. Run from the app/ directory:
+# Captures iPhone store screenshots by running the real app on an iOS simulator
+# and grabbing the screen with `xcrun simctl io screenshot` — the same approach
+# that works for the watch. We deliberately do NOT use integration_test's
+# takeScreenshot: its convertFlutterSurfaceToImage readback returns all-black
+# images on the iOS simulator (with or without Impeller).
 #
-#   SHOT_OUT=/abs/path WW_SHARE=<base64> bash ../scripts/ios-screenshots.sh
+# Run from the app/ directory:
+#   SHOT_OUT=/abs/path bash ../scripts/ios-screenshots.sh
 #
-# `flutter drive -d <name>` only sees *booted* simulators, so we resolve a
-# concrete device UDID (creating one if the runner has none), boot it, then
-# target it by UDID.
+# Each shot is the same screen (map + stats) with a different seeded route,
+# passed per launch via the WW_SHARE process env (read at runtime by
+# share_url_stub.dart), so we build once and just relaunch.
 set -uo pipefail
 
 SIM_NAME="${IOS_SIM:-iPhone 16 Pro Max}"
@@ -41,12 +45,46 @@ echo "ios-screenshots: using simulator $UDID"
 xcrun simctl boot "$UDID" 2>/dev/null || true
 xcrun simctl bootstatus "$UDID" -b || true
 
-# --no-enable-impeller: integration_test's takeScreenshot (via
-# convertFlutterSurfaceToImage) returns all-black images under Impeller on the
-# iOS simulator; the Skia backend reads back correctly.
-SHOT_OUT="$OUT" flutter drive \
-  --driver=test_driver/screenshot_driver.dart \
-  --target=integration_test/screenshots_test.dart \
-  -d "$UDID" \
-  --no-enable-impeller \
-  --dart-define=WW_SHARE="${WW_SHARE:-}"
+echo "ios-screenshots: building app for the simulator …"
+flutter build ios --simulator --debug | tail -20
+
+APP="$(find build/ios/iphonesimulator -maxdepth 1 -name '*.app' -type d 2>/dev/null | head -1)"
+if [ -z "${APP:-}" ]; then
+  echo "ios-screenshots: simulator build produced no .app" >&2
+  exit 1
+fi
+
+BUNDLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist" 2>/dev/null)"
+[ -z "$BUNDLE" ] && BUNDLE="com.thomaspeterson.bikerouter"
+echo "ios-screenshots: bundle id $BUNDLE"
+xcrun simctl install "$UDID" "$APP"
+
+# name <tab> WW_SHARE payload <tab> seconds to wait for tiles + route calc.
+# The roundtrip needs longer because the route is computed on-device.
+SHOTS=(
+  "01-trekking	eyJ3IjpbWzQ4LjEzNywxMS41NzVdLFs0OC4xNjUsMTEuNTJdXSwicCI6InRyZWtraW5nIn0	16"
+  "02-gravel	eyJ3IjpbWzQ3Ljg2LDExLjE4XSxbNDcuODMsMTEuMjVdXSwicCI6InF1YWVsbml4LWdyYXZlbCJ9	16"
+  "03-roundtrip	eyJ3IjpbWzQ4LjEzNywxMS41NzVdXSwicCI6ImZhc3RiaWtlIiwicnQiOjEsImQiOjIwLCJkaXIiOjkwfQ	26"
+  "04-mtb	eyJ3IjpbWzQ3LjQ4LDExLjA5XSxbNDcuNDYsMTEuMTFdXSwicCI6Im10Yi16b3NzZWJhcnQifQ	16"
+)
+
+saved=0
+for entry in "${SHOTS[@]}"; do
+  IFS=$'\t' read -r name share wait <<<"$entry"
+  echo "→ $name"
+  xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+  if ! SIMCTL_CHILD_WW_SHARE="$share" xcrun simctl launch "$UDID" "$BUNDLE"; then
+    echo "  launch failed for $name" >&2
+    continue
+  fi
+  sleep "$wait"
+  if xcrun simctl io "$UDID" screenshot "$OUT/$name.png" >/dev/null 2>&1; then
+    echo "  saved $name.png"
+    saved=$((saved + 1))
+  else
+    echo "  screenshot failed for $name" >&2
+  fi
+done
+
+echo "ios-screenshots: $saved/${#SHOTS[@]} screenshots → $OUT"
+[ "$saved" -gt 0 ] || exit 1

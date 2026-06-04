@@ -52,9 +52,11 @@ eines GitHub-Releases). Artefakte: `ios-screenshots` (Phone 1290×2796 + Watch),
 `android-screenshots` (Phone aus `wegwiesel.app` + Wear).
 
 Vier Oberflächen, je eigener Mechanismus:
-- **iOS-Phone** — `flutter drive` treibt die App im iPhone-16-Pro-Max-Simulator
-  (`app/integration_test/screenshots_test.dart`). Route wird per
-  `--dart-define=WW_SHARE=<base64>` geseedet (decodiert in `share_url_stub.dart`).
+- **iOS-Phone** — `scripts/ios-screenshots.sh` baut die App für den
+  iPhone-16-Pro-Max-Simulator, startet sie je Shot mit einer anderen Route
+  (Launch-Env `WW_SHARE`, zur Laufzeit gelesen in `share_url_stub.dart`) und nimmt
+  via `xcrun simctl io screenshot` auf. Kein `integration_test` — dessen
+  `takeScreenshot` liefert auf dem iOS-Sim schwarze Bilder.
 - **Apple Watch** — `scripts/watch-screenshots.sh`: env-gated Screenshot-Modus der
   Watch-App (`WW_WATCH_SHOTS=1`, `ScreenshotSupport.swift`) zeigt je einen Screen,
   `xcrun simctl io … screenshot` nimmt auf.

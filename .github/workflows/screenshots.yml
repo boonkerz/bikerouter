@@ -20,10 +20,8 @@ jobs:
     runs-on: [self-hosted, macOS]
     timeout-minutes: 45
     env:
-      # Demo route seeded into the app via the WW_SHARE compile-time define
-      # (Munich trekking route). Decoded by share_url_stub.dart.
-      WW_SHARE: eyJ3IjpbWzQ4LjEzNywxMS41NzVdLFs0OC4xNjUsMTEuNTJdXSwicCI6InRyZWtraW5nIn0
       # Simulator the phone screenshots are taken on → defines their resolution.
+      # The seeded routes live in scripts/ios-screenshots.sh.
       IOS_SIM: iPhone 16 Pro Max
     steps:
       - uses: actions/checkout@v4
