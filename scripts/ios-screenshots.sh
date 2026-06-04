@@ -41,8 +41,12 @@ echo "ios-screenshots: using simulator $UDID"
 xcrun simctl boot "$UDID" 2>/dev/null || true
 xcrun simctl bootstatus "$UDID" -b || true
 
+# --no-enable-impeller: integration_test's takeScreenshot (via
+# convertFlutterSurfaceToImage) returns all-black images under Impeller on the
+# iOS simulator; the Skia backend reads back correctly.
 SHOT_OUT="$OUT" flutter drive \
   --driver=test_driver/screenshot_driver.dart \
   --target=integration_test/screenshots_test.dart \
   -d "$UDID" \
+  --no-enable-impeller \
   --dart-define=WW_SHARE="${WW_SHARE:-}"

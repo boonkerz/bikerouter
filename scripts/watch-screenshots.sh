@@ -20,7 +20,11 @@ set -uo pipefail
 OUT="${SHOT_OUT:-$(pwd)/../build/screenshots/watch}"
 mkdir -p "$OUT"
 
-BUNDLE="com.thomaspeterson.bikerouter.WegwieselWatch"
+# Bundle id is read from the built .app below (the watch target's actual
+# PRODUCT_BUNDLE_IDENTIFIER is .watchkitapp, not the .WegwieselWatch id the
+# Fastfile references for provisioning). This fallback is only used if the
+# plist read fails.
+BUNDLE="com.thomaspeterson.bikerouter.watchkitapp"
 SCHEME="WegwieselWatch Watch App"
 DERIVED="$(pwd)/build/watch-shots"
 
@@ -66,13 +70,24 @@ if [ -z "${APP:-}" ]; then
   exit 1
 fi
 
+# Read the actual bundle id from the freshly built app — robust against the
+# id differing from any provisioning convention.
+PLIST_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist" 2>/dev/null)"
+[ -n "$PLIST_ID" ] && BUNDLE="$PLIST_ID"
+echo "watch-screenshots: bundle id $BUNDLE"
+
 xcrun simctl install "$UDID" "$APP"
 
 shoot() {
   local screen="$1" name="$2"
   xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
-  SIMCTL_CHILD_WW_WATCH_SHOTS=1 SIMCTL_CHILD_WW_WATCH_SHOT="$screen" \
-    xcrun simctl launch "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+  # Surface launch failures instead of swallowing them — a wrong bundle id or a
+  # crash on launch would otherwise show up only as a clock-face screenshot.
+  if ! SIMCTL_CHILD_WW_WATCH_SHOTS=1 SIMCTL_CHILD_WW_WATCH_SHOT="$screen" \
+       xcrun simctl launch "$UDID" "$BUNDLE"; then
+    echo "  launch failed for $screen" >&2
+    return
+  fi
   sleep 6
   if xcrun simctl io "$UDID" screenshot "$OUT/$name.png" >/dev/null 2>&1; then
     echo "  saved $name.png"
