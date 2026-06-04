@@ -20,9 +20,10 @@ jobs:
     runs-on: [self-hosted, macOS]
     timeout-minutes: 45
     env:
-      # Simulator the phone screenshots are taken on → defines their resolution.
+      # Preferred simulator (defines screenshot resolution). The script falls
+      # back to / creates any Pro Max if this exact name isn't on the runner.
       # The seeded routes live in scripts/ios-screenshots.sh.
-      IOS_SIM: iPhone 16 Pro Max
+      IOS_SIM: iPhone 17 Pro Max
     steps:
       - uses: actions/checkout@v4
 

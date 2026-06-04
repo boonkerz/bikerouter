@@ -22,19 +22,26 @@ udid_by_name() {
   xcrun simctl list devices available | grep -F "$1" | grep -oE '[0-9A-F-]{36}' | head -1
 }
 
+# Prefer a "Pro Max" device so screenshots come out at the App Store 6.9" size.
+# Order: the configured device by name → any existing Pro Max → create a Pro Max
+# → (last resort) any existing iPhone.
 UDID="$(udid_by_name "$SIM_NAME")"
 if [ -z "$UDID" ]; then
-  echo "ios-screenshots: '$SIM_NAME' not found — trying any available iPhone"
-  UDID="$(xcrun simctl list devices available | grep -E 'iPhone' | grep -oE '[0-9A-F-]{36}' | head -1)"
+  echo "ios-screenshots: '$SIM_NAME' not found — looking for any Pro Max"
+  UDID="$(xcrun simctl list devices available | grep -E 'iPhone.*Pro Max' | grep -oE '[0-9A-F-]{36}' | head -1)"
 fi
 if [ -z "$UDID" ]; then
-  echo "ios-screenshots: no iPhone simulator exists — creating one"
+  echo "ios-screenshots: no Pro Max present — creating one"
   RUNTIME="$(xcrun simctl list runtimes ios | grep -oE 'com.apple.CoreSimulator.SimRuntime.iOS-[0-9-]+' | tail -1)"
   DEVTYPE="$(xcrun simctl list devicetypes | grep -F "$SIM_NAME" | grep -oE 'com.apple.CoreSimulator.SimDeviceType.[^)]+' | head -1)"
-  [ -z "$DEVTYPE" ] && DEVTYPE="$(xcrun simctl list devicetypes | grep -E 'iPhone' | grep -oE 'com.apple.CoreSimulator.SimDeviceType.[^)]+' | tail -1)"
+  [ -z "$DEVTYPE" ] && DEVTYPE="$(xcrun simctl list devicetypes | grep -E 'iPhone.*Pro.?Max' | grep -oE 'com.apple.CoreSimulator.SimDeviceType.[^)]+' | tail -1)"
   if [ -n "$RUNTIME" ] && [ -n "$DEVTYPE" ]; then
     UDID="$(xcrun simctl create ww-shots "$DEVTYPE" "$RUNTIME" 2>/dev/null)"
   fi
+fi
+if [ -z "$UDID" ]; then
+  echo "ios-screenshots: falling back to any available iPhone"
+  UDID="$(xcrun simctl list devices available | grep -E 'iPhone' | grep -oE '[0-9A-F-]{36}' | head -1)"
 fi
 if [ -z "$UDID" ]; then
   echo "ios-screenshots: could not obtain a simulator" >&2
@@ -46,7 +53,9 @@ xcrun simctl boot "$UDID" 2>/dev/null || true
 xcrun simctl bootstatus "$UDID" -b || true
 
 echo "ios-screenshots: building app for the simulator …"
-flutter build ios --simulator --debug | tail -20
+# -d is required because the app embeds a watchOS companion: flutter needs a
+# concrete simulator to build the paired watch app against.
+flutter build ios --simulator --debug -d "$UDID" | tail -20
 
 APP="$(find build/ios/iphonesimulator -maxdepth 1 -name '*.app' -type d 2>/dev/null | head -1)"
 if [ -z "${APP:-}" ]; then
