@@ -19,10 +19,14 @@ mkdir -p "$OUT"
 # Regenerate it via Flutter's lightweight config-only pass.
 if [ ! -x ./gradlew ]; then
   echo "wear-screenshots: gradle wrapper missing — generating via flutter"
-  ( cd .. && flutter build apk --config-only ) || {
-    echo "wear-screenshots: could not generate gradle wrapper — skipping" >&2
-    exit 1
-  }
+  # Flutter injects the wrapper before invoking Gradle, so the wrapper appears
+  # even if the config step itself errors out (e.g. on JDK mismatch). Don't gate
+  # on the exit code — check that gradlew actually exists afterwards.
+  ( cd .. && flutter build apk --config-only ) || true
+fi
+if [ ! -x ./gradlew ]; then
+  echo "wear-screenshots: could not generate gradle wrapper — skipping" >&2
+  exit 1
 fi
 
 echo "wear-screenshots: rendering Compose previews via Paparazzi …"
