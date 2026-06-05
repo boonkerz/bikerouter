@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'app/**'
+      - 'scripts/**'
       - '.github/workflows/screenshots.yml'
   workflow_dispatch:
   release:
