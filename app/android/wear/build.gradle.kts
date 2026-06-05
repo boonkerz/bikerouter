@@ -12,8 +12,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
-    // Generates store screenshots from @Preview composables (no emulator).
-    id("com.android.compose.screenshot")
+    // Renders Compose to PNG on the JVM for store screenshots (no emulator).
+    id("app.cash.paparazzi")
 }
 
 // Load signing properties at file scope (same pattern as :app's
@@ -124,10 +124,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
-    // Compose Preview Screenshot Testing — only the screenshotTest source set.
-    // ui-tooling provides the @Preview renderer, wear-tooling-preview the
-    // WearDevices round-watch frames.
-    screenshotTestImplementation(composeBom)
-    screenshotTestImplementation("androidx.compose.ui:ui-tooling")
-    screenshotTestImplementation("androidx.wear:wear-tooling-preview:1.0.0")
+    // Paparazzi screenshot test (JVM, no emulator).
+    testImplementation(composeBom)
+    testImplementation("junit:junit:4.13.2")
 }

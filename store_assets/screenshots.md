@@ -62,11 +62,13 @@ Vier Oberflächen, je eigener Mechanismus:
   `xcrun simctl io … screenshot` nimmt auf.
 - **Android-Phone** — `scripts/screenshot-runner` rendert `wegwiesel.app` headless in
   Chromium (kein Gerät nötig; zeigt den **deployten** Stand).
-- **Wear OS** — `scripts/wear-screenshots.sh`: Compose Preview Screenshot Testing
-  rendert `@Preview`s (`wear/src/screenshotTest/…`) ohne Emulator zu PNG.
+- **Wear OS** — `scripts/wear-screenshots.sh`: **Paparazzi** (`recordPaparazziDebug`)
+  rendert die Compose-Nav-Glance (`wear/src/test/…`) per layoutlib zu PNG, ohne
+  Emulator. Braucht **AGP ≥ 8.13** (das offizielle Compose-Screenshot-Plugin und
+  Paparazzi sind beide an AGP gekoppelt; auf AGP 8.11 lief keins).
 
-Watch- und Wear-Schritte sind `continue-on-error` und beim ersten echten Lauf noch zu
-validieren (Simulator-Name, Plugin-Version).
+Watch- und Wear-Schritte sind `continue-on-error`. Watch wurde auf dem Runner
+validiert; iPhone/Android-Phone laufen über das Web.
 
 ## Wie erzeugen (manuell, Fallback)
 - iOS-Simulator mit iPhone 16 Pro Max Target starten, App installieren, Screenshots via `xcrun simctl io booted screenshot` oder einfach Cmd+S im Simulator.
