@@ -204,6 +204,10 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) setState(() => _garminAvailable = v);
     });
     _tryLoadSharedRoute();
+    // Locate the user once the map is mounted, so the current position is ready
+    // to seed as the route start. Deferred to a post-frame callback because the
+    // FlutterMap controller isn't attached yet during initState.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initialLocate());
   }
 
   /// If the last app session crashed mid-recording, an orphan session file
@@ -1020,6 +1024,57 @@ class _MapScreenState extends State<MapScreen> {
 
   // -- GPS Location --
 
+  /// One-shot locate on app start: fetches the current position (prompting for
+  /// permission the first time) so it can be used as the implicit route start.
+  /// Best-effort and silent — if location is off or denied, the user can still
+  /// tap a start manually. Doesn't recentre if a route is already being planned
+  /// (e.g. a shared route was opened) so we don't yank the camera away.
+  Future<void> _initialLocate() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      if (!mounted) return;
+      final latLng = LatLng(position.latitude, position.longitude);
+      setState(() => _currentPosition = latLng);
+      if (_waypoints.isEmpty) {
+        try {
+          _mapController.move(latLng, 14);
+        } catch (_) {
+          // Map not attached yet — the position is stored regardless.
+        }
+      }
+    } catch (_) {
+      // No GPS, no problem — fall back to manual start selection.
+    }
+  }
+
+  /// Seeds the roundtrip start from the current GPS position. Called when the
+  /// user switches into roundtrip mode so they don't have to tap a start first.
+  /// If the position isn't known yet, locates first. No-op if they've already
+  /// placed a start or left the mode in the meantime.
+  Future<void> _seedRoundtripStart() async {
+    if (!_roundtripMode || _waypoints.isNotEmpty) return;
+    var pos = _currentPosition;
+    if (pos == null) {
+      await _locateUser();
+      pos = _currentPosition;
+    }
+    if (pos == null || !mounted) return;
+    if (!_roundtripMode || _waypoints.isNotEmpty) return;
+    setState(() => _waypoints.add(pos!));
+    _resolveWaypointName(pos);
+  }
+
   Future<void> _locateUser() async {
     if (_locatingUser) return;
     setState(() => _locatingUser = true);
@@ -1642,6 +1697,8 @@ class _MapScreenState extends State<MapScreen> {
           _roundtripMode = isRoundtrip;
           _showControls = isRoundtrip;
         });
+        // Use the current location as the roundtrip start automatically.
+        if (isRoundtrip) _seedRoundtripStart();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1815,6 +1872,21 @@ class _MapScreenState extends State<MapScreen> {
 
     // Roundtrip mode with existing route: don't add new points
     if (_roundtripMode && _route != null) return;
+
+    // First tap in A→B mode: use the current GPS position as the start, so the
+    // tap becomes the destination and the route is computed right away. Falls
+    // back to the old "first tap = start" behaviour when GPS isn't available.
+    if (!_roundtripMode && _waypoints.isEmpty && _currentPosition != null) {
+      final start = _currentPosition!;
+      setState(() {
+        _waypoints.add(start);
+        _waypoints.add(latLng);
+      });
+      _resolveWaypointName(start);
+      _resolveWaypointName(latLng);
+      _calculateRoute();
+      return;
+    }
 
     setState(() => _waypoints.add(latLng));
     _resolveWaypointName(latLng);
