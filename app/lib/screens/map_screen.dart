@@ -3160,16 +3160,30 @@ class _MapScreenState extends State<MapScreen> {
           nogos: nogos,
         ));
       } else if (_returnMode == _ReturnTripMode.sameWay) {
-        // There-and-back on the same roads: route through the waypoints and
-        // back again (A→…→B→…→A) in one request.
-        final loop = [...pts, ...pts.reversed.skip(1)];
-        final result = await BRouterService.calculateRoute(
-          waypoints: loop,
+        // There-and-back on the same roads. Routed as two separate legs
+        // (A→B, then B→A) and joined, rather than one A→B→A request: some
+        // profiles (e.g. fastbike) refuse the U-turn at B and collapse a
+        // single round-trip request to a stub. A fresh B→A leg avoids that
+        // and naturally retraces the outbound roads.
+        final outbound = await BRouterService.calculateRoute(
+          waypoints: pts,
           profile: profile,
           nogos: nogos,
         );
         if (!mounted || requestId != _routeRequestId) return;
-        _displayRoute(result, alternatives: const []);
+        RouteResult combined;
+        try {
+          final ret = await BRouterService.calculateRoute(
+            waypoints: pts.reversed.toList(),
+            profile: profile,
+            nogos: nogos,
+          );
+          combined = RouteResult.concat(outbound, ret);
+        } catch (_) {
+          combined = outbound;
+        }
+        if (!mounted || requestId != _routeRequestId) return;
+        _displayRoute(combined, alternatives: const []);
       } else {
         // Different way home: route the outbound A→B, then route B→A while
         // discouraging the outbound roads via sampled nogo circles, and join
