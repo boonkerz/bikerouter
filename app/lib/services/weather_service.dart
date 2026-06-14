@@ -96,6 +96,16 @@ class WeatherService {
     return _fetchPoint(lat, lon, noon, 0);
   }
 
+  /// Current-hour conditions at a single point. Used by wind-optimised
+  /// roundtrips to pick the outbound bearing (ride into the wind first so the
+  /// return leg has a tailwind).
+  static Future<WeatherSample?> currentConditions({
+    required double lat,
+    required double lon,
+  }) {
+    return _fetchPoint(lat, lon, DateTime.now(), 0);
+  }
+
   static Future<WeatherSample?> _fetchPoint(
     double lat,
     double lon,

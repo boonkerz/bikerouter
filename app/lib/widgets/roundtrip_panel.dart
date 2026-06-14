@@ -23,6 +23,7 @@ class RoundtripPanel extends StatefulWidget {
   final ValueChanged<int> onDirectionChanged;
   final ValueChanged<RoundtripRequest> onGenerate;
   final ValueChanged<RoundtripRequest> onShuffle;
+  final ValueChanged<RoundtripRequest> onWindOptimize;
 
   const RoundtripPanel({
     super.key,
@@ -34,6 +35,7 @@ class RoundtripPanel extends StatefulWidget {
     required this.onDirectionChanged,
     required this.onGenerate,
     required this.onShuffle,
+    required this.onWindOptimize,
   });
 
   @override
@@ -194,6 +196,20 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               side: const BorderSide(color: Color(0xFF6a4a28)),
             ),
             child: Text(l.roundtripAlternative),
+          ),
+          const SizedBox(height: 6),
+          // Wind-optimised loop: heads out into the wind so the (tired) return
+          // leg gets a tailwind. Sets the direction automatically from the
+          // current forecast, then generates.
+          OutlinedButton.icon(
+            onPressed:
+                widget.hasStart ? () => widget.onWindOptimize(_request) : null,
+            icon: const Text('🌬️', style: TextStyle(fontSize: 15)),
+            label: Text(l.roundtripWindOptimized),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF2e6a4a),
+              side: const BorderSide(color: Color(0xFF2e6a4a)),
+            ),
           ),
         ],
       ),

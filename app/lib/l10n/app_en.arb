@@ -117,6 +117,15 @@
   "roundtripDirection": "Direction",
   "roundtripGenerate": "Calculate round trip",
   "roundtripAlternative": "Another variant",
+  "roundtripWindOptimized": "Wind-optimised",
+  "roundtripWindCalm": "Barely any wind – plain roundtrip generated",
+  "roundtripWindHint": "Headwind out, tailwind home · wind from {dir}, {kmh} km/h",
+  "@roundtripWindHint": {
+    "placeholders": {
+      "dir": { "type": "String" },
+      "kmh": { "type": "int" }
+    }
+  },
   "roundtripNeedStart": "Tap the map to set a start point",
   "roundtripApproxAt": "~{km} km at ~{speed} km/h",
   "@roundtripApproxAt": { "placeholders": { "km": { "type": "int" }, "speed": { "type": "int" } } },

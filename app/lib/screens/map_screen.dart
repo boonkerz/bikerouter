@@ -60,6 +60,7 @@ import '../services/sight_prefs.dart';
 import '../services/route_info_service.dart';
 import '../widgets/elevation_chart.dart';
 import '../services/stage_planner.dart';
+import '../services/weather_service.dart';
 import '../widgets/accommodation_sheet.dart';
 import '../widgets/route_poi_search_sheet.dart';
 import '../services/route_poi_search_service.dart';
@@ -700,6 +701,7 @@ class _MapScreenState extends State<MapScreen> {
                     setState(() => _rtDirection = (_rtDirection + 60) % 360);
                     _calculateRoundtrip(req);
                   },
+                  onWindOptimize: _generateWindOptimizedRoundtrip,
                 ),
               ),
             ),
@@ -3343,6 +3345,70 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _alternativeRoutes = [..._alternativeRoutes, alternative];
     });
+  }
+
+  /// Wind-optimised roundtrip: fetches the current wind at the start and heads
+  /// the loop out *into* the wind (windDirDeg is where the wind comes from), so
+  /// the return leg gets a tailwind. Falls back to a plain roundtrip when the
+  /// wind is too weak to matter or the forecast can't be fetched.
+  Future<void> _generateWindOptimizedRoundtrip(RoundtripRequest req) async {
+    if (_loading || _waypoints.isEmpty) return;
+    final start = _waypoints.first;
+    setState(() => _loading = true);
+    WeatherSample? w;
+    try {
+      w = await WeatherService.currentConditions(
+        lat: start.latitude,
+        lon: start.longitude,
+      );
+    } catch (_) {
+      // fall through to the weak-wind path below
+    }
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _showControls = false;
+    });
+    final l = AppLocalizations.of(context);
+    final dir = w?.windDirDeg;
+    final spd = w?.windKmh;
+    if (dir == null || spd == null || spd < 5) {
+      _showError(l.roundtripWindCalm);
+      _calculateRoundtrip(req);
+      return;
+    }
+    setState(() => _rtDirection = dir.round() % 360);
+    _showError(l.roundtripWindHint(_windCardinal(dir), spd.round()));
+    _calculateRoundtrip(req);
+  }
+
+  /// 8-point compass label for a bearing, built from the four localized
+  /// cardinal strings (e.g. de "N"+"O" = "NO", en "N"+"E" = "NE").
+  String _windCardinal(double deg) {
+    final l = AppLocalizations.of(context);
+    final n = l.roundtripCompassN;
+    final e = l.roundtripCompassE;
+    final s = l.roundtripCompassS;
+    final w = l.roundtripCompassW;
+    final idx = ((((deg % 360) + 22.5) ~/ 45) % 8).toInt();
+    switch (idx) {
+      case 1:
+        return '$n$e';
+      case 2:
+        return e;
+      case 3:
+        return '$s$e';
+      case 4:
+        return s;
+      case 5:
+        return '$s$w';
+      case 6:
+        return w;
+      case 7:
+        return '$n$w';
+      default:
+        return n;
+    }
   }
 
   Future<void> _calculateRoundtrip(RoundtripRequest req) async {

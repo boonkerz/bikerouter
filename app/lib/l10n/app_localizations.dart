@@ -704,6 +704,24 @@ abstract class AppLocalizations {
   /// **'Andere Variante'**
   String get roundtripAlternative;
 
+  /// No description provided for @roundtripWindOptimized.
+  ///
+  /// In de, this message translates to:
+  /// **'Wind-optimiert'**
+  String get roundtripWindOptimized;
+
+  /// No description provided for @roundtripWindCalm.
+  ///
+  /// In de, this message translates to:
+  /// **'Kaum Wind – normale Rundtour erzeugt'**
+  String get roundtripWindCalm;
+
+  /// No description provided for @roundtripWindHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Gegenwind raus, Rückenwind heim · Wind aus {dir}, {kmh} km/h'**
+  String roundtripWindHint(String dir, int kmh);
+
   /// No description provided for @roundtripNeedStart.
   ///
   /// In de, this message translates to:

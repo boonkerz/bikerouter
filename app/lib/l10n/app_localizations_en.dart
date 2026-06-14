@@ -316,6 +316,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roundtripAlternative => 'Another variant';
 
   @override
+  String get roundtripWindOptimized => 'Wind-optimised';
+
+  @override
+  String get roundtripWindCalm => 'Barely any wind – plain roundtrip generated';
+
+  @override
+  String roundtripWindHint(String dir, int kmh) {
+    return 'Headwind out, tailwind home · wind from $dir, $kmh km/h';
+  }
+
+  @override
   String get roundtripNeedStart => 'Tap the map to set a start point';
 
   @override
