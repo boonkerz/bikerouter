@@ -839,6 +839,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuStartNavigation => 'Start navigation';
 
   @override
+  String get menuReturnOneWay => 'One way only';
+
+  @override
+  String get menuReturnSameWay => 'Out & back (same way)';
+
+  @override
+  String get menuReturnDifferentWay => 'Out & back (different way)';
+
+  @override
   String get navigateContinue => 'Continue';
 
   @override

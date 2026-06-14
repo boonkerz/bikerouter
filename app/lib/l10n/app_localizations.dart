@@ -1664,6 +1664,24 @@ abstract class AppLocalizations {
   /// **'Navigation starten'**
   String get menuStartNavigation;
 
+  /// No description provided for @menuReturnOneWay.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur Hinweg'**
+  String get menuReturnOneWay;
+
+  /// No description provided for @menuReturnSameWay.
+  ///
+  /// In de, this message translates to:
+  /// **'Hin & zurück (gleicher Weg)'**
+  String get menuReturnSameWay;
+
+  /// No description provided for @menuReturnDifferentWay.
+  ///
+  /// In de, this message translates to:
+  /// **'Hin & zurück (anderer Weg)'**
+  String get menuReturnDifferentWay;
+
   /// No description provided for @navigateContinue.
   ///
   /// In de, this message translates to:

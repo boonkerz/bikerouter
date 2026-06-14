@@ -101,6 +101,7 @@ class _MapScreenState extends State<MapScreen> {
   String _profile = 'fastbike';
   MapStyle _mapStyle = mapStyles[0];
   bool _roundtripMode = false;
+  _ReturnTripMode _returnMode = _ReturnTripMode.oneWay;
   int _rtDistanceKm = 20;
   int _rtDirection = 0;
   bool _showElevation = true;
@@ -823,6 +824,29 @@ class _MapScreenState extends State<MapScreen> {
                               Text(l.menuSearchAlongRoute, style: const TextStyle(color: Colors.black87)),
                             ]),
                           ),
+                          // Out-and-back selector for A→B routes: one way only,
+                          // there-and-back the same way, or a different way home.
+                          if (_route != null && !_roundtripMode) ...[
+                            const PopupMenuDivider(),
+                            CheckedPopupMenuItem(
+                              value: 'return_oneway',
+                              checked: _returnMode == _ReturnTripMode.oneWay,
+                              child: Text(l.menuReturnOneWay,
+                                  style: const TextStyle(color: Colors.black87)),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: 'return_same',
+                              checked: _returnMode == _ReturnTripMode.sameWay,
+                              child: Text(l.menuReturnSameWay,
+                                  style: const TextStyle(color: Colors.black87)),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: 'return_diff',
+                              checked: _returnMode == _ReturnTripMode.differentWay,
+                              child: Text(l.menuReturnDifferentWay,
+                                  style: const TextStyle(color: Colors.black87)),
+                            ),
+                          ],
                           const PopupMenuDivider(),
                           // Recording — own track + browse the archive.
                           PopupMenuItem(
@@ -3121,7 +3145,7 @@ class _MapScreenState extends State<MapScreen> {
         );
         if (!mounted || requestId != _routeRequestId) return;
         _displayRoute(result, alternatives: const []);
-      } else {
+      } else if (_returnMode == _ReturnTripMode.oneWay) {
         final result = await BRouterService.calculateRoute(
           waypoints: pts,
           profile: profile,
@@ -3135,6 +3159,49 @@ class _MapScreenState extends State<MapScreen> {
           profile: profile,
           nogos: nogos,
         ));
+      } else if (_returnMode == _ReturnTripMode.sameWay) {
+        // There-and-back on the same roads: route through the waypoints and
+        // back again (A→…→B→…→A) in one request.
+        final loop = [...pts, ...pts.reversed.skip(1)];
+        final result = await BRouterService.calculateRoute(
+          waypoints: loop,
+          profile: profile,
+          nogos: nogos,
+        );
+        if (!mounted || requestId != _routeRequestId) return;
+        _displayRoute(result, alternatives: const []);
+      } else {
+        // Different way home: route the outbound A→B, then route B→A while
+        // discouraging the outbound roads via sampled nogo circles, and join
+        // the two. Falls back to the same-way loop if the return can't be
+        // routed (e.g. the only road is the outbound one).
+        final outbound = await BRouterService.calculateRoute(
+          waypoints: pts,
+          profile: profile,
+          nogos: nogos,
+        );
+        if (!mounted || requestId != _routeRequestId) return;
+        RouteResult combined;
+        try {
+          final returnNogos = [...nogos, ..._outboundNogos(outbound.coordinates)];
+          final ret = await BRouterService.calculateRoute(
+            waypoints: pts.reversed.toList(),
+            profile: profile,
+            nogos: returnNogos,
+          );
+          // If the avoidance produced almost the same length, it's likely the
+          // same path — keep it anyway; it's still a valid round trip.
+          combined = RouteResult.concat(outbound, ret);
+        } catch (_) {
+          final loop = [...pts, ...pts.reversed.skip(1)];
+          combined = await BRouterService.calculateRoute(
+            waypoints: loop,
+            profile: profile,
+            nogos: nogos,
+          );
+        }
+        if (!mounted || requestId != _routeRequestId) return;
+        _displayRoute(combined, alternatives: const []);
       }
     } catch (e) {
       if (mounted && requestId == _routeRequestId) {
@@ -3145,6 +3212,37 @@ class _MapScreenState extends State<MapScreen> {
         setState(() => _loading = false);
       }
     }
+  }
+
+  /// Switches the A→B return-trip mode and recomputes the route if one exists.
+  void _setReturnMode(_ReturnTripMode mode) {
+    if (_returnMode == mode) return;
+    setState(() => _returnMode = mode);
+    if (!_roundtripMode && _waypoints.length >= 2) _calculateRoute();
+  }
+
+  /// Builds nogo circles sampled along the middle of an outbound path so the
+  /// return leg is pushed onto different roads. The first/last ~10% are left
+  /// free so the start and destination stay routable, and the count is capped
+  /// to keep the request URL bounded.
+  List<NogoArea> _outboundNogos(List<List<double>> coords) {
+    if (coords.length < 4) return const [];
+    const radiusMeters = 40; // nudge to parallel roads without huge detours
+    const maxCircles = 60; // keep the GET URL from blowing up
+    final start = (coords.length * 0.1).floor().clamp(1, coords.length - 2);
+    final end = (coords.length * 0.9).ceil().clamp(start + 1, coords.length - 1);
+    final span = end - start;
+    final step = (span / maxCircles).ceil().clamp(1, span);
+    final nogos = <NogoArea>[];
+    for (int i = start; i < end; i += step) {
+      nogos.add(NogoArea(
+        id: 'rt$i',
+        lat: coords[i][1],
+        lon: coords[i][0],
+        radiusMeters: radiusMeters,
+      ));
+    }
+    return nogos;
   }
 
   Future<void> _loadRouteAlternatives({
@@ -3599,6 +3697,15 @@ class _MapScreenState extends State<MapScreen> {
         break;
       case 'poi_search':
         await _showPoiSearchSheet();
+        break;
+      case 'return_oneway':
+        _setReturnMode(_ReturnTripMode.oneWay);
+        break;
+      case 'return_same':
+        _setReturnMode(_ReturnTripMode.sameWay);
+        break;
+      case 'return_diff':
+        _setReturnMode(_ReturnTripMode.differentWay);
         break;
       case 'ftp_finder':
         await _showFtpFinder();
@@ -4997,6 +5104,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void _clearAll() {
     ++_routeRequestId;
+    _returnMode = _ReturnTripMode.oneWay;
     _waypoints.clear();
     _anchorIndices.clear();
     _pois.clear();
@@ -5017,6 +5125,10 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 enum _RouteAlternativeKind { primary, variant, shortest, avoidMotorways }
+
+/// How an A→B route is closed: one-way only, there-and-back on the same roads,
+/// or there-and-back trying to take a different way home.
+enum _ReturnTripMode { oneWay, sameWay, differentWay }
 
 class _RouteAlternative {
   final RouteResult route;

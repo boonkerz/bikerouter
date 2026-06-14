@@ -311,6 +311,9 @@
   "garminDeviceOffline": "{device} ist nicht erreichbar",
 
   "menuStartNavigation": "Navigation starten",
+  "menuReturnOneWay": "Nur Hinweg",
+  "menuReturnSameWay": "Hin & zurück (gleicher Weg)",
+  "menuReturnDifferentWay": "Hin & zurück (anderer Weg)",
   "navigateContinue": "Weiterfahren",
   "navigateTurnLeft": "links abbiegen",
   "navigateTurnRight": "rechts abbiegen",

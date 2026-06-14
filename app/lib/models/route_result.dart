@@ -24,6 +24,66 @@ class RouteResult {
     this.turnHints = const [],
   });
 
+  /// Joins two routes end-to-end into one — e.g. an out-and-back whose return
+  /// leg was routed separately. Assumes `b` starts where `a` ends, so `b`'s
+  /// duplicate first coordinate is dropped. Segment/turn-hint indices and
+  /// distances from `b` are shifted to sit after `a`. `geojson` is rebuilt as a
+  /// plain LineString of the joined coordinates (it isn't read downstream, but
+  /// keeping it self-consistent avoids surprises).
+  factory RouteResult.concat(RouteResult a, RouteResult b) {
+    final coords = <List<double>>[
+      ...a.coordinates,
+      if (b.coordinates.length > 1) ...b.coordinates.sublist(1),
+    ];
+    final idxOffset = a.coordinates.isEmpty ? 0 : a.coordinates.length - 1;
+    final distOffset = a.distance;
+
+    final segments = <RouteSegment>[
+      ...a.segments,
+      for (final s in b.segments)
+        RouteSegment(
+          startCoordIdx: s.startCoordIdx + idxOffset,
+          endCoordIdx: s.endCoordIdx + idxOffset,
+          startDistanceKm: s.startDistanceKm + distOffset,
+          endDistanceKm: s.endDistanceKm + distOffset,
+          wayTagsRaw: s.wayTagsRaw,
+          costPerKm: s.costPerKm,
+        ),
+    ];
+
+    final hints = <TurnHint>[
+      ...a.turnHints,
+      for (final h in b.turnHints)
+        TurnHint(
+          coordIndex: h.coordIndex + idxOffset,
+          cmd: h.cmd,
+          exitNumber: h.exitNumber,
+          distanceToNextM: h.distanceToNextM,
+          angle: h.angle,
+        ),
+    ];
+
+    return RouteResult(
+      geojson: {
+        'type': 'FeatureCollection',
+        'features': [
+          {
+            'type': 'Feature',
+            'properties': const <String, dynamic>{},
+            'geometry': {'type': 'LineString', 'coordinates': coords},
+          }
+        ],
+      },
+      distance: a.distance + b.distance,
+      ascent: a.ascent + b.ascent,
+      descent: a.descent + b.descent,
+      time: a.time + b.time,
+      coordinates: coords,
+      segments: segments,
+      turnHints: hints,
+    );
+  }
+
   /// Highest SAC scale found along the route (0..6, 0 means no SAC-tagged
   /// segments). Used to surface a difficulty badge for hiking profiles.
   int get maxSacLevel {

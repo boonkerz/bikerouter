@@ -838,6 +838,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuStartNavigation => 'Navigation starten';
 
   @override
+  String get menuReturnOneWay => 'Nur Hinweg';
+
+  @override
+  String get menuReturnSameWay => 'Hin & zurück (gleicher Weg)';
+
+  @override
+  String get menuReturnDifferentWay => 'Hin & zurück (anderer Weg)';
+
+  @override
   String get navigateContinue => 'Weiterfahren';
 
   @override
