@@ -12,8 +12,16 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
-    // Renders Compose to PNG on the JVM for store screenshots (no emulator).
-    id("app.cash.paparazzi")
+}
+
+// Paparazzi renders Compose to PNG on the JVM for store screenshots (no
+// emulator). It's an alpha plugin pulling a heavy layoutlib dependency, so we
+// only apply it when screenshots are actually being generated
+// (`-PwithPaparazzi`, set by scripts/wear-screenshots.sh). Normal phone/wear
+// release builds (`bundleRelease`) must NOT touch it — otherwise every release
+// has to resolve the alpha plugin and breaks when that resolution hiccups.
+if (project.hasProperty("withPaparazzi")) {
+    apply(plugin = "app.cash.paparazzi")
 }
 
 // Load signing properties at file scope (same pattern as :app's

@@ -30,7 +30,9 @@ if [ ! -x ./gradlew ]; then
 fi
 
 echo "wear-screenshots: rendering Compose previews via Paparazzi …"
-./gradlew :wear:recordPaparazziDebug --no-daemon || {
+# -PwithPaparazzi applies the Paparazzi plugin (see wear/build.gradle.kts); it's
+# left off for normal builds so release bundles don't depend on the alpha plugin.
+./gradlew :wear:recordPaparazziDebug -PwithPaparazzi --no-daemon || {
   echo "wear-screenshots: gradle task failed — skipping" >&2
   exit 1
 }
