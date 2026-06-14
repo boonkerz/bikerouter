@@ -775,6 +775,21 @@
   "shareToWatchQueued": "Route sent to Watch",
   "shareToWatchFailed": "Watch not reachable",
   "settingsEbikeCapacity": "E-bike battery",
+  "settingsEvTitle": "Electric car",
+  "settingsEvOff": "Off",
+  "settingsEvSummary": "{kwh} kWh · {cons} kWh/100 km",
+  "@settingsEvSummary": {
+    "placeholders": { "kwh": { "type": "String" }, "cons": { "type": "String" } }
+  },
+  "settingsEvEnabled": "EV mode (car profile)",
+  "settingsEvEnabledSub": "Range badge + charging-stop planner for the car",
+  "settingsEvBattery": "Battery",
+  "settingsEvConsumption": "Consumption",
+  "settingsEvStartCharge": "Start charge",
+  "evChargeTime": "~{min} min charging",
+  "@evChargeTime": {
+    "placeholders": { "min": { "type": "int" } }
+  },
   "settingsEbikeCapacityEdit": "Battery capacity",
   "ebikeRangeComfortable": "comfortable",
   "ebikeRangeTight": "getting tight",

@@ -2094,6 +2094,38 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsEbikeCapacityEdit => 'Akkukapazität';
 
   @override
+  String get settingsEvTitle => 'Elektroauto';
+
+  @override
+  String get settingsEvOff => 'Aus';
+
+  @override
+  String settingsEvSummary(String kwh, String cons) {
+    return '$kwh kWh · $cons kWh/100 km';
+  }
+
+  @override
+  String get settingsEvEnabled => 'EV-Modus (Auto-Profil)';
+
+  @override
+  String get settingsEvEnabledSub =>
+      'Reichweiten-Badge + Ladestopp-Planer fürs Auto';
+
+  @override
+  String get settingsEvBattery => 'Akku';
+
+  @override
+  String get settingsEvConsumption => 'Verbrauch';
+
+  @override
+  String get settingsEvStartCharge => 'Start-Ladung';
+
+  @override
+  String evChargeTime(int min) {
+    return '~$min min laden';
+  }
+
+  @override
   String get ebikeRangeComfortable => 'reicht locker';
 
   @override

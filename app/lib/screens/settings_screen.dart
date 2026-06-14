@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../services/bikepacking_prefs.dart';
 import '../services/body_weight_prefs.dart';
 import '../services/ebike_prefs.dart';
+import '../services/ev_prefs.dart';
 import '../services/new_feature_prefs.dart';
 import '../widgets/battery_budget_dialog.dart';
 import '../widgets/new_pill.dart';
@@ -20,6 +21,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _weightKg = BodyWeightPrefs.defaultKg;
   bool _bikepacking = BikepackingPrefs.active;
   int _ebikeCapacityWh = EbikePrefs.capacityWh;
+  bool _evEnabled = EvPrefs.enabled;
+  double _evBatteryKwh = EvPrefs.batteryKwh;
+  double _evConsumption = EvPrefs.consumptionKwh100;
+  int _evStartPct = EvPrefs.startPct;
 
   @override
   void initState() {
@@ -62,6 +67,91 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (result != null) {
       await EbikePrefs.setCapacityWh(result);
       if (mounted) setState(() => _ebikeCapacityWh = result);
+    }
+  }
+
+  Future<void> _editEv() async {
+    final l = AppLocalizations.of(context);
+    final batteryCtrl =
+        TextEditingController(text: _evBatteryKwh.toStringAsFixed(0));
+    final consCtrl =
+        TextEditingController(text: _evConsumption.toStringAsFixed(0));
+    final startCtrl = TextEditingController(text: _evStartPct.toString());
+    var enabled = _evEnabled;
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          backgroundColor: const Color(0xFFf5e9d8),
+          title: Text(l.settingsEvTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeThumbColor: const Color(0xFF6a4a28),
+                title: Text(l.settingsEvEnabled),
+                subtitle: Text(l.settingsEvEnabledSub,
+                    style: const TextStyle(fontSize: 12)),
+                value: enabled,
+                onChanged: (v) => setLocal(() => enabled = v),
+              ),
+              TextField(
+                controller: batteryCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                    labelText: l.settingsEvBattery, suffix: const Text('kWh')),
+              ),
+              TextField(
+                controller: consCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                    labelText: l.settingsEvConsumption,
+                    suffix: const Text('kWh/100 km')),
+              ),
+              TextField(
+                controller: startCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                    labelText: l.settingsEvStartCharge, suffix: const Text('%')),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l.urlImportCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l.recordingSave),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved != true) return;
+    final battery = double.tryParse(batteryCtrl.text.trim().replaceAll(',', '.'));
+    final cons = double.tryParse(consCtrl.text.trim().replaceAll(',', '.'));
+    final start = int.tryParse(startCtrl.text.trim());
+    await EvPrefs.setEnabled(enabled);
+    await EvPrefs.setConfig(
+      batteryKwh: (battery != null && battery >= 5 && battery <= 250)
+          ? battery
+          : _evBatteryKwh,
+      consumptionKwh100:
+          (cons != null && cons >= 5 && cons <= 60) ? cons : _evConsumption,
+      startPct: (start != null && start >= 10 && start <= 100)
+          ? start
+          : _evStartPct,
+    );
+    if (mounted) {
+      setState(() {
+        _evEnabled = EvPrefs.enabled;
+        _evBatteryKwh = EvPrefs.batteryKwh;
+        _evConsumption = EvPrefs.consumptionKwh100;
+        _evStartPct = EvPrefs.startPct;
+      });
     }
   }
 
@@ -199,6 +289,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: '$_ebikeCapacityWh Wh',
             onTap: _editEbikeCapacity,
             newFeature: NewFeature.ebikeBatteryBadge,
+          ),
+          _tile(
+            icon: Icons.electric_car,
+            title: l.settingsEvTitle,
+            subtitle: _evEnabled
+                ? l.settingsEvSummary(
+                    _evBatteryKwh.toStringAsFixed(0),
+                    _evConsumption.toStringAsFixed(0))
+                : l.settingsEvOff,
+            onTap: _editEv,
           ),
           _sectionHeader(l.settingsSectionFeedback),
           _tile(

@@ -2095,6 +2095,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsEbikeCapacityEdit => 'Battery capacity';
 
   @override
+  String get settingsEvTitle => 'Electric car';
+
+  @override
+  String get settingsEvOff => 'Off';
+
+  @override
+  String settingsEvSummary(String kwh, String cons) {
+    return '$kwh kWh · $cons kWh/100 km';
+  }
+
+  @override
+  String get settingsEvEnabled => 'EV mode (car profile)';
+
+  @override
+  String get settingsEvEnabledSub =>
+      'Range badge + charging-stop planner for the car';
+
+  @override
+  String get settingsEvBattery => 'Battery';
+
+  @override
+  String get settingsEvConsumption => 'Consumption';
+
+  @override
+  String get settingsEvStartCharge => 'Start charge';
+
+  @override
+  String evChargeTime(int min) {
+    return '~$min min charging';
+  }
+
+  @override
   String get ebikeRangeComfortable => 'comfortable';
 
   @override

@@ -3986,6 +3986,60 @@ abstract class AppLocalizations {
   /// **'Akkukapazität'**
   String get settingsEbikeCapacityEdit;
 
+  /// No description provided for @settingsEvTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Elektroauto'**
+  String get settingsEvTitle;
+
+  /// No description provided for @settingsEvOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus'**
+  String get settingsEvOff;
+
+  /// No description provided for @settingsEvSummary.
+  ///
+  /// In de, this message translates to:
+  /// **'{kwh} kWh · {cons} kWh/100 km'**
+  String settingsEvSummary(String kwh, String cons);
+
+  /// No description provided for @settingsEvEnabled.
+  ///
+  /// In de, this message translates to:
+  /// **'EV-Modus (Auto-Profil)'**
+  String get settingsEvEnabled;
+
+  /// No description provided for @settingsEvEnabledSub.
+  ///
+  /// In de, this message translates to:
+  /// **'Reichweiten-Badge + Ladestopp-Planer fürs Auto'**
+  String get settingsEvEnabledSub;
+
+  /// No description provided for @settingsEvBattery.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku'**
+  String get settingsEvBattery;
+
+  /// No description provided for @settingsEvConsumption.
+  ///
+  /// In de, this message translates to:
+  /// **'Verbrauch'**
+  String get settingsEvConsumption;
+
+  /// No description provided for @settingsEvStartCharge.
+  ///
+  /// In de, this message translates to:
+  /// **'Start-Ladung'**
+  String get settingsEvStartCharge;
+
+  /// No description provided for @evChargeTime.
+  ///
+  /// In de, this message translates to:
+  /// **'~{min} min laden'**
+  String evChargeTime(int min);
+
   /// No description provided for @ebikeRangeComfortable.
   ///
   /// In de, this message translates to:

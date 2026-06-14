@@ -42,6 +42,8 @@ import '../services/hiking_prefs.dart';
 import '../services/routing_prefs.dart';
 import '../services/ebike_prefs.dart';
 import '../services/ebike_charging_planner.dart';
+import '../services/ev_prefs.dart';
+import '../services/ev_charging_planner.dart';
 import '../services/new_feature_prefs.dart';
 import '../services/activity_service.dart';
 import '../models/activity.dart';
@@ -194,6 +196,7 @@ class _MapScreenState extends State<MapScreen> {
     HikingPrefs.load();
     RoutingPrefs.load();
     EbikePrefs.load();
+    EvPrefs.load();
     ActivityService.load().then((_) {
       if (mounted) setState(() {});
     });
@@ -1266,6 +1269,11 @@ class _MapScreenState extends State<MapScreen> {
             ebikeHasChargingStops: _chargingStopLatLngs().isNotEmpty,
             onPlanChargingStop:
                 _profile == 'wegwiesel-ebike' ? _planEbikeChargingStop : null,
+            showEvBadge: _isEv,
+            evKwhNeeded: _isEv ? _evKwhNeeded(route) : 0,
+            evUsableKwh: EvPrefs.usableKwh,
+            evHasChargingStops: _chargingStopLatLngs().isNotEmpty,
+            onPlanEvChargingStop: _isEv ? _planEvChargingStop : null,
           ),
           if (_showElevation)
             ElevationChart(
@@ -4645,6 +4653,139 @@ class _MapScreenState extends State<MapScreen> {
       for (final w in _waypoints)
         if (_chargingStopKeys.contains(_wpKey(w))) [w.latitude, w.longitude],
     ];
+  }
+
+  /// EV mode is active when the user enabled it in Settings and is on a car
+  /// profile. Shares the charging-stop infrastructure with the e-bike planner.
+  bool get _isEv =>
+      EvPrefs.enabled && (_profile == 'car' || _profile == 'car-trailer');
+
+  /// kWh figure for the EV badge: whole-tour estimate normally, or the worst
+  /// single leg between charges once charging stops exist.
+  double _evKwhNeeded(RouteResult route) {
+    final stops = _chargingStopLatLngs();
+    if (stops.isEmpty) {
+      return EvPrefs.estimateKwhForRoute(
+        distanceKm: route.distance,
+        ascentM: route.ascent.round(),
+      );
+    }
+    return EvPrefs.estimateWorstLegKwh(
+      coords: route.coordinates,
+      stopLatLngs: stops,
+    );
+  }
+
+  /// Finds charging stations along the route and plans as many EV stops as it
+  /// takes so no leg exceeds the usable charge, then confirms before inserting
+  /// them as via-points and recomputing. Mirrors [_planEbikeChargingStop] and
+  /// reuses [_chargingStopKeys]; adds a rough charge-time per stop.
+  Future<void> _planEvChargingStop() async {
+    final route = _route;
+    if (route == null) return;
+    final l = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l.ebikePlanChargingSearching),
+        duration: const Duration(seconds: 8),
+      ),
+    );
+    EvChargingPlan? plan;
+    try {
+      plan = await EvChargingPlanner.plan(route);
+    } catch (_) {
+      // best-effort
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    if (plan == null || plan.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.ebikePlanChargingNoneFound)),
+      );
+      return;
+    }
+    final resolvedPlan = plan;
+    final stops = resolvedPlan.stops;
+    // Energy to refill per stop ≈ the usable budget spent on the leg up to it;
+    // simplest readable proxy is the whole usable charge for the charge-time.
+    final perStopKwh = EvPrefs.usableKwh * 0.9;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFf5e9d8),
+        title: Row(
+          children: [
+            const Icon(Icons.ev_station, color: Color(0xFF6a4a28)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(l.ebikePlanChargingTitle)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              stops.length == 1
+                  ? l.ebikePlanChargingOneStop
+                  : l.ebikePlanChargingManyStops(stops.length),
+              style: const TextStyle(
+                color: Color(0xFF6a4a28),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final s in stops)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  '• ${s.name ?? l.poiCatCharging} '
+                  '(${l.ebikePlanChargingDetails(
+                    s.routeKm.toStringAsFixed(1),
+                    s.sideMeters.round(),
+                  )} · ${l.evChargeTime(EvChargingPlanner.chargeMinutes(s, perStopKwh))})',
+                  style: const TextStyle(color: Colors.black87, fontSize: 13),
+                ),
+              ),
+            if (resolvedPlan.incomplete) ...[
+              const SizedBox(height: 6),
+              Text(
+                l.ebikePlanChargingIncomplete,
+                style: const TextStyle(
+                  color: Color(0xFFc62828),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF6a4a28),
+              foregroundColor: const Color(0xFFf5e9d8),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.ebikePlanChargingInsert),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    for (final s in stops) {
+      final stop = LatLng(s.lat, s.lon);
+      _insertViaPoint(stop);
+      final key = _wpKey(stop);
+      _chargingStopKeys.add(key);
+      if (s.name != null) _waypointNames[key] = s.name!;
+    }
+    setState(() => _draggingWaypointIndex = null);
+    await _calculateRoute();
   }
 
   /// Wh figure for the e-bike badge: whole-tour estimate normally, or

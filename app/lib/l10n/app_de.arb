@@ -776,6 +776,21 @@
   "shareToWatchFailed": "Watch nicht erreichbar",
   "settingsEbikeCapacity": "E-Bike-Akku",
   "settingsEbikeCapacityEdit": "Akkukapazität",
+  "settingsEvTitle": "Elektroauto",
+  "settingsEvOff": "Aus",
+  "settingsEvSummary": "{kwh} kWh · {cons} kWh/100 km",
+  "@settingsEvSummary": {
+    "placeholders": { "kwh": { "type": "String" }, "cons": { "type": "String" } }
+  },
+  "settingsEvEnabled": "EV-Modus (Auto-Profil)",
+  "settingsEvEnabledSub": "Reichweiten-Badge + Ladestopp-Planer fürs Auto",
+  "settingsEvBattery": "Akku",
+  "settingsEvConsumption": "Verbrauch",
+  "settingsEvStartCharge": "Start-Ladung",
+  "evChargeTime": "~{min} min laden",
+  "@evChargeTime": {
+    "placeholders": { "min": { "type": "int" } }
+  },
   "ebikeRangeComfortable": "reicht locker",
   "ebikeRangeTight": "wird knapp",
   "ebikeRangeBarely": "sehr knapp",

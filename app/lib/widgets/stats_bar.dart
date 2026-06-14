@@ -50,6 +50,20 @@ class StatsBar extends StatelessWidget {
   /// kicks off the suggestion + waypoint insertion from here.
   final VoidCallback? onPlanChargingStop;
 
+  /// When true, render an EV battery-range badge below the stats. Set by the
+  /// map screen when EV mode is on and the profile is a car.
+  final bool showEvBadge;
+
+  /// kWh the relevant leg draws (whole tour, or worst leg once charging stops
+  /// exist) and the car's usable charge. Ignored unless [showEvBadge] is set.
+  final double evKwhNeeded;
+  final double evUsableKwh;
+  final bool evHasChargingStops;
+
+  /// Fired when the user taps "plan charging stop" inside the over-range EV
+  /// badge.
+  final VoidCallback? onPlanEvChargingStop;
+
   const StatsBar({
     super.key,
     required this.route,
@@ -61,6 +75,11 @@ class StatsBar extends StatelessWidget {
     this.ebikeWhNeeded = 0,
     this.ebikeHasChargingStops = false,
     this.onPlanChargingStop,
+    this.showEvBadge = false,
+    this.evKwhNeeded = 0,
+    this.evUsableKwh = 0,
+    this.evHasChargingStops = false,
+    this.onPlanEvChargingStop,
   });
 
   @override
@@ -114,6 +133,16 @@ class StatsBar extends StatelessWidget {
                 capacityWh: EbikePrefs.capacityWh,
                 hasChargingStops: ebikeHasChargingStops,
                 onPlanChargingStop: onPlanChargingStop,
+              ),
+            ),
+          if (showEvBadge)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: _EvBadge(
+                kwhNeeded: evKwhNeeded,
+                usableKwh: evUsableKwh,
+                hasChargingStops: evHasChargingStops,
+                onPlanChargingStop: onPlanEvChargingStop,
               ),
             ),
           if (actions.isNotEmpty)
@@ -380,6 +409,136 @@ class _EbikeBadge extends StatelessWidget {
     if (pct < 90) return const Color(0xFFffa726); // amber — tight
     if (pct < 100) return const Color(0xFFef6c00); // dark amber — barely
     return const Color(0xFFc62828); // red — over-budget
+  }
+
+  IconData _iconFor(int pct) {
+    if (pct < 70) return Icons.battery_full;
+    if (pct < 90) return Icons.battery_5_bar;
+    if (pct < 100) return Icons.battery_3_bar;
+    return Icons.battery_alert;
+  }
+
+  String _labelFor(AppLocalizations l, int pct) {
+    if (pct < 70) return l.ebikeRangeComfortable;
+    if (pct < 90) return l.ebikeRangeTight;
+    if (pct < 100) return l.ebikeRangeBarely;
+    return l.ebikeRangeOver;
+  }
+}
+
+/// EV battery-range badge. The kWh twin of [_EbikeBadge]: route draw vs the
+/// car's usable charge, colour band flipping to red over 100 %, with a
+/// "plan charging stop" CTA when over range.
+class _EvBadge extends StatelessWidget {
+  final double kwhNeeded;
+  final double usableKwh;
+  final bool hasChargingStops;
+  final VoidCallback? onPlanChargingStop;
+
+  const _EvBadge({
+    required this.kwhNeeded,
+    required this.usableKwh,
+    this.hasChargingStops = false,
+    this.onPlanChargingStop,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final pct = usableKwh > 0 ? (kwhNeeded * 100 / usableKwh).round() : 0;
+    final color = _colorFor(pct);
+    final showCta = pct >= 100 && onPlanChargingStop != null;
+    final needStr = kwhNeeded.toStringAsFixed(1);
+    final capStr = usableKwh.toStringAsFixed(0);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_iconFor(pct), color: color, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                hasChargingStops
+                    ? '${l.ebikeWorstLeg}: $needStr / $capStr kWh'
+                    : '$needStr / $capStr kWh',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF6a4a28),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '$pct%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  _labelFor(l, pct),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF6a4a28)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          if (showCta) ...[
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: onPlanChargingStop,
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.ev_station, color: color, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      l.ebikePlanChargingStop,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Color _colorFor(int pct) {
+    if (pct < 70) return const Color(0xFF66bb6a);
+    if (pct < 90) return const Color(0xFFffa726);
+    if (pct < 100) return const Color(0xFFef6c00);
+    return const Color(0xFFc62828);
   }
 
   IconData _iconFor(int pct) {
