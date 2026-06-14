@@ -238,7 +238,7 @@ class BRouterService {
   // so a single naive correction would either overshoot or oscillate.
   static const _roundtripRadiusDivisor = 5.0;
   static const _roundtripMinRadius = 150;
-  static const _roundtripMaxIters = 5;
+  static const _roundtripMaxIters = 8;
   static const _roundtripAcceptToleranceLow = 0.85;
   static const _roundtripAcceptToleranceHigh = 1.15;
   static const _roundtripFailToleranceLow = 0.5;
@@ -250,46 +250,20 @@ class BRouterService {
     required int distanceKm,
     required int direction,
     List<NogoArea> nogos = const [],
-  }) async {
-    final targetDistance = distanceKm * 1000.0; // meters
-    var radius = max(
-      _roundtripMinRadius,
-      (targetDistance / _roundtripRadiusDivisor).round(),
-    );
-
-    RouteResult? best;
-    double bestErr = double.infinity;
-    for (var i = 0; i < _roundtripMaxIters; i++) {
-      final result = await _fetchRoundtripOnce(
-        start: start, profile: profile, radius: radius, direction: direction,
-        nogos: nogos,
-      );
-      final actual = result.distance * 1000;
-      final ratio = actual / targetDistance;
-      final err = (ratio - 1.0).abs();
-      if (err < bestErr) {
-        bestErr = err;
-        best = result;
-      }
-      if (ratio >= _roundtripAcceptToleranceLow &&
-          ratio <= _roundtripAcceptToleranceHigh) {
-        break;
-      }
-      // Square-root dampening: ratio=4 → divide by 2, ratio=0.25 → multiply by 2.
-      // Keeps the next radius in a sane range even for wildly off first replies.
-      radius = max(
+  }) {
+    final targetM = distanceKm * 1000.0;
+    return _convergeRoundtrip(
+      target: targetM,
+      metricOf: (r) => r.distance * 1000,
+      initialRadius: max(
         _roundtripMinRadius,
-        (radius / sqrt(ratio)).round(),
-      );
-    }
-    final finalRatio = (best!.distance * 1000) / targetDistance;
-    if (finalRatio < _roundtripFailToleranceLow ||
-        finalRatio > _roundtripFailToleranceHigh) {
-      throw Exception(
-        'roundtrip_off_target:${best.distance.toStringAsFixed(1)}',
-      );
-    }
-    return best;
+        (targetM / _roundtripRadiusDivisor).round(),
+      ),
+      start: start,
+      profile: profile,
+      direction: direction,
+      nogos: nogos,
+    );
   }
 
   static Future<RouteResult> calculateRoundtripByTime({
@@ -299,22 +273,61 @@ class BRouterService {
     required int avgSpeedKmh,
     required int direction,
     List<NogoArea> nogos = const [],
-  }) async {
+  }) {
     final targetSeconds = timeMinutes * 60.0;
     final estimatedKm = timeMinutes / 60.0 * avgSpeedKmh;
-    var radius = max(
-      _roundtripMinRadius,
-      (estimatedKm * 1000 / _roundtripRadiusDivisor).round(),
+    return _convergeRoundtrip(
+      target: targetSeconds,
+      metricOf: (r) => r.time,
+      initialRadius: max(
+        _roundtripMinRadius,
+        (estimatedKm * 1000 / _roundtripRadiusDivisor).round(),
+      ),
+      start: start,
+      profile: profile,
+      direction: direction,
+      nogos: nogos,
     );
+  }
+
+  /// Finds the `roundTripDistance` radius whose loop hits [target] (metres for
+  /// distance plans, seconds for time plans via [metricOf]). BRouter's
+  /// radius→length relation is monotonic but nonlinear and location-dependent,
+  /// so we *bracket* the target — one radius that comes up short, one that
+  /// overshoots — and then converge by false position, falling back to
+  /// bisection whenever a step would leave the bracket. This replaces the old
+  /// sqrt-damped single-variable correction, which oscillated and failed to
+  /// converge on sparse road networks (e.g. rural roundtrips returning nothing).
+  static Future<RouteResult> _convergeRoundtrip({
+    required double target,
+    required double Function(RouteResult) metricOf,
+    required int initialRadius,
+    required List<double> start,
+    required String profile,
+    required int direction,
+    required List<NogoArea> nogos,
+  }) async {
+    var radius = max(_roundtripMinRadius, initialRadius);
 
     RouteResult? best;
-    double bestErr = double.infinity;
+    var bestErr = double.infinity;
+
+    // Bracket endpoints: lo = a radius whose loop is too short, hi = too long.
+    int? loR;
+    double? loV;
+    int? hiR;
+    double? hiV;
+
     for (var i = 0; i < _roundtripMaxIters; i++) {
       final result = await _fetchRoundtripOnce(
-        start: start, profile: profile, radius: radius, direction: direction,
+        start: start,
+        profile: profile,
+        radius: radius,
+        direction: direction,
         nogos: nogos,
       );
-      final ratio = result.time / targetSeconds;
+      final v = metricOf(result);
+      final ratio = v / target;
       final err = (ratio - 1.0).abs();
       if (err < bestErr) {
         bestErr = err;
@@ -324,12 +337,42 @@ class BRouterService {
           ratio <= _roundtripAcceptToleranceHigh) {
         break;
       }
-      radius = max(
-        _roundtripMinRadius,
-        (radius / sqrt(ratio)).round(),
-      );
+
+      if (v < target) {
+        loR = radius;
+        loV = v;
+      } else {
+        hiR = radius;
+        hiV = v;
+      }
+
+      int next;
+      if (loR != null && hiR != null) {
+        // Both sides known → false position on (radius → metric), clamped
+        // strictly inside the bracket so the interval always shrinks.
+        final lo = loR;
+        final hi = hiR;
+        final lv = loV!;
+        final hv = hiV!;
+        final span = hv - lv;
+        final fp = span.abs() < 1e-6
+            ? (lo + hi) / 2
+            : lo + (hi - lo) * (target - lv) / span;
+        next = fp.round();
+        if (next <= lo || next >= hi) {
+          next = ((lo + hi) / 2).round();
+        }
+      } else if (hiR != null) {
+        next = (radius * 0.6).round(); // only overshoots seen → shrink
+      } else {
+        next = (radius * 1.7).round(); // only short loops seen → grow
+      }
+      next = max(_roundtripMinRadius, next);
+      if (next == radius) break; // converged onto the radius grid; keep best
+      radius = next;
     }
-    final finalRatio = best!.time / targetSeconds;
+
+    final finalRatio = metricOf(best!) / target;
     if (finalRatio < _roundtripFailToleranceLow ||
         finalRatio > _roundtripFailToleranceHigh) {
       throw Exception(
