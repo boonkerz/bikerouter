@@ -872,6 +872,48 @@ abstract class AppLocalizations {
   /// **'Tagesziel'**
   String get stagesTargetLabel;
 
+  /// No description provided for @stagesByKm.
+  ///
+  /// In de, this message translates to:
+  /// **'km/Tag'**
+  String get stagesByKm;
+
+  /// No description provided for @stagesByDays.
+  ///
+  /// In de, this message translates to:
+  /// **'Tage'**
+  String get stagesByDays;
+
+  /// No description provided for @stagesDaysValue.
+  ///
+  /// In de, this message translates to:
+  /// **'{days} Tage'**
+  String stagesDaysValue(int days);
+
+  /// No description provided for @stagesPlanSummary.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Etappen · Ø {km} km'**
+  String stagesPlanSummary(int count, int km);
+
+  /// No description provided for @stagesDaylightOver.
+  ///
+  /// In de, this message translates to:
+  /// **'länger als Tageslicht'**
+  String get stagesDaylightOver;
+
+  /// No description provided for @stagesDaylightTight.
+  ///
+  /// In de, this message translates to:
+  /// **'knapp vor Sonnenuntergang'**
+  String get stagesDaylightTight;
+
+  /// No description provided for @stagesBatteryOver.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku reicht nicht'**
+  String get stagesBatteryOver;
+
   /// No description provided for @stagesDays.
   ///
   /// In de, this message translates to:

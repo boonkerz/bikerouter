@@ -162,6 +162,19 @@
   "stagesTotalKm": "{km} km total",
   "@stagesTotalKm": { "placeholders": { "km": { "type": "String" } } },
   "stagesTargetLabel": "Daily target",
+  "stagesByKm": "km/day",
+  "stagesByDays": "Days",
+  "stagesDaysValue": "{days} days",
+  "@stagesDaysValue": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "stagesPlanSummary": "{count} stages · ~{km} km",
+  "@stagesPlanSummary": {
+    "placeholders": { "count": { "type": "int" }, "km": { "type": "int" } }
+  },
+  "stagesDaylightOver": "exceeds daylight",
+  "stagesDaylightTight": "tight before sunset",
+  "stagesBatteryOver": "battery won't last",
   "stagesDays": "{count} days",
   "@stagesDays": { "placeholders": { "count": { "type": "int" } } },
   "stagesCreating": "Calculating stages…",

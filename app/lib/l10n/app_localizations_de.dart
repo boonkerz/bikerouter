@@ -420,6 +420,31 @@ class AppLocalizationsDe extends AppLocalizations {
   String get stagesTargetLabel => 'Tagesziel';
 
   @override
+  String get stagesByKm => 'km/Tag';
+
+  @override
+  String get stagesByDays => 'Tage';
+
+  @override
+  String stagesDaysValue(int days) {
+    return '$days Tage';
+  }
+
+  @override
+  String stagesPlanSummary(int count, int km) {
+    return '$count Etappen · Ø $km km';
+  }
+
+  @override
+  String get stagesDaylightOver => 'länger als Tageslicht';
+
+  @override
+  String get stagesDaylightTight => 'knapp vor Sonnenuntergang';
+
+  @override
+  String get stagesBatteryOver => 'Akku reicht nicht';
+
+  @override
   String stagesDays(int count) {
     return '$count Tage';
   }

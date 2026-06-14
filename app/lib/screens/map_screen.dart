@@ -4492,6 +4492,7 @@ class _MapScreenState extends State<MapScreen> {
       context,
       coordinates: _route!.coordinates,
       totalDistanceKm: _route!.distance,
+      profile: _profile,
     );
     if (result == null || !mounted) return;
     setState(() => _stages = result.stages);

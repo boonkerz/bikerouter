@@ -162,6 +162,19 @@
   "stagesTotalKm": "{km} km gesamt",
   "@stagesTotalKm": { "placeholders": { "km": { "type": "String" } } },
   "stagesTargetLabel": "Tagesziel",
+  "stagesByKm": "km/Tag",
+  "stagesByDays": "Tage",
+  "stagesDaysValue": "{days} Tage",
+  "@stagesDaysValue": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "stagesPlanSummary": "{count} Etappen · Ø {km} km",
+  "@stagesPlanSummary": {
+    "placeholders": { "count": { "type": "int" }, "km": { "type": "int" } }
+  },
+  "stagesDaylightOver": "länger als Tageslicht",
+  "stagesDaylightTight": "knapp vor Sonnenuntergang",
+  "stagesBatteryOver": "Akku reicht nicht",
   "stagesDays": "{count} Tage",
   "@stagesDays": { "placeholders": { "count": { "type": "int" } } },
   "stagesCreating": "Etappen werden berechnet…",

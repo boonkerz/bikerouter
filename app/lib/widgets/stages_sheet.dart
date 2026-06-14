@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/ebike_prefs.dart';
+import '../services/profile_speed_prefs.dart';
 import '../services/solar_calc.dart';
 import '../services/stage_planner.dart';
 import '../services/weather_service.dart';
@@ -15,6 +17,7 @@ Future<StagesResult?> showStagesSheet(
   BuildContext context, {
   required List<List<double>> coordinates,
   required double totalDistanceKm,
+  required String profile,
 }) {
   return showModalBottomSheet<StagesResult>(
     context: context,
@@ -26,6 +29,7 @@ Future<StagesResult?> showStagesSheet(
     builder: (ctx) => _Sheet(
       coordinates: coordinates,
       totalKm: totalDistanceKm,
+      profile: profile,
     ),
   );
 }
@@ -33,8 +37,13 @@ Future<StagesResult?> showStagesSheet(
 class _Sheet extends StatefulWidget {
   final List<List<double>> coordinates;
   final double totalKm;
+  final String profile;
 
-  const _Sheet({required this.coordinates, required this.totalKm});
+  const _Sheet({
+    required this.coordinates,
+    required this.totalKm,
+    required this.profile,
+  });
 
   @override
   State<_Sheet> createState() => _SheetState();
@@ -42,8 +51,26 @@ class _Sheet extends StatefulWidget {
 
 class _SheetState extends State<_Sheet> {
   double _targetKm = 60;
+  // Plan-by-days mode: instead of "km per day", the rider picks how many days
+  // they have and the planner divides the route evenly. targetKm is derived.
+  bool _planByDays = false;
+  int _days = 3;
   List<Stage>? _stages;
   bool _loading = false;
+
+  bool get _isEbike => widget.profile == 'wegwiesel-ebike';
+  int get _speedKmh => ProfileSpeedPrefs.speedFor(widget.profile);
+
+  /// Rough riding time for a stage: flat-speed time plus a Naismith-style
+  /// climb penalty (~1 h per 600 ascended metres). Used for the daylight check.
+  double _ridingHours(Stage s) =>
+      s.lengthKm / _speedKmh + s.ascentM / 600.0;
+
+  /// Available daylight in hours for a stage's day, or null near the poles.
+  double? _daylightHours(SolarTimes? solar) {
+    if (solar == null) return null;
+    return solar.sunsetLocal.difference(solar.sunriseLocal).inMinutes / 60.0;
+  }
   // Start date for stage 1. Stage N runs on _startDate + (N-1) days. We
   // strip the time-of-day because the planner doesn't model intra-day
   // start times — sunrise/sunset are calendar-day values at the endpoint.
@@ -66,12 +93,18 @@ class _SheetState extends State<_Sheet> {
     _fetch();
   }
 
+  /// Effective km/day fed to the planner — derived from the day count in
+  /// plan-by-days mode, otherwise the slider value.
+  double get _effectiveTargetKm => _planByDays
+      ? (widget.totalKm / _days).clamp(1.0, double.infinity)
+      : _targetKm;
+
   Future<void> _fetch() async {
     setState(() => _loading = true);
     try {
       final s = await StagePlanner.plan(
         coordinates: widget.coordinates,
-        targetKm: _targetKm,
+        targetKm: _effectiveTargetKm,
       );
       if (!mounted) return;
       setState(() {
@@ -166,28 +199,69 @@ class _SheetState extends State<_Sheet> {
               ],
             ),
             const SizedBox(height: 8),
+            // Mode toggle: split by km/day or by a fixed number of days.
             Row(
               children: [
-                Text(l.stagesTargetLabel, style: const TextStyle(color: Colors.black54, fontSize: 12)),
-                Expanded(
-                  child: Slider(
-                    value: _targetKm,
-                    min: 20,
-                    max: 150,
-                    divisions: 26,
-                    label: '${_targetKm.round()} km',
-                    activeColor: const Color(0xFF6a4a28),
-                    onChanged: (v) => setState(() => _targetKm = v),
-                    onChangeEnd: (_) => _fetch(),
+                _modeChip(l.stagesByKm, !_planByDays),
+                const SizedBox(width: 8),
+                _modeChip(l.stagesByDays, _planByDays),
+                const Spacer(),
+                Text(
+                  l.stagesPlanSummary(
+                    (_stages?.length ?? 0),
+                    _effectiveTargetKm.round(),
                   ),
-                ),
-                SizedBox(
-                  width: 56,
-                  child: Text('${_targetKm.round()} km',
-                      style: const TextStyle(color: Colors.black87, fontSize: 12)),
+                  style: const TextStyle(color: Colors.black54, fontSize: 11),
                 ),
               ],
             ),
+            const SizedBox(height: 4),
+            if (_planByDays)
+              Row(
+                children: [
+                  Text(l.stagesByDays, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  Expanded(
+                    child: Slider(
+                      value: _days.toDouble(),
+                      min: 1,
+                      max: 14,
+                      divisions: 13,
+                      label: '$_days',
+                      activeColor: const Color(0xFF6a4a28),
+                      onChanged: (v) => setState(() => _days = v.round()),
+                      onChangeEnd: (_) => _fetch(),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 56,
+                    child: Text(l.stagesDaysValue(_days),
+                        style: const TextStyle(color: Colors.black87, fontSize: 12)),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Text(l.stagesTargetLabel, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  Expanded(
+                    child: Slider(
+                      value: _targetKm,
+                      min: 20,
+                      max: 150,
+                      divisions: 26,
+                      label: '${_targetKm.round()} km',
+                      activeColor: const Color(0xFF6a4a28),
+                      onChanged: (v) => setState(() => _targetKm = v),
+                      onChangeEnd: (_) => _fetch(),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 56,
+                    child: Text('${_targetKm.round()} km',
+                        style: const TextStyle(color: Colors.black87, fontSize: 12)),
+                  ),
+                ],
+              ),
             // Start-date picker — only useful when the route splits into 2+
             // stages, otherwise sunset on day-1 is just for "today" anyway.
             if ((_stages?.length ?? 0) > 1) ...[
@@ -233,7 +307,8 @@ class _SheetState extends State<_Sheet> {
                     backgroundColor: const Color(0xFF6a4a28),
                     foregroundColor: const Color(0xFFf5e9d8),
                   ),
-                  onPressed: () => Navigator.pop(context, StagesResult(_stages!, _targetKm)),
+                  onPressed: () => Navigator.pop(
+                      context, StagesResult(_stages!, _effectiveTargetKm)),
                 ),
               ),
           ],
@@ -321,6 +396,7 @@ class _SheetState extends State<_Sheet> {
                       ],
                     ],
                   ),
+                  _feasibilityRow(s, solar, l),
                   if (_overnight[s.index] != null) ...[
                     const SizedBox(height: 4),
                     _overnightChip(_overnight[s.index]!),
@@ -355,6 +431,96 @@ class _SheetState extends State<_Sheet> {
     final h = t.hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  Widget _modeChip(String label, bool active) {
+    return GestureDetector(
+      onTap: () {
+        if ((label == AppLocalizations.of(context).stagesByDays) == _planByDays) {
+          return;
+        }
+        setState(() => _planByDays = !_planByDays);
+        _fetch();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFF6a4a28).withValues(alpha: 0.2)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active ? const Color(0xFF6a4a28) : Colors.black26,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? const Color(0xFF6a4a28) : Colors.black54,
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Per-stage feasibility: estimated riding time, a daylight warning when the
+  /// stage won't fit between sunrise and sunset, and (on e-bikes) the share of
+  /// the battery this stage draws with an over-budget warning. This is the bit
+  /// that turns a plain stage list into an auto multi-day planner.
+  Widget _feasibilityRow(Stage s, SolarTimes? solar, AppLocalizations l) {
+    final ridingH = _ridingHours(s);
+    final daylightH = _daylightHours(solar);
+    final overDaylight = daylightH != null && ridingH > daylightH;
+    final tightDaylight =
+        daylightH != null && !overDaylight && ridingH > daylightH - 1.5;
+
+    final cap = EbikePrefs.capacityWh;
+    final ebikeWh = _isEbike
+        ? EbikePrefs.estimateWhForRoute(
+            distanceKm: s.lengthKm, ascentM: s.ascentM.round())
+        : 0;
+    final ebikePct = (_isEbike && cap > 0) ? (ebikeWh / cap * 100).round() : 0;
+    final ebikeOver = _isEbike && cap > 0 && ebikeWh > cap;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('⏱ ${_formatDuration(ridingH)}',
+              style: const TextStyle(color: Colors.black54, fontSize: 12)),
+          if (overDaylight)
+            Text('⚠️ ${l.stagesDaylightOver}',
+                style: const TextStyle(
+                    color: Color(0xFFc62828),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600))
+          else if (tightDaylight)
+            Text('⚠️ ${l.stagesDaylightTight}',
+                style: const TextStyle(color: Color(0xFFb26a00), fontSize: 12)),
+          if (_isEbike && cap > 0)
+            Text(
+              '🔋 $ebikePct%${ebikeOver ? ' · ${l.stagesBatteryOver}' : ''}',
+              style: TextStyle(
+                color: ebikeOver ? const Color(0xFFc62828) : const Color(0xFF2e6a4a),
+                fontSize: 12,
+                fontWeight: ebikeOver ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatDuration(double hours) {
+    final total = (hours * 60).round();
+    final h = total ~/ 60;
+    final m = total % 60;
+    return '$h:${m.toString().padLeft(2, '0')} h';
   }
 
   Widget _overnightChip(OvernightAnchor a) {
