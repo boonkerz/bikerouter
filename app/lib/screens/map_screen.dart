@@ -1117,15 +1117,34 @@ class _MapScreenState extends State<MapScreen> {
     final latLng = LatLng(result.lat, result.lon);
     _mapController.move(latLng, 14);
 
-    // Add as waypoint
+    final destName = result.displayName.split(',').take(2).join(',').trim();
+
+    // Roundtrip: the searched address becomes the start of the loop.
     if (_roundtripMode) {
       _clearAll();
+      setState(() => _waypoints.add(latLng));
+      _waypointNames[_wpKey(latLng)] = destName;
+      return;
     }
-    setState(() {
-      _waypoints.add(latLng);
-    });
-    _waypointNames[_wpKey(latLng)] = result.displayName.split(',').take(2).join(',').trim();
-    if (!_roundtripMode && _waypoints.length >= 2) {
+
+    // First destination in A→B mode: route from the current location to the
+    // searched address (current position = A, address = B). Falls back to the
+    // address becoming the start when GPS isn't available.
+    if (_waypoints.isEmpty && _currentPosition != null) {
+      final start = _currentPosition!;
+      setState(() {
+        _waypoints.add(start);
+        _waypoints.add(latLng);
+      });
+      _resolveWaypointName(start);
+      _waypointNames[_wpKey(latLng)] = destName;
+      _calculateRoute();
+      return;
+    }
+
+    setState(() => _waypoints.add(latLng));
+    _waypointNames[_wpKey(latLng)] = destName;
+    if (_waypoints.length >= 2) {
       _calculateRoute();
     }
   }
