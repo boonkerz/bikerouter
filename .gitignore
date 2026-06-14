@@ -42,3 +42,6 @@ Thumbs.db
 # Go build outputs (services build inside Docker)
 tracking/wegwiesel-tracking
 share/wegwiesel-share
+
+# Playwright MCP scratch artifacts
+.playwright-mcp/
