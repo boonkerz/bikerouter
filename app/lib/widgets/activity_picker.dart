@@ -59,26 +59,36 @@ Future<Activity?> showActivityPicker(
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 1.0,
-                    children: [
-                      for (final a in activities)
-                        _ActivityTile(
-                          activity: a,
-                          selected: a.id == active?.id,
-                          label: a.localizedName(l),
-                          onTap: () => Navigator.of(ctx).pop(a),
-                        ),
-                    ],
+                  // Cap the grid width so the tiles stay compact on wide
+                  // screens (tablet / web) instead of ballooning to a third
+                  // of the viewport; centred on those, full-width on phones.
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 460),
+                      child: GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                        // Flatter than square so all 12 activities fit without
+                        // scrolling — wide enough for a two-line label.
+                        childAspectRatio: 1.35,
+                        children: [
+                          for (final a in activities)
+                            _ActivityTile(
+                              activity: a,
+                              selected: a.id == active?.id,
+                              label: a.localizedName(l),
+                              onTap: () => Navigator.of(ctx).pop(a),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -129,11 +139,11 @@ class _ActivityTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(activity.icon, style: const TextStyle(fontSize: 28)),
+              Text(activity.icon, style: const TextStyle(fontSize: 24)),
               const SizedBox(height: 4),
               Text(
                 label,
