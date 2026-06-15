@@ -4130,6 +4130,30 @@ abstract class AppLocalizations {
   /// **'Was machst du heute?'**
   String get activityPickerTitle;
 
+  /// No description provided for @tourProfile.
+  ///
+  /// In de, this message translates to:
+  /// **'Wähle hier dein Profil bzw. deine Aktivität (Rad, E-Bike, Wandern, Auto …).'**
+  String get tourProfile;
+
+  /// No description provided for @tourModes.
+  ///
+  /// In de, this message translates to:
+  /// **'A→B-Route oder Rundtour? Hier umschalten.'**
+  String get tourModes;
+
+  /// No description provided for @tourSearch.
+  ///
+  /// In de, this message translates to:
+  /// **'Adresse suchen — oder einfach das Ziel auf die Karte tippen. Dein Standort ist der Start.'**
+  String get tourSearch;
+
+  /// No description provided for @tourSkip.
+  ///
+  /// In de, this message translates to:
+  /// **'ÜBERSPRINGEN'**
+  String get tourSkip;
+
   /// No description provided for @mapHintChooseProfile.
   ///
   /// In de, this message translates to:

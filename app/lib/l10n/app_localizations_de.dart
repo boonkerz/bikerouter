@@ -2176,6 +2176,20 @@ class AppLocalizationsDe extends AppLocalizations {
   String get activityPickerTitle => 'Was machst du heute?';
 
   @override
+  String get tourProfile =>
+      'Wähle hier dein Profil bzw. deine Aktivität (Rad, E-Bike, Wandern, Auto …).';
+
+  @override
+  String get tourModes => 'A→B-Route oder Rundtour? Hier umschalten.';
+
+  @override
+  String get tourSearch =>
+      'Adresse suchen — oder einfach das Ziel auf die Karte tippen. Dein Standort ist der Start.';
+
+  @override
+  String get tourSkip => 'ÜBERSPRINGEN';
+
+  @override
   String get mapHintChooseProfile => 'Oben Profil & A→B / Rundtour wählen';
 
   @override

@@ -54,6 +54,7 @@ dependencies:
   wakelock_plus: ^1.2.8
   flutter_tts: ^4.2.0
   crypto: ^3.0.6
+  tutorial_coach_mark: ^1.2.11
 
 dev_dependencies:
   flutter_test:

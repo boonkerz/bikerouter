@@ -2176,6 +2176,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityPickerTitle => 'What are you doing today?';
 
   @override
+  String get tourProfile =>
+      'Pick your profile / activity here (bike, e-bike, hiking, car …).';
+
+  @override
+  String get tourModes => 'A→B route or a roundtrip? Switch here.';
+
+  @override
+  String get tourSearch =>
+      'Search an address — or just tap your destination on the map. Your location is the start.';
+
+  @override
+  String get tourSkip => 'SKIP';
+
+  @override
   String get mapHintChooseProfile => 'Pick a profile & A→B / roundtrip up top';
 
   @override

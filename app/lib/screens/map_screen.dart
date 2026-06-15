@@ -7,6 +7,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../services/gpx_export.dart';
@@ -116,6 +117,12 @@ class _MapScreenState extends State<MapScreen> {
   // First-run hint that teaches the core "tap to set destination" gesture.
   // Dismissed permanently once the user taps it away or makes a route.
   bool _tapHintDismissed = false;
+  // First-launch spotlight tour (coachmarks over the top controls). Runs once;
+  // the lightweight tap hint only kicks in afterwards.
+  bool _tourSeen = false;
+  final GlobalKey _keyModes = GlobalKey();
+  final GlobalKey _keyProfile = GlobalKey();
+  final GlobalKey _keySearch = GlobalKey();
   bool _showControls = false;
   int? _highlightIndex;
   LatLng? _currentPosition;
@@ -193,6 +200,8 @@ class _MapScreenState extends State<MapScreen> {
       if (op != null && mounted) setState(() => _overlayOpacity = op.clamp(0.0, 1.0));
       final hintSeen = prefs.getBool('onboard_tap_hint_v1') ?? false;
       if (hintSeen && mounted) setState(() => _tapHintDismissed = true);
+      _tourSeen = prefs.getBool('onboard_tour_v1') ?? false;
+      if (!_tourSeen && mounted) _maybeShowTour();
     });
     NogoStorage.load().then((v) {
       if (mounted) setState(() => _nogos = v);
@@ -548,6 +557,7 @@ class _MapScreenState extends State<MapScreen> {
             child: Row(
               children: [
                 Container(
+                  key: _keyModes,
                   decoration: BoxDecoration(
                     color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(10),
@@ -568,6 +578,7 @@ class _MapScreenState extends State<MapScreen> {
                   child: GestureDetector(
                     onTap: () => _showActivityPicker(context),
                     child: Container(
+                      key: _keyProfile,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
@@ -739,8 +750,10 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
 
-          // First-run empty-state hint teaching the core gesture.
-          if (_route == null &&
+          // Lightweight empty-state reminder — shown after the first-launch
+          // spotlight tour has run (or been skipped).
+          if (_tourSeen &&
+              _route == null &&
               _waypoints.isEmpty &&
               !_roundtripMode &&
               !_tapHintDismissed)
@@ -759,7 +772,10 @@ class _MapScreenState extends State<MapScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Search button
-                _fab(Icons.search, () => _searchAddress(context)),
+                KeyedSubtree(
+                  key: _keySearch,
+                  child: _fab(Icons.search, () => _searchAddress(context)),
+                ),
                 const SizedBox(height: 8),
                 // GPS location button
                 _fab(
@@ -1899,6 +1915,96 @@ class _MapScreenState extends State<MapScreen> {
     setState(() => _tapHintDismissed = true);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboard_tap_hint_v1', true);
+  }
+
+  /// Schedules the first-launch spotlight tour once the target widgets are laid
+  /// out and the map is still empty. No-op if already seen or mid-planning.
+  void _maybeShowTour() {
+    if (_tourSeen || _route != null || _waypoints.isNotEmpty || _roundtripMode) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _tourSeen) return;
+      final ready = _keyModes.currentContext != null &&
+          _keyProfile.currentContext != null &&
+          _keySearch.currentContext != null;
+      if (!ready) return; // not laid out yet; harmless — user can plan manually
+      _showTour();
+    });
+  }
+
+  void _showTour() {
+    final l = AppLocalizations.of(context);
+    TutorialCoachMark(
+      colorShadow: const Color(0xFF2a2014),
+      textSkip: l.tourSkip,
+      paddingFocus: 6,
+      onFinish: _markTourSeen,
+      onSkip: () {
+        _markTourSeen();
+        return true;
+      },
+      targets: [
+        TargetFocus(
+          identify: 'profile',
+          keyTarget: _keyProfile,
+          shape: ShapeLightFocus.RRect,
+          radius: 10,
+          contents: [
+            TargetContent(
+              align: ContentAlign.bottom,
+              builder: (_, __) => _tourBubble(l.tourProfile),
+            ),
+          ],
+        ),
+        TargetFocus(
+          identify: 'modes',
+          keyTarget: _keyModes,
+          shape: ShapeLightFocus.RRect,
+          radius: 10,
+          contents: [
+            TargetContent(
+              align: ContentAlign.bottom,
+              builder: (_, __) => _tourBubble(l.tourModes),
+            ),
+          ],
+        ),
+        TargetFocus(
+          identify: 'search',
+          keyTarget: _keySearch,
+          shape: ShapeLightFocus.Circle,
+          contents: [
+            TargetContent(
+              align: ContentAlign.left,
+              builder: (_, __) => _tourBubble(l.tourSearch),
+            ),
+          ],
+        ),
+      ],
+    ).show(context: context);
+  }
+
+  Widget _tourBubble(String text) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 320),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFf5e9d8),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+            color: Color(0xFF2a2014), fontSize: 15, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  Future<void> _markTourSeen() async {
+    if (!mounted) return;
+    setState(() => _tourSeen = true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboard_tour_v1', true);
   }
 
   List<StatsAction> _buildStatsActions(BuildContext context) {
