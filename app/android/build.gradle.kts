@@ -1,3 +1,21 @@
+// Paparazzi (alpha Compose-screenshot plugin) is only needed when generating
+// Wear screenshots (-PwithPaparazzi, via scripts/wear-screenshots.sh). Adding it
+// to the buildscript classpath solely under that flag keeps the flaky alpha
+// plugin marker off normal release builds — resolving it during settings
+// evaluation intermittently broke the Android release lane.
+buildscript {
+    if (gradle.startParameter.projectProperties.containsKey("withPaparazzi")) {
+        repositories {
+            google()
+            mavenCentral()
+            gradlePluginPortal()
+        }
+        dependencies {
+            classpath("app.cash.paparazzi:paparazzi-gradle-plugin:2.0.0-alpha05")
+        }
+    }
+}
+
 allprojects {
     repositories {
         google()

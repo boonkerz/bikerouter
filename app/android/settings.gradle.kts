@@ -22,9 +22,11 @@ plugins {
     id("com.android.application") version "8.13.2" apply false
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20" apply false
-    // Paparazzi — renders Compose to PNG via layoutlib on the JVM (no emulator),
-    // used by :wear for store screenshots.
-    id("app.cash.paparazzi") version "2.0.0-alpha05" apply false
+    // Paparazzi (alpha screenshot plugin) is intentionally NOT declared here:
+    // even `apply false` resolves its marker during settings evaluation, which
+    // flakily broke the Android release lane. It's added to the buildscript
+    // classpath only under -PwithPaparazzi (see build.gradle.kts) and applied
+    // by :wear for store screenshots.
 }
 
 include(":app")
