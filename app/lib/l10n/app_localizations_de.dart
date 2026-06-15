@@ -2176,10 +2176,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get activityPickerTitle => 'Was machst du heute?';
 
   @override
-  String get mapTapHintGps => 'Tippe aufs Ziel — dein Standort ist der Start';
+  String get mapHintChooseProfile => 'Oben Profil & A→B / Rundtour wählen';
 
   @override
-  String get mapTapHintNoGps => 'Tippe Start und Ziel auf die Karte';
+  String get mapTapHintGps => 'Ziel antippen — dein Standort ist der Start';
+
+  @override
+  String get mapTapHintNoGps => 'Start und Ziel auf die Karte tippen';
 
   @override
   String get activityPickerAdvanced => 'Erweitert (alle Profile)';

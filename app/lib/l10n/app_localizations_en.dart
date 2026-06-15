@@ -2176,6 +2176,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityPickerTitle => 'What are you doing today?';
 
   @override
+  String get mapHintChooseProfile => 'Pick a profile & A→B / roundtrip up top';
+
+  @override
   String get mapTapHintGps =>
       'Tap your destination — your location is the start';
 

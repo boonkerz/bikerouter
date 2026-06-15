@@ -1823,17 +1823,18 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /// Compact one-line coachmark shown on an empty map: teaches that tapping
-  /// sets the destination (with GPS as the start). Dismissible and one-time.
+  /// Compact two-step coachmark shown on an empty map: pick a profile + route
+  /// mode (top controls), then tap the destination (GPS as the start).
+  /// Dismissible and one-time.
   Widget _buildTapHint(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final text = _currentPosition != null ? l.mapTapHintGps : l.mapTapHintNoGps;
+    final step2 = _currentPosition != null ? l.mapTapHintGps : l.mapTapHintNoGps;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      constraints: const BoxConstraints(maxWidth: 380),
+      constraints: const BoxConstraints(maxWidth: 400),
       decoration: BoxDecoration(
         color: const Color(0xFF6a4a28),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -1842,20 +1843,20 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.only(left: 14, right: 4, top: 4, bottom: 4),
+      padding: const EdgeInsets.fromLTRB(14, 10, 4, 10),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.touch_app, color: Color(0xFFf5e9d8), size: 18),
-          const SizedBox(width: 8),
           Flexible(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Color(0xFFf5e9d8),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _hintStep('1.', l.mapHintChooseProfile),
+                const SizedBox(height: 4),
+                _hintStep('2.', step2),
+              ],
             ),
           ),
           IconButton(
@@ -1866,6 +1867,31 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _hintStep(String num, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(num,
+            style: const TextStyle(
+                color: Color(0xFFf5e9d8),
+                fontSize: 13,
+                fontWeight: FontWeight.w700)),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFFf5e9d8),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
