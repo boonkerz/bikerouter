@@ -791,6 +791,12 @@
   "@evChargeTime": {
     "placeholders": { "min": { "type": "int" } }
   },
+  "evPriceOsm": "Preis (OSM): {price}",
+  "@evPriceOsm": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "evChargingFree": "kostenlos",
+  "evChargingPaid": "kostenpflichtig",
   "ebikeRangeComfortable": "reicht locker",
   "ebikeRangeTight": "wird knapp",
   "ebikeRangeBarely": "sehr knapp",

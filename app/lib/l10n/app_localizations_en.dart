@@ -2127,6 +2127,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String evPriceOsm(String price) {
+    return 'Price (OSM): $price';
+  }
+
+  @override
+  String get evChargingFree => 'free';
+
+  @override
+  String get evChargingPaid => 'paid';
+
+  @override
   String get ebikeRangeComfortable => 'comfortable';
 
   @override

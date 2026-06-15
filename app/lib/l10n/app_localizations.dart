@@ -4040,6 +4040,24 @@ abstract class AppLocalizations {
   /// **'~{min} min laden'**
   String evChargeTime(int min);
 
+  /// No description provided for @evPriceOsm.
+  ///
+  /// In de, this message translates to:
+  /// **'Preis (OSM): {price}'**
+  String evPriceOsm(String price);
+
+  /// No description provided for @evChargingFree.
+  ///
+  /// In de, this message translates to:
+  /// **'kostenlos'**
+  String get evChargingFree;
+
+  /// No description provided for @evChargingPaid.
+  ///
+  /// In de, this message translates to:
+  /// **'kostenpflichtig'**
+  String get evChargingPaid;
+
   /// No description provided for @ebikeRangeComfortable.
   ///
   /// In de, this message translates to:

@@ -117,6 +117,16 @@ class EvChargingPlanner {
     return EvChargingPlan(stops: stops, incomplete: incomplete);
   }
 
+  /// Operator / network / brand of a charging station from OSM tags (e.g.
+  /// "EnBW", "Ionity", "Tesla"), or null when untagged.
+  static String? operatorName(RoutePoiHit hit) {
+    for (final k in const ['operator', 'network', 'brand']) {
+      final v = hit.tags[k];
+      if (v != null && v.trim().isNotEmpty) return v.trim();
+    }
+    return null;
+  }
+
   /// Rough charge-time (minutes) to put [kwh] back at [hit]'s station, using the
   /// station's advertised power when tagged, else a default fast charger.
   static int chargeMinutes(RoutePoiHit hit, double kwh) {

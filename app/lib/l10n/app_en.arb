@@ -790,6 +790,12 @@
   "@evChargeTime": {
     "placeholders": { "min": { "type": "int" } }
   },
+  "evPriceOsm": "Price (OSM): {price}",
+  "@evPriceOsm": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "evChargingFree": "free",
+  "evChargingPaid": "paid",
   "settingsEbikeCapacityEdit": "Battery capacity",
   "ebikeRangeComfortable": "comfortable",
   "ebikeRangeTight": "getting tight",

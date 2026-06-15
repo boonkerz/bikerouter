@@ -4681,6 +4681,20 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  /// Static price/fee for a charging station from OSM tags. OSM carries no
+  /// live tariffs, so this is the (often missing/outdated) `charge` price or a
+  /// free/paid hint from `fee` — labelled "(OSM)" so it's clearly not live.
+  String? _chargingPrice(RoutePoiHit s, AppLocalizations l) {
+    final charge = s.tags['charge'];
+    if (charge != null && charge.trim().isNotEmpty) {
+      return l.evPriceOsm(charge.trim());
+    }
+    final fee = s.tags['fee']?.toLowerCase();
+    if (fee == 'no') return l.evChargingFree;
+    if (fee == 'yes') return l.evChargingPaid;
+    return null;
+  }
+
   /// Finds charging stations along the route and plans as many EV stops as it
   /// takes so no leg exceeds the usable charge, then confirms before inserting
   /// them as via-points and recomputing. Mirrors [_planEbikeChargingStop] and
@@ -4741,17 +4755,37 @@ class _MapScreenState extends State<MapScreen> {
             ),
             const SizedBox(height: 8),
             for (final s in stops)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  '• ${s.name ?? l.poiCatCharging} '
-                  '(${l.ebikePlanChargingDetails(
-                    s.routeKm.toStringAsFixed(1),
-                    s.sideMeters.round(),
-                  )} · ${l.evChargeTime(EvChargingPlanner.chargeMinutes(s, perStopKwh))})',
-                  style: const TextStyle(color: Colors.black87, fontSize: 13),
-                ),
-              ),
+              Builder(builder: (_) {
+                final op = EvChargingPlanner.operatorName(s);
+                final price = _chargingPrice(s, l);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '• ${op ?? s.name ?? l.poiCatCharging}',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        '   ${l.ebikePlanChargingDetails(
+                          s.routeKm.toStringAsFixed(1),
+                          s.sideMeters.round(),
+                        )} · ${l.evChargeTime(EvChargingPlanner.chargeMinutes(s, perStopKwh))}',
+                        style: const TextStyle(color: Colors.black54, fontSize: 12),
+                      ),
+                      if (price != null)
+                        Text('   $price',
+                            style:
+                                const TextStyle(color: Colors.black54, fontSize: 12)),
+                    ],
+                  ),
+                );
+              }),
             if (resolvedPlan.incomplete) ...[
               const SizedBox(height: 6),
               Text(
