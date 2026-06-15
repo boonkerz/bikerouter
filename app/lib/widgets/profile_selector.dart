@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/profile.dart';
+import '../services/ev_prefs.dart';
 import '../services/hiking_prefs.dart';
 import '../services/profile_speed_prefs.dart';
 import '../services/routing_prefs.dart';
@@ -149,6 +150,13 @@ class ProfileSelector extends StatelessWidget {
     // RoutingFlag toggles, hiking knobs and car-vmax all flip this on.
     bool routingChanged = false;
     final isCar = p.id == 'car' || p.id == 'car-trailer';
+    // EV settings live alongside the car routing options while EV mode is on,
+    // so the rider tunes battery + consumption from the same place.
+    final showEv = isCar && EvPrefs.enabled;
+    final evBatteryCtrl =
+        TextEditingController(text: EvPrefs.batteryKwh.toStringAsFixed(0));
+    final evConsCtrl =
+        TextEditingController(text: EvPrefs.consumptionKwh100.toStringAsFixed(0));
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -230,6 +238,35 @@ class ProfileSelector extends StatelessWidget {
                     setDialogState(() {});
                   },
                 ),
+                if (showEv) ...[
+                  const Divider(height: 24, color: Colors.black12),
+                  Text('🔌 ${l.settingsEvTitle}',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      )),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: evBatteryCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l.settingsEvBattery,
+                      isDense: true,
+                      suffix: const Text('kWh'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: evConsCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l.settingsEvConsumption,
+                      isDense: true,
+                      suffix: const Text('kWh/100 km'),
+                    ),
+                  ),
+                ],
               ],
               ),
             ),
@@ -265,6 +302,23 @@ class ProfileSelector extends StatelessWidget {
                   // Car profiles bake speed into the BRouter URL — any
                   // change there warrants a reroute.
                   if (isCar && value != originalSpeed) routingChanged = true;
+                  // EV battery/consumption only feed the range estimate, not
+                  // the route — the caller's setState refreshes the badge.
+                  if (showEv) {
+                    final b = double.tryParse(
+                        evBatteryCtrl.text.trim().replaceAll(',', '.'));
+                    final c = double.tryParse(
+                        evConsCtrl.text.trim().replaceAll(',', '.'));
+                    await EvPrefs.setConfig(
+                      batteryKwh: (b != null && b >= 5 && b <= 250)
+                          ? b
+                          : EvPrefs.batteryKwh,
+                      consumptionKwh100: (c != null && c >= 5 && c <= 60)
+                          ? c
+                          : EvPrefs.consumptionKwh100,
+                      startPct: EvPrefs.startPct,
+                    );
+                  }
                   if (ctx.mounted) Navigator.of(ctx).pop(routingChanged);
                 },
                 child: Text(l.commonSave),
@@ -274,6 +328,8 @@ class ProfileSelector extends StatelessWidget {
         );
       },
     );
+    evBatteryCtrl.dispose();
+    evConsCtrl.dispose();
     // Dialog-dismiss-by-barrier returns null; treat as "no change".
     return result ?? false;
   }
