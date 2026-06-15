@@ -4130,6 +4130,18 @@ abstract class AppLocalizations {
   /// **'Was machst du heute?'**
   String get activityPickerTitle;
 
+  /// No description provided for @mapTapHintGps.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe aufs Ziel — dein Standort ist der Start'**
+  String get mapTapHintGps;
+
+  /// No description provided for @mapTapHintNoGps.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe Start und Ziel auf die Karte'**
+  String get mapTapHintNoGps;
+
   /// No description provided for @activityPickerAdvanced.
   ///
   /// In de, this message translates to:

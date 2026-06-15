@@ -2176,6 +2176,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityPickerTitle => 'What are you doing today?';
 
   @override
+  String get mapTapHintGps =>
+      'Tap your destination — your location is the start';
+
+  @override
+  String get mapTapHintNoGps => 'Tap start and destination on the map';
+
+  @override
   String get activityPickerAdvanced => 'Advanced (all profiles)';
 
   @override

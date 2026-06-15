@@ -810,6 +810,8 @@
   "ebikePlanChargingInsert": "Einfügen",
   "newPill": "NEU",
   "activityPickerTitle": "Was machst du heute?",
+  "mapTapHintGps": "Tippe aufs Ziel — dein Standort ist der Start",
+  "mapTapHintNoGps": "Tippe Start und Ziel auf die Karte",
   "activityPickerAdvanced": "Erweitert (alle Profile)",
   "activityPickerAllProfiles": "Alle Profile",
   "activityEv": "E-Auto",

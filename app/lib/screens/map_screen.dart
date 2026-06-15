@@ -113,6 +113,9 @@ class _MapScreenState extends State<MapScreen> {
   // user toggles it via the drag handle above the stats bar. Distinct
   // from _showElevation, which only hides the chart.
   bool _statsPeek = false;
+  // First-run hint that teaches the core "tap to set destination" gesture.
+  // Dismissed permanently once the user taps it away or makes a route.
+  bool _tapHintDismissed = false;
   bool _showControls = false;
   int? _highlightIndex;
   LatLng? _currentPosition;
@@ -188,6 +191,8 @@ class _MapScreenState extends State<MapScreen> {
       if (mode != null && mounted) setState(() => _routeVizMode = mode);
       final op = prefs.getDouble('overlay_opacity_v1');
       if (op != null && mounted) setState(() => _overlayOpacity = op.clamp(0.0, 1.0));
+      final hintSeen = prefs.getBool('onboard_tap_hint_v1') ?? false;
+      if (hintSeen && mounted) setState(() => _tapHintDismissed = true);
     });
     NogoStorage.load().then((v) {
       if (mounted) setState(() => _nogos = v);
@@ -713,6 +718,38 @@ class _MapScreenState extends State<MapScreen> {
           if (_loading)
             const Center(
                 child: CircularProgressIndicator(color: Color(0xFF6a4a28))),
+
+          // Primary action: start turn-by-turn navigation. Promoted out of the
+          // kebab menu to a prominent, thumb-reachable button (centred above the
+          // bottom panel) whenever a route is loaded.
+          if (_route != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: _fabBottomOffset(bottomPadding),
+              child: Center(
+                child: FloatingActionButton.extended(
+                  heroTag: 'startNav',
+                  backgroundColor: const Color(0xFF2e6a4a),
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.navigation),
+                  label: Text(AppLocalizations.of(context).menuStartNavigation),
+                  onPressed: _startNavigation,
+                ),
+              ),
+            ),
+
+          // First-run empty-state hint teaching the core gesture.
+          if (_route == null &&
+              _waypoints.isEmpty &&
+              !_roundtripMode &&
+              !_tapHintDismissed)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: bottomPadding + 112,
+              child: Center(child: _buildTapHint(context)),
+            ),
 
           // Action buttons
           Positioned(
@@ -1784,6 +1821,58 @@ class _MapScreenState extends State<MapScreen> {
       onPressed: onTap,
       child: Icon(icon),
     );
+  }
+
+  /// Compact one-line coachmark shown on an empty map: teaches that tapping
+  /// sets the destination (with GPS as the start). Dismissible and one-time.
+  Widget _buildTapHint(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final text = _currentPosition != null ? l.mapTapHintGps : l.mapTapHintNoGps;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      constraints: const BoxConstraints(maxWidth: 380),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6a4a28),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.only(left: 14, right: 4, top: 4, bottom: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.touch_app, color: Color(0xFFf5e9d8), size: 18),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Color(0xFFf5e9d8),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Color(0xFFf5e9d8), size: 18),
+            visualDensity: VisualDensity.compact,
+            onPressed: _dismissTapHint,
+            tooltip: AppLocalizations.of(context).commonCancel,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _dismissTapHint() async {
+    setState(() => _tapHintDismissed = true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboard_tap_hint_v1', true);
   }
 
   List<StatsAction> _buildStatsActions(BuildContext context) {
@@ -3630,6 +3719,8 @@ class _MapScreenState extends State<MapScreen> {
 
   void _displayRoute(RouteResult result,
       {List<_RouteAlternative> alternatives = const []}) {
+    // The user has clearly figured out routing — retire the empty-state hint.
+    if (!_tapHintDismissed) _dismissTapHint();
     final points = result.coordinates
         .map((c) => LatLng(c[1], c[0]))
         .toList();
