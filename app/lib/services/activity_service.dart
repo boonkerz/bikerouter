@@ -42,4 +42,13 @@ class ActivityService {
 
     return activity.profileId;
   }
+
+  /// Forgets the last activity — used when the user picks a raw profile
+  /// directly, so the top-bar label falls back to the profile name instead
+  /// of a stale activity.
+  static Future<void> clearLastActivity() async {
+    _lastActivityId = null;
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_keyLastActivity);
+  }
 }

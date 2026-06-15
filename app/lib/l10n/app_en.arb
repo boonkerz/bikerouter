@@ -805,6 +805,8 @@
   "newPill": "NEW",
   "activityPickerTitle": "What are you doing today?",
   "activityPickerAdvanced": "Advanced (all profiles)",
+  "activityPickerAllProfiles": "All profiles",
+  "activityEv": "E-car",
   "activityTour": "Tour",
   "activityCommute": "Commute",
   "activityRoad": "Road bike",

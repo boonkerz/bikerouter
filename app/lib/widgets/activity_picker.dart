@@ -2,25 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/activity.dart';
+import '../models/profile.dart';
+import '../services/ev_prefs.dart';
 
-/// "Was machst du heute?" grid picker. Replaces the bare BRouter-
-/// profile list as the primary front door — each tile is an everyday
-/// activity, not a routing-engine profile name. Power users still
-/// reach raw profiles + flags through the tune button.
+/// "Was machst du heute?" grid picker. Two sections in one overlay: the
+/// friendly activity presets up top (each configures profile + flags + POI
+/// bias in one tap), and every raw BRouter profile below — so power users
+/// reach any profile without a separate "advanced" sheet. Per-profile flag
+/// tweaking still lives on the map's tune button.
 ///
-/// Returns the chosen [Activity] via the sheet's pop value, or null
-/// if dismissed. The caller is responsible for applying it (profile +
-/// prefs) and the "advanced" escape hatch into the raw profile sheet.
+/// Returns the chosen [Activity] via the sheet's pop value (null if
+/// dismissed); a raw profile pick is delivered through [onProfile] and the
+/// sheet closes itself.
 Future<Activity?> showActivityPicker(
   BuildContext context, {
   required String currentProfileId,
-  required VoidCallback onAdvanced,
+  required ValueChanged<String> onProfile,
 }) {
   return showModalBottomSheet<Activity>(
     context: context,
     backgroundColor: const Color(0xFFf5e9d8),
-    // Scroll-controlled so the grid can use up to ~85% of the screen
-    // and scroll on small devices instead of overflowing / clipping.
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -29,6 +30,16 @@ Future<Activity?> showActivityPicker(
       final l = AppLocalizations.of(ctx);
       final active = Activity.forProfile(currentProfileId);
       final maxHeight = MediaQuery.of(ctx).size.height * 0.85;
+
+      bool activitySelected(Activity a) {
+        // Car shares one profile across Auto + E-Auto — tell them apart by the
+        // EV pref so the right one highlights.
+        if (a.profileId == 'car') {
+          return currentProfileId == 'car' && a.ev == EvPrefs.enabled;
+        }
+        return a.id == active?.id;
+      }
+
       return SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: maxHeight),
@@ -36,8 +47,6 @@ Future<Activity?> showActivityPicker(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Fixed drag handle + title so they stay put while the
-              // grid below scrolls.
               const SizedBox(height: 8),
               Center(
                 child: Container(
@@ -63,50 +72,59 @@ Future<Activity?> showActivityPicker(
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  // Cap the grid width so the tiles stay compact on wide
-                  // screens (tablet / web) instead of ballooning to a third
-                  // of the viewport; centred on those, full-width on phones.
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 460),
-                      child: GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 3,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        // Flatter than square so all 12 activities fit without
-                        // scrolling — wide enough for a two-line label.
-                        childAspectRatio: 1.35,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          for (final a in activities)
-                            _ActivityTile(
-                              activity: a,
-                              selected: a.id == active?.id,
-                              label: a.localizedName(l),
-                              onTap: () => Navigator.of(ctx).pop(a),
-                            ),
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 1.35,
+                            children: [
+                              for (final a in activities)
+                                _Tile(
+                                  icon: a.icon,
+                                  label: a.localizedName(l),
+                                  selected: activitySelected(a),
+                                  onTap: () => Navigator.of(ctx).pop(a),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _SectionDivider(label: l.activityPickerAllProfiles),
+                          const SizedBox(height: 12),
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 1.35,
+                            children: [
+                              for (final p in profiles)
+                                _Tile(
+                                  icon: p.icon,
+                                  label: p.localizedName(l),
+                                  selected: p.id == currentProfileId,
+                                  onTap: () {
+                                    Navigator.of(ctx).pop();
+                                    onProfile(p.id);
+                                  },
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
-              Center(
-                child: TextButton.icon(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    onAdvanced();
-                  },
-                  icon: const Icon(Icons.tune,
-                      size: 18, color: Color(0xFF6a4a28)),
-                  label: Text(
-                    l.activityPickerAdvanced,
-                    style: const TextStyle(color: Color(0xFF6a4a28)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -115,16 +133,43 @@ Future<Activity?> showActivityPicker(
   );
 }
 
-class _ActivityTile extends StatelessWidget {
-  final Activity activity;
-  final bool selected;
+class _SectionDivider extends StatelessWidget {
   final String label;
+
+  const _SectionDivider({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: Colors.black26)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF6a4a28),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const Expanded(child: Divider(color: Colors.black26)),
+      ],
+    );
+  }
+}
+
+class _Tile extends StatelessWidget {
+  final String icon;
+  final String label;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _ActivityTile({
-    required this.activity,
-    required this.selected,
+  const _Tile({
+    required this.icon,
     required this.label,
+    required this.selected,
     required this.onTap,
   });
 
@@ -143,7 +188,7 @@ class _ActivityTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(activity.icon, style: const TextStyle(fontSize: 24)),
+              Text(icon, style: const TextStyle(fontSize: 24)),
               const SizedBox(height: 4),
               Text(
                 label,

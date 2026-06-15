@@ -1342,13 +1342,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _showProfileSheet(BuildContext context) {
-    ProfileSelector(
-      selectedProfile: _profile,
-      onChanged: _setProfile,
-    ).showSheet(context);
-  }
-
   /// Primary front door: the activity picker. Selecting an activity
   /// applies its profile + routing-flag + bikepacking bundle and
   /// reroutes. "Erweitert" inside the picker falls through to the raw
@@ -1358,10 +1351,22 @@ class _MapScreenState extends State<MapScreen> {
     final chosen = await showActivityPicker(
       context,
       currentProfileId: _profile,
-      onAdvanced: () => _showProfileSheet(context),
+      // Direct raw-profile pick from the "Alle Profile" section: forget the
+      // last activity so the top-bar shows the profile name, then apply.
+      onProfile: (id) async {
+        await ActivityService.clearLastActivity();
+        if (!mounted) return;
+        _setProfile(id);
+        setState(() {});
+      },
     );
     if (chosen == null || !mounted) return;
     final profileId = await ActivityService.apply(chosen);
+    // E-Auto turns EV mode on, plain Auto turns it off; other activities
+    // leave the EV pref alone (it only matters on the car profile anyway).
+    if (chosen.profileId == 'car' || chosen.profileId == 'car-trailer') {
+      await EvPrefs.setEnabled(chosen.ev);
+    }
     // _setProfile owns the profile-string state + reroute; the prefs
     // (flags, bikepacking) were already written by ActivityService.
     _setProfile(profileId);

@@ -32,6 +32,10 @@ class Activity {
   /// charging, etc.
   final Set<PoiCategory> poiCategories;
 
+  /// Whether this preset turns on EV mode (range badge + charging-stop
+  /// planner) on top of the car profile. Only meaningful for car profiles.
+  final bool ev;
+
   const Activity({
     required this.id,
     required this.icon,
@@ -39,6 +43,7 @@ class Activity {
     this.enableFlags = const {},
     this.bikepacking = false,
     this.poiCategories = const {},
+    this.ev = false,
   });
 
   String localizedName(AppLocalizations l) {
@@ -65,6 +70,8 @@ class Activity {
         return l.activityUltra;
       case 'car':
         return l.activityCar;
+      case 'ev':
+        return l.activityEv;
       case 'car-trailer':
         return l.activityCarTrailer;
       case 'safety':
@@ -86,7 +93,8 @@ class Activity {
   /// saved route / share link that only carries the profile string.
   static Activity? forProfile(String profileId) {
     try {
-      return activities.firstWhere((a) => a.profileId == profileId);
+      // Skip EV presets so a plain car route maps to "Auto", not "E-Auto".
+      return activities.firstWhere((a) => a.profileId == profileId && !a.ev);
     } catch (_) {
       return null;
     }
@@ -186,6 +194,13 @@ const activities = [
       PoiCategory.water,
       PoiCategory.charging,
     },
+  ),
+  Activity(
+    id: 'ev',
+    icon: '🔌',
+    profileId: 'car',
+    ev: true,
+    poiCategories: {PoiCategory.charging},
   ),
   Activity(
     id: 'car',

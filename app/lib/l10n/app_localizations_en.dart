@@ -2168,6 +2168,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityPickerAdvanced => 'Advanced (all profiles)';
 
   @override
+  String get activityPickerAllProfiles => 'All profiles';
+
+  @override
+  String get activityEv => 'E-car';
+
+  @override
   String get activityTour => 'Tour';
 
   @override

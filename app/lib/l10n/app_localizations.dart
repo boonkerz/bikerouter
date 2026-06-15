@@ -4118,6 +4118,18 @@ abstract class AppLocalizations {
   /// **'Erweitert (alle Profile)'**
   String get activityPickerAdvanced;
 
+  /// No description provided for @activityPickerAllProfiles.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle Profile'**
+  String get activityPickerAllProfiles;
+
+  /// No description provided for @activityEv.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Auto'**
+  String get activityEv;
+
   /// No description provided for @activityTour.
   ///
   /// In de, this message translates to:
