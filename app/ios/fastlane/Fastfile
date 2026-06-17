@@ -72,14 +72,16 @@ platform :ios do
     # Flip both targets from automatic to manual signing so the archive uses
     # the imported distribution cert + the profiles sigh just installed. The
     # Xcode target name for the watch is "WegwieselWatch Watch App" even though
-    # its bundle id is …watchkitapp.
+    # its bundle id is …watchkitapp. Absolute path — the action verifies the
+    # xcodeproj exists and the relative form is CWD-ambiguous.
+    xcodeproj = File.expand_path("../Runner.xcodeproj", __dir__)
     update_code_signing_settings(
-      use_automatic_signing: false, path: "../Runner.xcodeproj",
+      use_automatic_signing: false, path: xcodeproj,
       team_id: team_id, code_sign_identity: "Apple Distribution",
       bundle_identifier: app_id, profile_name: app_profile, targets: ["Runner"],
     )
     update_code_signing_settings(
-      use_automatic_signing: false, path: "../Runner.xcodeproj",
+      use_automatic_signing: false, path: xcodeproj,
       team_id: team_id, code_sign_identity: "Apple Distribution",
       bundle_identifier: watch_id, profile_name: watch_profile,
       targets: ["WegwieselWatch Watch App"],
