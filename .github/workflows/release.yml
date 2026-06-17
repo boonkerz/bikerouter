@@ -9,45 +9,20 @@ on:
       - '.github/workflows/release.yml'
   workflow_dispatch:
 
+# A newer push supersedes an in-flight release — cancel the old run so we don't
+# burn a build at a stale build number (the duplicate-version trap).
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.41.6'
+
 jobs:
-  build-ios:
-    name: iOS — TestFlight
-    runs-on: [self-hosted, macOS]
-    timeout-minutes: 45
-    env:
-      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-      APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Flutter pub get
-        working-directory: app
-        run: flutter pub get
-
-      - name: Fastlane bundle install
-        working-directory: app/ios
-        run: bundle install
-
-      - name: Fastlane release lane
-        working-directory: app/ios
-        run: bundle exec fastlane release
-
-      - name: Upload IPA artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: app/build/ios/ipa/*.ipa
-          if-no-files-found: ignore
-          retention-days: 14
-
   build-android:
     name: Android — Play Console
-    runs-on: [self-hosted, macOS]
+    runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: build-ios          # serialize so a single Mac runner can do both
-    if: always()              # … even if iOS failed (you might just have an iOS-cert issue)
     env:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -56,6 +31,26 @@ jobs:
       PLAY_STORE_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Set up Ruby (fastlane)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: app/android
 
       - name: Flutter pub get
         working-directory: app
@@ -76,10 +71,6 @@ jobs:
         working-directory: app/android
         run: echo "$PLAY_STORE_SERVICE_ACCOUNT_JSON" > play-store-credentials.json
 
-      - name: Fastlane bundle install
-        working-directory: app/android
-        run: bundle install
-
       - name: Fastlane release lane
         working-directory: app/android
         run: bundle exec fastlane release
@@ -87,8 +78,7 @@ jobs:
       - name: Cleanup secrets
         if: always()
         working-directory: app/android
-        run: |
-          rm -f release.keystore key.properties play-store-credentials.json
+        run: rm -f release.keystore key.properties play-store-credentials.json
 
       - name: Upload AAB artifacts
         if: always()
@@ -98,5 +88,73 @@ jobs:
           path: |
             app/build/app/outputs/bundle/release/*.aab
             app/android/wear/build/outputs/bundle/release/*.aab
+          if-no-files-found: ignore
+          retention-days: 14
+
+  build-ios:
+    name: iOS — TestFlight
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+      IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+      IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Set up Ruby (fastlane)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: app/ios
+
+      # Import the distribution certificate (.p12, incl. private key) into a
+      # throwaway keychain. The private key from the dead self-hosted Mac lives
+      # in this .p12; sigh then attaches matching App Store provisioning profiles.
+      - name: Import signing certificate
+        env:
+          KEYCHAIN_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/dist-cert.p12"
+          echo "$IOS_DIST_CERT_P12_BASE64" | base64 --decode > "$CERT_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$IOS_DIST_CERT_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" >/dev/null
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          rm -f "$CERT_PATH"
+
+      - name: Flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Fastlane release lane
+        working-directory: app/ios
+        run: bundle exec fastlane release
+
+      - name: Cleanup keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" || true
+
+      - name: Upload IPA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: app/build/ios/ipa/*.ipa
           if-no-files-found: ignore
           retention-days: 14

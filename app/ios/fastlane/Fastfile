@@ -46,34 +46,64 @@ platform :ios do
       in_house: false,
     )
 
-    # Step 1: make sure an iOS Distribution Certificate is in the
-    # keychain. `cert` checks for an existing one and creates a new
-    # one via the API only when none matches — so re-running this is
-    # idempotent. Apple allows three distribution certificates per
-    # team; if you hit the limit, revoke an old one in the developer
-    # portal first.
-    cert(
-      api_key: api_key,
-      development: false,  # false = distribution (App Store / Ad-Hoc)
+    # The iOS Distribution certificate (private key included) is imported
+    # into a throwaway keychain by the CI step *before* fastlane runs — see
+    # .github/workflows/release.yml "Import signing certificate". Hosted
+    # runners are ephemeral, so we never let fastlane mint a new cert (`cert`)
+    # — that would burn through Apple's 3-cert limit and leave the private key
+    # behind on a machine we throw away. The .p12 is the single source of the
+    # signing identity.
+    team_id = "933ZZXVE7E"
+    app_id   = "com.thomaspeterson.bikerouter"
+    watch_id = "com.thomaspeterson.bikerouter.watchkitapp"
+
+    # App Store provisioning profiles for both bundles (the iOS app and the
+    # embedded Watch companion). `sigh` downloads/creates them via the API key
+    # and installs them; readonly:false lets it create one if missing.
+    sigh(api_key: api_key, app_identifier: app_id,   platform: "ios", readonly: false)
+    app_profile = ENV["sigh_#{app_id}_appstore_profile-name"]
+    sigh(api_key: api_key, app_identifier: watch_id, platform: "ios", readonly: false)
+    watch_profile = ENV["sigh_#{watch_id}_appstore_profile-name"]
+    UI.user_error!("sigh did not return profile names") unless app_profile && watch_profile
+
+    # Flip both targets from automatic to manual signing so the archive uses
+    # the imported distribution cert + the profiles sigh just installed. The
+    # Xcode target name for the watch is "WegwieselWatch Watch App" even though
+    # its bundle id is …watchkitapp.
+    update_code_signing_settings(
+      use_automatic_signing: false, path: "../Runner.xcodeproj",
+      team_id: team_id, code_sign_identity: "Apple Distribution",
+      bundle_identifier: app_id, profile_name: app_profile, targets: ["Runner"],
+    )
+    update_code_signing_settings(
+      use_automatic_signing: false, path: "../Runner.xcodeproj",
+      team_id: team_id, code_sign_identity: "Apple Distribution",
+      bundle_identifier: watch_id, profile_name: watch_profile,
+      targets: ["WegwieselWatch Watch App"],
     )
 
-    # Step 2: make sure provisioning profiles exist for both bundles
-    # (the iOS app and the embedded Watch companion). `match` would be
-    # cleaner for multi-developer teams, but for a single-machine setup
-    # `sigh` downloading App-Store profiles directly via the API key is
-    # simpler.
-    sigh(
-      api_key: api_key,
-      app_identifier: "com.thomaspeterson.bikerouter",
-      platform: "ios",
-      readonly: false,
-    )
-    sigh(
-      api_key: api_key,
-      app_identifier: "com.thomaspeterson.bikerouter.WegwieselWatch",
-      platform: "ios",
-      readonly: false,
-    )
+    # ExportOptions.plist for `flutter build ipa` — manual app-store export
+    # mapping each bundle id to its profile.
+    export_opts = File.expand_path("../ExportOptions.plist", __dir__)
+    File.write(export_opts, <<~PLIST)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>method</key><string>app-store</string>
+        <key>teamID</key><string>#{team_id}</string>
+        <key>signingStyle</key><string>manual</string>
+        <key>signingCertificate</key><string>Apple Distribution</string>
+        <key>provisioningProfiles</key>
+        <dict>
+          <key>#{app_id}</key><string>#{app_profile}</string>
+          <key>#{watch_id}</key><string>#{watch_profile}</string>
+        </dict>
+        <key>uploadSymbols</key><true/>
+        <key>uploadBitcode</key><false/>
+      </dict>
+      </plist>
+    PLIST
 
     version_name, build_number = pubspec_version_components
     UI.message "Building iOS #{version_name}+#{build_number}"
@@ -85,10 +115,7 @@ platform :ios do
     sh "cd ../.. && flutter build ipa --release " \
        "--build-name=#{version_name} " \
        "--build-number=#{build_number} " \
-       "--export-options-plist=#{ENV['HOME']}/export_options.plist 2>&1 || " \
-       "flutter build ipa --release " \
-       "--build-name=#{version_name} " \
-       "--build-number=#{build_number}"
+       "--export-options-plist=#{export_opts}"
 
     ipa_path = Dir["#{ENV['GITHUB_WORKSPACE'] || '../..'}/app/build/ios/ipa/*.ipa"].first
     ipa_path ||= Dir["../build/ios/ipa/*.ipa"].first
