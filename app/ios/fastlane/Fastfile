@@ -60,11 +60,14 @@ platform :ios do
     # App Store provisioning profiles for both bundles (the iOS app and the
     # embedded Watch companion). `sigh` downloads/creates them via the API key
     # and installs them; readonly:false lets it create one if missing.
+    # Capture each profile's name from lane_context right after its sigh call
+    # (SIGH_NAME is overwritten by the next sigh, so read it immediately).
     sigh(api_key: api_key, app_identifier: app_id,   platform: "ios", readonly: false)
-    app_profile = ENV["sigh_#{app_id}_appstore_profile-name"]
+    app_profile = lane_context[SharedValues::SIGH_NAME]
     sigh(api_key: api_key, app_identifier: watch_id, platform: "ios", readonly: false)
-    watch_profile = ENV["sigh_#{watch_id}_appstore_profile-name"]
+    watch_profile = lane_context[SharedValues::SIGH_NAME]
     UI.user_error!("sigh did not return profile names") unless app_profile && watch_profile
+    UI.message "Using profiles: app='#{app_profile}', watch='#{watch_profile}'"
 
     # Flip both targets from automatic to manual signing so the archive uses
     # the imported distribution cert + the profiles sigh just installed. The
