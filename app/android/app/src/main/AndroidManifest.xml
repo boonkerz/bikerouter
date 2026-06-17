@@ -1,5 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- Required for maps/tiles, routing (wegwiesel.app/brouter), search and
+         weather. Flutter only adds INTERNET to the debug/profile manifests, so
+         it MUST be declared here or release builds have no network at all
+         (DNS fails with EAI_NONAME). -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Ride recording runs as a foreground service (type=location) with a
