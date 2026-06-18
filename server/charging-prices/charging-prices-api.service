@@ -1,0 +1,20 @@
+# systemd unit for the bbox API. Adjust User and WorkingDirectory.
+# Install: copy to /etc/systemd/system/, then
+#   systemctl daemon-reload && systemctl enable --now charging-prices-api
+[Unit]
+Description=Wegwiesel charging-prices bbox API
+After=network.target
+
+[Service]
+Type=simple
+User=wegwiesel
+WorkingDirectory=/opt/wegwiesel/charging-prices
+Environment=HOST=127.0.0.1
+Environment=PORT=8088
+Environment=DATA_FILE=/opt/wegwiesel/charging-prices/data/charging_prices.json
+ExecStart=/usr/bin/python3 /opt/wegwiesel/charging-prices/serve_prices.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

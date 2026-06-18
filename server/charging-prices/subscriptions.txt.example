@@ -1,0 +1,5 @@
+# One Mobilithek subscription ID per line (AFIR ad-hoc price datasets, DATEX II v3).
+# Lines starting with # and inline #-comments are ignored.
+# Copy to subscriptions.txt and fill in your subscribed dataset IDs.
+1004477666601701376   # EnBW (DE-NAP-EnBWAG)
+# 2000000             # next CPO ...

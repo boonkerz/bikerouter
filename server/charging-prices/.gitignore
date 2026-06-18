@@ -1,0 +1,10 @@
+# Never commit credentials or the pulled data
+mobilithek.crt
+mobilithek.key
+mobilithek.cer
+mobilithek_ca.crt
+*.key
+*.p12
+*.pfx
+subscriptions.txt
+data/
