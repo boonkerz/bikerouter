@@ -738,7 +738,9 @@ class _MapScreenState extends State<MapScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: _fabBottomOffset(bottomPadding),
+              // Lift the start-navigation button clear of the route/variant
+              // summary cards that sit just above the bottom panel.
+              bottom: _fabBottomOffset(bottomPadding) + 28,
               child: Center(
                 child: FloatingActionButton.extended(
                   heroTag: 'startNav',
@@ -4992,12 +4994,16 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            for (final s in stops)
+            for (int i = 0; i < stops.length; i++)
               Builder(builder: (_) {
+                final s = stops[i];
                 final op = EvChargingPlanner.operatorName(s);
                 final price = _chargingPrice(s, l);
+                final alts = i < resolvedPlan.alternatives.length
+                    ? resolvedPlan.alternatives[i]
+                    : const <RoutePoiHit>[];
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -5020,6 +5026,25 @@ class _MapScreenState extends State<MapScreen> {
                         Text('   $price',
                             style:
                                 const TextStyle(color: Colors.black54, fontSize: 12)),
+                      if (alts.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text('   ${l.evChargingAlternatives}',
+                            style: const TextStyle(
+                                color: Colors.black45,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600)),
+                        for (final a in alts)
+                          Builder(builder: (_) {
+                            final aop = EvChargingPlanner.operatorName(a);
+                            final aprice = _chargingPrice(a, l);
+                            return Text(
+                              '   ↳ ${aop ?? a.name ?? l.poiCatCharging}'
+                              '${aprice != null ? ' · $aprice' : ' · ${a.sideMeters.round()} m'}',
+                              style: const TextStyle(
+                                  color: Colors.black45, fontSize: 11),
+                            );
+                          }),
+                      ],
                     ],
                   ),
                 );

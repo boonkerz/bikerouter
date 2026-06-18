@@ -798,6 +798,8 @@
   "@evPriceAdhoc": {
     "placeholders": { "price": { "type": "String" } }
   },
+  "evChargingAlternatives": "Nearby alternatives:",
+  "@evChargingAlternatives": {},
   "evChargingFree": "free",
   "evChargingPaid": "paid",
   "settingsEbikeCapacityEdit": "Battery capacity",

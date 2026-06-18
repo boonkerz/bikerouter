@@ -2,6 +2,7 @@ import 'dart:math';
 
 import '../models/route_result.dart';
 import '../models/route_poi.dart';
+import 'charging_price_service.dart';
 import 'ev_prefs.dart';
 import 'route_poi_search_service.dart';
 
@@ -11,11 +12,19 @@ class EvChargingPlan {
   /// usable charge or no usable station was found.
   final List<RoutePoiHit> stops;
 
+  /// Other reachable stations near each stop (same index as [stops]), so the
+  /// user can pick a different one — e.g. one with a known ad-hoc price.
+  final List<List<RoutePoiHit>> alternatives;
+
   /// True when a leg had no reachable station — the stops we found don't fully
   /// cover the tour and the car will still run flat somewhere.
   final bool incomplete;
 
-  const EvChargingPlan({required this.stops, required this.incomplete});
+  const EvChargingPlan({
+    required this.stops,
+    required this.incomplete,
+    this.alternatives = const [],
+  });
 
   bool get isEmpty => stops.isEmpty;
 }
@@ -76,8 +85,16 @@ class EvChargingPlanner {
     final usable = hits.where((h) => h.sideMeters <= _maxSideMeters).toList()
       ..sort((a, b) => a.routeKm.compareTo(b.routeKm));
 
+    // Load real ad-hoc prices for the candidate stations so we can prefer a
+    // priced one (and show priced alternatives). Best-effort.
+    await ChargingPriceService.instance
+        .loadAround(usable.map((h) => (lat: h.lat, lon: h.lon)));
+    bool priced(RoutePoiHit h) =>
+        ChargingPriceService.instance.lookup(h.lat, h.lon) != null;
+
     final budget = usableKwh * _usableFraction;
     final stops = <RoutePoiHit>[];
+    final alternatives = <List<RoutePoiHit>>[];
     var legStartKwh = 0.0;
     var legStartKm = 0.0;
     var incomplete = false;
@@ -93,28 +110,46 @@ class EvChargingPlanner {
           legStartKm + (reachKm - legStartKm) * _earliestFraction;
       final candidates = usable
           .where((h) => h.routeKm > windowMinKm && h.routeKm <= reachKm)
+          .where((h) => !stops.any((s) => s.osmId == h.osmId))
           .toList();
       if (candidates.isEmpty) {
         incomplete = true;
         break;
       }
-      candidates.sort((a, b) {
+      // Prefer stations with a known ad-hoc price; among the chosen pool take
+      // the one furthest along the leg (latest safe charge). Reachability is
+      // preserved because every candidate is within the reachable window.
+      final pricedCandidates = candidates.where(priced).toList();
+      final pool = pricedCandidates.isNotEmpty ? pricedCandidates : candidates;
+      pool.sort((a, b) {
         final byKm = b.routeKm.compareTo(a.routeKm);
         if (byKm != 0) return byKm;
         return a.sideMeters.compareTo(b.sideMeters);
       });
-      final chosen = candidates.first;
-      if (stops.any((s) => s.osmId == chosen.osmId)) {
-        incomplete = true;
-        break;
-      }
+      final chosen = pool.first;
       stops.add(chosen);
+
+      // Up to 3 nearby alternatives (priced first, then closest along route).
+      final alts = candidates.where((h) => h.osmId != chosen.osmId).toList()
+        ..sort((a, b) {
+          final pa = priced(a) ? 0 : 1;
+          final pb = priced(b) ? 0 : 1;
+          if (pa != pb) return pa - pb;
+          return (a.routeKm - chosen.routeKm)
+              .abs()
+              .compareTo((b.routeKm - chosen.routeKm).abs());
+        });
+      alternatives.add(alts.take(3).toList());
+
       legStartKm = chosen.routeKm;
       legStartKwh = _at(cumKm, cumKwh, chosen.routeKm);
     }
 
-    stops.sort((a, b) => a.routeKm.compareTo(b.routeKm));
-    return EvChargingPlan(stops: stops, incomplete: incomplete);
+    return EvChargingPlan(
+      stops: stops,
+      alternatives: alternatives,
+      incomplete: incomplete,
+    );
   }
 
   /// Operator / network / brand of a charging station from OSM tags (e.g.

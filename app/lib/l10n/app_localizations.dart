@@ -4052,6 +4052,12 @@ abstract class AppLocalizations {
   /// **'Ad-hoc {price} €/kWh'**
   String evPriceAdhoc(String price);
 
+  /// No description provided for @evChargingAlternatives.
+  ///
+  /// In de, this message translates to:
+  /// **'Alternativen in der Nähe:'**
+  String get evChargingAlternatives;
+
   /// No description provided for @evChargingFree.
   ///
   /// In de, this message translates to:

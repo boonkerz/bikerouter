@@ -2137,6 +2137,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get evChargingAlternatives => 'Nearby alternatives:';
+
+  @override
   String get evChargingFree => 'free';
 
   @override

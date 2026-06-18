@@ -799,6 +799,8 @@
   "@evPriceAdhoc": {
     "placeholders": { "price": { "type": "String" } }
   },
+  "evChargingAlternatives": "Alternativen in der Nähe:",
+  "@evChargingAlternatives": {},
   "evChargingFree": "kostenlos",
   "evChargingPaid": "kostenpflichtig",
   "ebikeRangeComfortable": "reicht locker",
