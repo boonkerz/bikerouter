@@ -203,6 +203,15 @@ class _MapScreenState extends State<MapScreen> {
       if (hintSeen && mounted) setState(() => _tapHintDismissed = true);
       _tourSeen = prefs.getBool('onboard_tour_v1') ?? false;
       if (!_tourSeen && mounted) _maybeShowTour();
+      // Restore the last-used routing profile, unless a shared-route link is
+      // overriding it (that already set _profile synchronously).
+      final shareParam = readShareParam();
+      if ((shareParam == null || shareParam.isEmpty) && mounted) {
+        final lastProfile = prefs.getString('last_profile_v1');
+        if (lastProfile != null && lastProfile.isNotEmpty) {
+          setState(() => _profile = lastProfile);
+        }
+      }
     });
     NogoStorage.load().then((v) {
       if (mounted) setState(() => _nogos = v);
@@ -3331,6 +3340,10 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _setProfile(String profile) {
+    // Remember the chosen profile so it's restored on next launch (all
+    // platforms — SharedPreferences is localStorage on web).
+    SharedPreferences.getInstance()
+        .then((p) => p.setString('last_profile_v1', profile));
     setState(() {
       _profile = profile;
       // Hiking has a much smaller realistic distance range than cycling.
