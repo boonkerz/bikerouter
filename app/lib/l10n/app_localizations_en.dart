@@ -2132,6 +2132,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String evPriceAdhoc(String price) {
+    return 'Ad-hoc $price €/kWh';
+  }
+
+  @override
   String get evChargingFree => 'free';
 
   @override

@@ -4046,6 +4046,12 @@ abstract class AppLocalizations {
   /// **'Preis (OSM): {price}'**
   String evPriceOsm(String price);
 
+  /// No description provided for @evPriceAdhoc.
+  ///
+  /// In de, this message translates to:
+  /// **'Ad-hoc {price} €/kWh'**
+  String evPriceAdhoc(String price);
+
   /// No description provided for @evChargingFree.
   ///
   /// In de, this message translates to:

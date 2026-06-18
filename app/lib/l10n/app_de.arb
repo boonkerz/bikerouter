@@ -795,6 +795,10 @@
   "@evPriceOsm": {
     "placeholders": { "price": { "type": "String" } }
   },
+  "evPriceAdhoc": "Ad-hoc {price} €/kWh",
+  "@evPriceAdhoc": {
+    "placeholders": { "price": { "type": "String" } }
+  },
   "evChargingFree": "kostenlos",
   "evChargingPaid": "kostenpflichtig",
   "ebikeRangeComfortable": "reicht locker",

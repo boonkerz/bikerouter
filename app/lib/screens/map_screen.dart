@@ -45,6 +45,7 @@ import '../services/ebike_prefs.dart';
 import '../services/ebike_charging_planner.dart';
 import '../services/ev_prefs.dart';
 import '../services/ev_charging_planner.dart';
+import '../services/charging_price_service.dart';
 import '../services/new_feature_prefs.dart';
 import '../services/activity_service.dart';
 import '../models/activity.dart';
@@ -4908,6 +4909,16 @@ class _MapScreenState extends State<MapScreen> {
   /// live tariffs, so this is the (often missing/outdated) `charge` price or a
   /// free/paid hint from `fee` — labelled "(OSM)" so it's clearly not live.
   String? _chargingPrice(RoutePoiHit s, AppLocalizations l) {
+    // Prefer the real AFIR ad-hoc price (Mobilithek feed via wegwiesel.app);
+    // fall back to the static OSM tags when no AFIR match is in range.
+    final afir = ChargingPriceService.instance.lookup(s.lat, s.lon);
+    if (afir?.kwh != null) {
+      var t = l.evPriceAdhoc(afir!.kwh!.toStringAsFixed(2));
+      if (afir.perMin != null && afir.perMin! > 0) {
+        t += ' · ${afir.perMin!.toStringAsFixed(2)} €/min';
+      }
+      return t;
+    }
     final charge = s.tags['charge'];
     if (charge != null && charge.trim().isNotEmpty) {
       return l.evPriceOsm(charge.trim());
@@ -4951,6 +4962,10 @@ class _MapScreenState extends State<MapScreen> {
     // Energy to refill per stop ≈ the usable budget spent on the leg up to it;
     // simplest readable proxy is the whole usable charge for the charge-time.
     final perStopKwh = EvPrefs.usableKwh * 0.9;
+    // Pull real ad-hoc prices for the stops' area so the dialog can show them.
+    await ChargingPriceService.instance
+        .loadAround(stops.map((s) => (lat: s.lat, lon: s.lon)));
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
