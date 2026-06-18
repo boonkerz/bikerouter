@@ -71,13 +71,23 @@ def _gross(price):
     return v * (1 + (price.get("taxRate") or 0) / 100.0)
 
 
+def _find_coords(node):
+    """First lat/lon pair anywhere in the site. CPOs put coordinates at
+    different depths (site- vs station-level), so search recursively rather
+    than assuming one fixed path."""
+    for obj in _walk(node):
+        lat = obj.get("latitude")
+        lon = obj.get("longitude")
+        if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+            return lat, lon
+    return None
+
+
 def site_to_point(site, operator):
-    # location
-    try:
-        coord = site["locationReference"]["locAreaLocation"]["coordinatesForDisplay"]
-        lat, lon = coord["latitude"], coord["longitude"]
-    except (KeyError, TypeError):
+    coords = _find_coords(site)
+    if coords is None:
         return None
+    lat, lon = coords
     # name
     name = None
     try:
