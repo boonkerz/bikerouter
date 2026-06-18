@@ -801,6 +801,10 @@
   },
   "evChargingAlternatives": "Alternativen in der Nähe:",
   "@evChargingAlternatives": {},
+  "evChargingCostTotal": "Ladekosten gesamt: ~{cost} €",
+  "@evChargingCostTotal": {
+    "placeholders": { "cost": { "type": "String" } }
+  },
   "evChargingFree": "kostenlos",
   "evChargingPaid": "kostenpflichtig",
   "ebikeRangeComfortable": "reicht locker",

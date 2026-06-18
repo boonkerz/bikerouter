@@ -129,20 +129,36 @@ class EvChargingPlanner {
       final chosen = pool.first;
       stops.add(chosen);
 
-      // Up to 3 nearby alternatives (priced first, then closest along route).
-      final alts = candidates.where((h) => h.osmId != chosen.osmId).toList()
+      legStartKm = chosen.routeKm;
+      legStartKwh = _at(cumKm, cumKwh, chosen.routeKm);
+    }
+
+    // Per stop, the *interchangeable* alternatives: stations from which the
+    // previous anchor is still close enough AND the next anchor (next stop, or
+    // the destination for the last stop) is still reachable on a full charge.
+    // That keeps the rest of the plan valid whichever one the user picks, so
+    // the UI can safely default to the cheapest.
+    for (int i = 0; i < stops.length; i++) {
+      final chosen = stops[i];
+      final prevKwh = i > 0 ? _at(cumKm, cumKwh, stops[i - 1].routeKm) : 0.0;
+      final nextKwh = i < stops.length - 1
+          ? _at(cumKm, cumKwh, stops[i + 1].routeKm)
+          : totalKwh;
+      final alts = usable.where((h) {
+        if (h.osmId == chosen.osmId) return false;
+        if (stops.any((s) => s.osmId == h.osmId)) return false;
+        final khe = _at(cumKm, cumKwh, h.routeKm);
+        return khe - prevKwh > 0 &&
+            khe - prevKwh <= budget && // reachable from the previous anchor
+            nextKwh - khe <= budget; // reaches the next anchor on a full charge
+      }).toList()
         ..sort((a, b) {
           final pa = priced(a) ? 0 : 1;
           final pb = priced(b) ? 0 : 1;
           if (pa != pb) return pa - pb;
-          return (a.routeKm - chosen.routeKm)
-              .abs()
-              .compareTo((b.routeKm - chosen.routeKm).abs());
+          return a.sideMeters.compareTo(b.sideMeters);
         });
-      alternatives.add(alts.take(3).toList());
-
-      legStartKm = chosen.routeKm;
-      legStartKwh = _at(cumKm, cumKwh, chosen.routeKm);
+      alternatives.add(alts.take(4).toList());
     }
 
     return EvChargingPlan(

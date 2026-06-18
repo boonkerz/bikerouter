@@ -2139,6 +2139,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get evChargingAlternatives => 'Alternativen in der Nähe:';
 
   @override
+  String evChargingCostTotal(String cost) {
+    return 'Ladekosten gesamt: ~$cost €';
+  }
+
+  @override
   String get evChargingFree => 'kostenlos';
 
   @override

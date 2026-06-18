@@ -800,6 +800,10 @@
   },
   "evChargingAlternatives": "Nearby alternatives:",
   "@evChargingAlternatives": {},
+  "evChargingCostTotal": "Total charging cost: ~{cost} €",
+  "@evChargingCostTotal": {
+    "placeholders": { "cost": { "type": "String" } }
+  },
   "evChargingFree": "free",
   "evChargingPaid": "paid",
   "settingsEbikeCapacityEdit": "Battery capacity",

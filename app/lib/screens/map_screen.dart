@@ -4910,6 +4910,10 @@ class _MapScreenState extends State<MapScreen> {
   /// Static price/fee for a charging station from OSM tags. OSM carries no
   /// live tariffs, so this is the (often missing/outdated) `charge` price or a
   /// free/paid hint from `fee` — labelled "(OSM)" so it's clearly not live.
+  /// Numeric AFIR ad-hoc €/kWh for a station, or null when none is in range.
+  double? _afirKwh(RoutePoiHit s) =>
+      ChargingPriceService.instance.lookup(s.lat, s.lon)?.kwh;
+
   String? _chargingPrice(RoutePoiHit s, AppLocalizations l) {
     // Prefer the real AFIR ad-hoc price (Mobilithek feed via wegwiesel.app);
     // fall back to the static OSM tags when no AFIR match is in range.
@@ -4968,118 +4972,188 @@ class _MapScreenState extends State<MapScreen> {
     await ChargingPriceService.instance
         .loadAround(stops.map((s) => (lat: s.lat, lon: s.lon)));
     if (!mounted) return;
+    // Per stop the user can pick which station to use (the suggestion + the
+    // interchangeable alternatives), sorted cheapest-first and pre-selected on
+    // the cheapest. Every option keeps the rest of the plan reachable, so the
+    // cheapest default is safe.
+    final candidatesPerStop = <List<RoutePoiHit>>[];
+    for (int i = 0; i < stops.length; i++) {
+      final list = <RoutePoiHit>[stops[i]];
+      if (i < resolvedPlan.alternatives.length) {
+        for (final a in resolvedPlan.alternatives[i]) {
+          if (!list.any((x) => x.osmId == a.osmId)) list.add(a);
+        }
+      }
+      list.sort((a, b) {
+        final pa = _afirKwh(a);
+        final pb = _afirKwh(b);
+        if (pa == null && pb == null) return 0;
+        if (pa == null) return 1;
+        if (pb == null) return -1;
+        return pa.compareTo(pb);
+      });
+      candidatesPerStop.add(list);
+    }
+    final selected = List<int>.filled(stops.length, 0);
+    double? stopCost(int i) {
+      final k = _afirKwh(candidatesPerStop[i][selected[i]]);
+      return k == null ? null : perStopKwh * k;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFf5e9d8),
-        title: Row(
-          children: [
-            const Icon(Icons.ev_station, color: Color(0xFF6a4a28)),
-            const SizedBox(width: 8),
-            Expanded(child: Text(l.ebikePlanChargingTitle)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              stops.length == 1
-                  ? l.ebikePlanChargingOneStop
-                  : l.ebikePlanChargingManyStops(stops.length),
-              style: const TextStyle(
-                color: Color(0xFF6a4a28),
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            for (int i = 0; i < stops.length; i++)
-              Builder(builder: (_) {
-                final s = stops[i];
-                final op = EvChargingPlanner.operatorName(s);
-                final price = _chargingPrice(s, l);
-                final alts = i < resolvedPlan.alternatives.length
-                    ? resolvedPlan.alternatives[i]
-                    : const <RoutePoiHit>[];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '• ${op ?? s.name ?? l.poiCatCharging}',
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        '   ${l.ebikePlanChargingDetails(
-                          s.routeKm.toStringAsFixed(1),
-                          s.sideMeters.round(),
-                        )} · ${l.evChargeTime(EvChargingPlanner.chargeMinutes(s, perStopKwh))}',
-                        style: const TextStyle(color: Colors.black54, fontSize: 12),
-                      ),
-                      if (price != null)
-                        Text('   $price',
-                            style:
-                                const TextStyle(color: Colors.black54, fontSize: 12)),
-                      if (alts.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text('   ${l.evChargingAlternatives}',
-                            style: const TextStyle(
-                                color: Colors.black45,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600)),
-                        for (final a in alts)
-                          Builder(builder: (_) {
-                            final aop = EvChargingPlanner.operatorName(a);
-                            final aprice = _chargingPrice(a, l);
-                            return Text(
-                              '   ↳ ${aop ?? a.name ?? l.poiCatCharging}'
-                              '${aprice != null ? ' · $aprice' : ' · ${a.sideMeters.round()} m'}',
-                              style: const TextStyle(
-                                  color: Colors.black45, fontSize: 11),
-                            );
-                          }),
-                      ],
-                    ],
-                  ),
-                );
-              }),
-            if (resolvedPlan.incomplete) ...[
-              const SizedBox(height: 6),
-              Text(
-                l.ebikePlanChargingIncomplete,
-                style: const TextStyle(
-                  color: Color(0xFFc62828),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setLocal) {
+        var total = 0.0;
+        var anyCost = false;
+        for (int i = 0; i < stops.length; i++) {
+          final c = stopCost(i);
+          if (c != null) {
+            total += c;
+            anyCost = true;
+          }
+        }
+        return AlertDialog(
+          backgroundColor: const Color(0xFFf5e9d8),
+          title: Row(
+            children: [
+              const Icon(Icons.ev_station, color: Color(0xFF6a4a28)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(l.ebikePlanChargingTitle)),
             ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.commonCancel),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF6a4a28),
-              foregroundColor: const Color(0xFFf5e9d8),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    stops.length == 1
+                        ? l.ebikePlanChargingOneStop
+                        : l.ebikePlanChargingManyStops(stops.length),
+                    style: const TextStyle(
+                      color: Color(0xFF6a4a28),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (int i = 0; i < stops.length; i++) ...[
+                    Builder(builder: (_) {
+                      final sel = candidatesPerStop[i][selected[i]];
+                      return Text(
+                        '${l.ebikePlanChargingDetails(
+                          sel.routeKm.toStringAsFixed(1),
+                          sel.sideMeters.round(),
+                        )} · ${l.evChargeTime(EvChargingPlanner.chargeMinutes(sel, perStopKwh))}',
+                        style:
+                            const TextStyle(color: Colors.black54, fontSize: 12),
+                      );
+                    }),
+                    const SizedBox(height: 2),
+                    for (int j = 0; j < candidatesPerStop[i].length; j++)
+                      Builder(builder: (_) {
+                        final c = candidatesPerStop[i][j];
+                        final op = EvChargingPlanner.operatorName(c) ??
+                            c.name ??
+                            l.poiCatCharging;
+                        final price = _chargingPrice(c, l);
+                        final k = _afirKwh(c);
+                        final cost = k == null ? null : perStopKwh * k;
+                        final isSel = selected[i] == j;
+                        return InkWell(
+                          onTap: () => setLocal(() => selected[i] = j),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  isSel
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_unchecked,
+                                  size: 18,
+                                  color: const Color(0xFF6a4a28),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(op,
+                                          style: TextStyle(
+                                              color: Colors.black87,
+                                              fontSize: 13,
+                                              fontWeight: isSel
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500)),
+                                      Text(
+                                        [
+                                          if (price != null) price,
+                                          if (cost != null)
+                                            '≈ ${cost.toStringAsFixed(2)} €',
+                                        ].join(' · '),
+                                        style: const TextStyle(
+                                            color: Colors.black54,
+                                            fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    const SizedBox(height: 8),
+                  ],
+                  if (anyCost) ...[
+                    const Divider(height: 4),
+                    Text(
+                      l.evChargingCostTotal(total.toStringAsFixed(2)),
+                      style: const TextStyle(
+                          color: Color(0xFF2e6a4a),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                  if (resolvedPlan.incomplete) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      l.ebikePlanChargingIncomplete,
+                      style: const TextStyle(
+                        color: Color(0xFFc62828),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l.ebikePlanChargingInsert),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l.commonCancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF6a4a28),
+                foregroundColor: const Color(0xFFf5e9d8),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l.ebikePlanChargingInsert),
+            ),
+          ],
+        );
+      }),
     );
     if (confirmed != true || !mounted) return;
-    for (final s in stops) {
+    for (int i = 0; i < stops.length; i++) {
+      final s = candidatesPerStop[i][selected[i]];
       final stop = LatLng(s.lat, s.lon);
       _insertViaPoint(stop);
       final key = _wpKey(stop);

@@ -4058,6 +4058,12 @@ abstract class AppLocalizations {
   /// **'Alternativen in der Nähe:'**
   String get evChargingAlternatives;
 
+  /// No description provided for @evChargingCostTotal.
+  ///
+  /// In de, this message translates to:
+  /// **'Ladekosten gesamt: ~{cost} €'**
+  String evChargingCostTotal(String cost);
+
   /// No description provided for @evChargingFree.
   ///
   /// In de, this message translates to:
