@@ -64,6 +64,26 @@ services:
     expose:
       - "8080"
 
+  charging-prices:
+    build:
+      context: ./server/charging-prices
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8080"
+      MOBILITHEK_CERT: /secrets/mobilithek.crt
+      MOBILITHEK_KEY: /secrets/mobilithek.key
+      SUBSCRIPTIONS: /config/subscriptions.txt
+      OUT_FILE: /data/charging_prices.json
+      DATA_FILE: /data/charging_prices.json
+      FETCH_INTERVAL_HOURS: "24"
+    volumes:
+      - /opt/wegwiesel/charging-prices/secrets:/secrets:ro
+      - /opt/wegwiesel/charging-prices/subscriptions.txt:/config/subscriptions.txt:ro
+      - /opt/wegwiesel/charging-prices-data:/data
+    restart: unless-stopped
+    expose:
+      - "8080"
+
   caddy:
     image: caddy:2-alpine
     ports:
@@ -82,6 +102,7 @@ services:
       - feedback
       - share
       - tracking
+      - charging-prices
 
 volumes:
   caddy_data:

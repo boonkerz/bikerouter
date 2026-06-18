@@ -43,6 +43,11 @@ wegwiesel.app {
 		reverse_proxy tracking:8080
 	}
 
+	# AFIR ad-hoc charging prices (bbox API, Mobilithek feed)
+	handle /api/charging-prices* {
+		reverse_proxy charging-prices:8080
+	}
+
 	# Flutter Web App
 	handle {
 		root * /srv/web

@@ -1,50 +1,37 @@
 # Charging-prices service (Mobilithek AFIR ad-hoc prices)
 
-Server-side fetcher + bbox API that supplies real **ad-hoc charging prices** to the
-Wegwiesel app. The app must **not** hold the mTLS client certificate (it's a public
-client, and the Mobilithek limits accesses per cert), so the cert stays here on the
-server and the app only ever asks for the prices inside a map/route bounding box.
+Docker service that supplies real **ad-hoc charging prices** to the Wegwiesel app.
+The app must **not** hold the mTLS client certificate (it's a public client, and the
+Mobilithek limits accesses per cert), so the cert stays on the server and the app only
+asks for the prices inside a map/route bounding box.
 
 ```
-cron/timer:  Mobilithek datexv3 (mTLS) ──fetch_prices.py──> data/charging_prices.json
-request:     app ──GET /api/charging-prices?bbox=W,S,E,N──> serve_prices.py ──> points in bbox
+inside the container:  Mobilithek datexv3 (mTLS) ──fetch_prices.py (daily)──> /data/charging_prices.json
+request via Caddy:      app ──GET /api/charging-prices?bbox=W,S,E,N──> serve_prices.py ──> points in bbox
 ```
 
-Pure Python stdlib + (optionally) `jq`-free. No external deps.
+Pure Python stdlib, no external deps. Runs as the `charging-prices` service in
+`docker-compose.prod.yml`; Caddy routes `/api/charging-prices*` to it.
 
 ## Files
 - `fetch_prices.py` — pulls every subscribed dataset via mTLS, extracts a compact
   `{op,name,lat,lon,kwh,min,cur,kw,upd}` per priced site (ad-hoc rate, gross/tax-incl.).
-- `serve_prices.py` — bbox API (binds `127.0.0.1`, put Caddy in front).
-- `subscriptions.txt` — one subscription ID per line (copy from `.example`).
-- `mobilithek.crt` / `mobilithek.key` — the M2M client cert/key (copy from your machine;
-  **never commit**, already in `.gitignore`).
-- `charging-prices-*.service` / `.timer` — systemd units.
+- `serve_prices.py` — bbox API (`/api/charging-prices?bbox=W,S,E,N`, lon,lat,lon,lat).
+- `entrypoint.sh` — initial + daily fetch in the background, API in the foreground.
+- `Dockerfile` — `python:3.12-slim`.
+- `subscriptions.txt.example` — one subscription ID per line (copy to `subscriptions.txt`).
 
-## Deploy (example: /opt/wegwiesel/charging-prices)
-```bash
-sudo mkdir -p /opt/wegwiesel/charging-prices/data
-sudo rsync -a fetch_prices.py serve_prices.py /opt/wegwiesel/charging-prices/
-# credentials + config (scp from your local ~/mobilithek)
-scp mobilithek_client/{mobilithek.crt,mobilithek.key} server:/opt/wegwiesel/charging-prices/
-cp subscriptions.txt.example /opt/wegwiesel/charging-prices/subscriptions.txt   # then edit
-
-# first fetch
-cd /opt/wegwiesel/charging-prices && python3 fetch_prices.py
-
-# API service + daily fetch timer
-sudo cp charging-prices-api.service charging-prices-fetch.service charging-prices-fetch.timer /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now charging-prices-api charging-prices-fetch.timer
+## Server provisioning (one-time, on the host /opt/wegwiesel)
+The compose service mounts three host paths:
 ```
-
-## Caddy
-Add to the `wegwiesel.app` site block (so the app calls the same origin):
+/opt/wegwiesel/charging-prices/secrets/mobilithek.crt   # M2M client cert (PEM)
+/opt/wegwiesel/charging-prices/secrets/mobilithek.key   # M2M private key
+/opt/wegwiesel/charging-prices/subscriptions.txt        # subscribed dataset IDs, one per line
+/opt/wegwiesel/charging-prices-data/                    # output (auto-created)
 ```
-handle /api/charging-prices* {
-    reverse_proxy 127.0.0.1:8088
-}
-```
+Copy the cert/key (from `~/mobilithek/mobilithek.{crt,key}`) into `secrets/` and create
+`subscriptions.txt`. Then deploy as usual (Terraform / `docker compose up -d --build
+charging-prices` + `caddy reload`). The container fetches on start and then daily.
 
 ## API
 ```
@@ -55,5 +42,6 @@ GET /api/charging-prices?bbox=<west>,<south>,<east>,<north>   # lon,lat,lon,lat 
 - bboxes larger than `MAX_SPAN_DEG` (3°) per axis are rejected; up to `MAX_POINTS` (1000) returned.
 
 ## Adding more CPOs
-Subscribe the dataset on Mobilithek, add its ID to `subscriptions.txt`, done — the
-parser is schema-driven (DATEX II v3) and handles any AFIR EnergyInfrastructure feed.
+Subscribe the dataset on Mobilithek, add its ID to `subscriptions.txt`, restart the
+service — the parser is schema-driven (DATEX II v3) and handles any AFIR
+EnergyInfrastructure feed.
