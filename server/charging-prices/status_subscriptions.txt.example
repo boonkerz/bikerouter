@@ -1,0 +1,4 @@
+# One Mobilithek *dynamic* (dyn) AFIR status subscription ID per line.
+# These are DELTA feeds polled every STATUS_INTERVAL seconds for live
+# available/busy/offline per charging point. Distinct from subscriptions.txt.
+1004700141608472576   # chargecloud (live status)

@@ -126,6 +126,7 @@ def site_to_point(site, operator):
 
     return {
         "op": operator,
+        "id": site.get("idG"),  # join key for the live-status (dyn) feed
         "name": name,
         "lat": round(lat, 6),
         "lon": round(lon, 6),

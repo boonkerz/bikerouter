@@ -76,9 +76,15 @@ services:
       OUT_FILE: /data/charging_prices.json
       DATA_FILE: /data/charging_prices.json
       FETCH_INTERVAL_HOURS: "24"
+      # Live status (dyn) feeds — polled every STATUS_INTERVAL seconds.
+      STATUS_SUBSCRIPTIONS: /config/status_subscriptions.txt
+      STATUS_FILE: /data/charging_status.json
+      STORE_FILE: /data/charging_status_store.json
+      STATUS_INTERVAL: "150"
     volumes:
       - /opt/wegwiesel/charging-prices/secrets:/secrets:ro
       - /opt/wegwiesel/charging-prices/subscriptions.txt:/config/subscriptions.txt:ro
+      - /opt/wegwiesel/charging-prices/status_subscriptions.txt:/config/status_subscriptions.txt:ro
       - /opt/wegwiesel/charging-prices-data:/data
     restart: unless-stopped
     expose:

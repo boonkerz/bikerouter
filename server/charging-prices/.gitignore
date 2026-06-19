@@ -8,3 +8,4 @@ mobilithek_ca.crt
 *.pfx
 subscriptions.txt
 data/
+status_subscriptions.txt

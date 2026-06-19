@@ -24,11 +24,13 @@ from urllib.parse import urlparse, parse_qs
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.environ.get("DATA_FILE", os.path.join(HERE, "data", "charging_prices.json"))
+STATUS_FILE = os.environ.get("STATUS_FILE", os.path.join(HERE, "data", "charging_status.json"))
 MAX_SPAN = float(os.environ.get("MAX_SPAN_DEG", "3.0"))
 MAX_POINTS = int(os.environ.get("MAX_POINTS", "1000"))
 
 _lock = threading.Lock()
 _cache = {"mtime": 0, "data": {"points": [], "generated": None, "attribution": None}}
+_status = {"mtime": 0, "sites": {}}
 
 
 def load_data():
@@ -43,6 +45,23 @@ def load_data():
                 _cache["data"] = json.load(f)
             _cache["mtime"] = mtime
         return _cache["data"]
+
+
+def load_status():
+    """Live per-site availability from the dyn poller (rewrites every few min)."""
+    try:
+        mtime = os.path.getmtime(STATUS_FILE)
+    except OSError:
+        return _status["sites"]
+    with _lock:
+        if mtime != _status["mtime"]:
+            try:
+                with open(STATUS_FILE) as f:
+                    _status["sites"] = json.load(f).get("sites", {})
+                _status["mtime"] = mtime
+            except (OSError, ValueError):
+                pass
+        return _status["sites"]
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -75,10 +94,17 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": f"bbox too large (max {MAX_SPAN} deg per axis)"})
 
         data = load_data()
+        status = load_status()
         out = []
         for p in data.get("points", []):
             if w <= p["lon"] <= e and s <= p["lat"] <= n:
-                out.append(p)
+                # attach live status by site id; drop the id from the response
+                q2 = {k: v for k, v in p.items() if k != "id"}
+                st = status.get(p.get("id"))
+                if st:
+                    q2["st"] = st["s"]  # available | busy | offline
+                    q2["av"] = st["a"]  # known available points
+                out.append(q2)
                 if len(out) >= MAX_POINTS:
                     break
         self._send(200, {
