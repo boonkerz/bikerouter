@@ -4064,6 +4064,30 @@ abstract class AppLocalizations {
   /// **'Ladekosten gesamt: ~{cost} €'**
   String evChargingCostTotal(String cost);
 
+  /// No description provided for @evStatusAvailable.
+  ///
+  /// In de, this message translates to:
+  /// **'frei'**
+  String get evStatusAvailable;
+
+  /// No description provided for @evStatusAvailableN.
+  ///
+  /// In de, this message translates to:
+  /// **'{n} frei'**
+  String evStatusAvailableN(int n);
+
+  /// No description provided for @evStatusBusy.
+  ///
+  /// In de, this message translates to:
+  /// **'belegt'**
+  String get evStatusBusy;
+
+  /// No description provided for @evStatusOffline.
+  ///
+  /// In de, this message translates to:
+  /// **'außer Betrieb'**
+  String get evStatusOffline;
+
   /// No description provided for @evChargingFree.
   ///
   /// In de, this message translates to:

@@ -11,6 +11,8 @@ class AfirPrice {
   final double? kw; // max charging power
   final String? operator;
   final String currency;
+  final String? state; // live: 'available' | 'busy' | 'offline' | null=unknown
+  final int? avail; // live: number of available points known
 
   const AfirPrice({
     this.kwh,
@@ -18,7 +20,11 @@ class AfirPrice {
     this.kw,
     this.operator,
     this.currency = 'EUR',
+    this.state,
+    this.avail,
   });
+
+  bool get isBusy => state == 'busy' || state == 'offline';
 }
 
 class _PricePoint {
@@ -74,6 +80,8 @@ class ChargingPriceService {
             kw: (m['kw'] as num?)?.toDouble(),
             operator: m['op'] as String?,
             currency: (m['cur'] as String?) ?? 'EUR',
+            state: m['st'] as String?,
+            avail: (m['av'] as num?)?.toInt(),
           ),
         ));
       }

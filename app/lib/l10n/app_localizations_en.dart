@@ -2145,6 +2145,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get evStatusAvailable => 'available';
+
+  @override
+  String evStatusAvailableN(int n) {
+    return '$n available';
+  }
+
+  @override
+  String get evStatusBusy => 'in use';
+
+  @override
+  String get evStatusOffline => 'out of service';
+
+  @override
   String get evChargingFree => 'free';
 
   @override

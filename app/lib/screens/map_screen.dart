@@ -4927,6 +4927,26 @@ class _MapScreenState extends State<MapScreen> {
   double? _afirKwh(RoutePoiHit s) =>
       ChargingPriceService.instance.lookup(s.lat, s.lon)?.kwh;
 
+  /// Live availability of a station (label + colour), or null when unknown.
+  (String, Color)? _afirStatus(RoutePoiHit s, AppLocalizations l) {
+    final a = ChargingPriceService.instance.lookup(s.lat, s.lon);
+    switch (a?.state) {
+      case 'available':
+        return (
+          (a!.avail != null && a.avail! > 0)
+              ? l.evStatusAvailableN(a.avail!)
+              : l.evStatusAvailable,
+          const Color(0xFF2e6a4a),
+        );
+      case 'busy':
+        return (l.evStatusBusy, const Color(0xFFef6c00));
+      case 'offline':
+        return (l.evStatusOffline, const Color(0xFFc62828));
+      default:
+        return null;
+    }
+  }
+
   String? _chargingPrice(RoutePoiHit s, AppLocalizations l) {
     // Prefer the real AFIR ad-hoc price (Mobilithek feed via wegwiesel.app);
     // fall back to the static OSM tags when no AFIR match is in range.
@@ -4998,6 +5018,12 @@ class _MapScreenState extends State<MapScreen> {
         }
       }
       list.sort((a, b) {
+        // Available/unknown before busy/offline, then cheapest first.
+        final ba =
+            ChargingPriceService.instance.lookup(a.lat, a.lon)?.isBusy ?? false;
+        final bb =
+            ChargingPriceService.instance.lookup(b.lat, b.lon)?.isBusy ?? false;
+        if (ba != bb) return ba ? 1 : -1;
         final pa = _afirKwh(a);
         final pb = _afirKwh(b);
         if (pa == null && pb == null) return 0;
@@ -5074,6 +5100,7 @@ class _MapScreenState extends State<MapScreen> {
                         final price = _chargingPrice(c, l);
                         final k = _afirKwh(c);
                         final cost = k == null ? null : perStopKwh * k;
+                        final status = _afirStatus(c, l);
                         final isSel = selected[i] == j;
                         return InkWell(
                           onTap: () => setLocal(() => selected[i] = j),
@@ -5112,6 +5139,12 @@ class _MapScreenState extends State<MapScreen> {
                                             color: Colors.black54,
                                             fontSize: 12),
                                       ),
+                                      if (status != null)
+                                        Text('● ${status.$1}',
+                                            style: TextStyle(
+                                                color: status.$2,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600)),
                                     ],
                                   ),
                                 ),

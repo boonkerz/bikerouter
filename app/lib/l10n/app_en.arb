@@ -804,6 +804,16 @@
   "@evChargingCostTotal": {
     "placeholders": { "cost": { "type": "String" } }
   },
+  "evStatusAvailable": "available",
+  "@evStatusAvailable": {},
+  "evStatusAvailableN": "{n} available",
+  "@evStatusAvailableN": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "evStatusBusy": "in use",
+  "@evStatusBusy": {},
+  "evStatusOffline": "out of service",
+  "@evStatusOffline": {},
   "evChargingFree": "free",
   "evChargingPaid": "paid",
   "settingsEbikeCapacityEdit": "Battery capacity",

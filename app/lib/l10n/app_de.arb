@@ -805,6 +805,16 @@
   "@evChargingCostTotal": {
     "placeholders": { "cost": { "type": "String" } }
   },
+  "evStatusAvailable": "frei",
+  "@evStatusAvailable": {},
+  "evStatusAvailableN": "{n} frei",
+  "@evStatusAvailableN": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "evStatusBusy": "belegt",
+  "@evStatusBusy": {},
+  "evStatusOffline": "außer Betrieb",
+  "@evStatusOffline": {},
   "evChargingFree": "kostenlos",
   "evChargingPaid": "kostenpflichtig",
   "ebikeRangeComfortable": "reicht locker",
