@@ -68,7 +68,11 @@ def apply_delta(doc, store, now):
                 continue
             for stn in site_st.get("energyInfrastructureStationStatus", []):
                 for rp in stn.get("refillPointStatus", []):
-                    cp = rp.get("aegiElectricChargingPointStatus") or {}
+                    # CPOs use different DATEX-II extension keys for the point
+                    # status: chargecloud/eRound -> aegiElectricChargingPointStatus,
+                    # EnBW -> aegiRefillPointStatus. Same {reference.idG, status.value}.
+                    cp = (rp.get("aegiElectricChargingPointStatus")
+                          or rp.get("aegiRefillPointStatus") or {})
                     evse = (cp.get("reference") or {}).get("idG")
                     status = (cp.get("status") or {}).get("value")
                     if not evse or not status:
