@@ -46,6 +46,7 @@ import '../services/ebike_charging_planner.dart';
 import '../services/ev_prefs.dart';
 import '../services/ev_charging_planner.dart';
 import '../services/charging_price_service.dart';
+import '../services/charging_tariffs.dart';
 import '../services/new_feature_prefs.dart';
 import '../services/activity_service.dart';
 import '../models/activity.dart';
@@ -5001,9 +5002,13 @@ class _MapScreenState extends State<MapScreen> {
     // Energy to refill per stop ≈ the usable budget spent on the leg up to it;
     // simplest readable proxy is the whole usable charge for the charge-time.
     final perStopKwh = EvPrefs.usableKwh * 0.9;
-    // Pull real ad-hoc prices for the stops' area so the dialog can show them.
-    await ChargingPriceService.instance
-        .loadAround(stops.map((s) => (lat: s.lat, lon: s.lon)));
+    // Pull real ad-hoc prices for the stops' area + the latest card tariffs so
+    // the wizard can show per-card costs.
+    await Future.wait([
+      ChargingPriceService.instance
+          .loadAround(stops.map((s) => (lat: s.lat, lon: s.lon))),
+      ChargingTariffs.load(),
+    ]);
     if (!mounted) return;
     // Per stop the user can pick which station to use (the suggestion + the
     // interchangeable alternatives), sorted cheapest-first and pre-selected on
@@ -5034,23 +5039,236 @@ class _MapScreenState extends State<MapScreen> {
       candidatesPerStop.add(list);
     }
     final selected = List<int>.filled(stops.length, 0);
-    double? stopCost(int i) {
-      final k = _afirKwh(candidatesPerStop[i][selected[i]]);
-      return k == null ? null : perStopKwh * k;
+    var lastCard = await ChargingTariffs.lastCardId();
+    if (!mounted) return;
+    // Per-stop chosen charging card (defaults to the last-used one).
+    final cardSel = List<String>.filled(stops.length, lastCard);
+
+    bool isDc(RoutePoiHit c) =>
+        (ChargingPriceService.instance.lookup(c.lat, c.lon)?.kw ??
+            EvPrefs.defaultChargerKw) >=
+        43;
+    ({double rate, double cost, bool roaming})? costFor(
+        RoutePoiHit c, String cardId) {
+      final afir = ChargingPriceService.instance.lookup(c.lat, c.lon);
+      return ChargingTariffs.cost(
+        card: ChargingTariffs.byId(cardId),
+        stationOperator: afir?.operator,
+        dc: isDc(c),
+        kwh: perStopKwh,
+        minutes: EvChargingPlanner.chargeMinutes(c, perStopKwh).toDouble(),
+        adhocKwh: afir?.kwh,
+        adhocPerMin: afir?.perMin,
+      );
     }
 
+    var step = 0; // 0..stops.length-1 = per-stop pages, stops.length = summary
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setLocal) {
-        var total = 0.0;
-        var anyCost = false;
-        for (int i = 0; i < stops.length; i++) {
-          final c = stopCost(i);
-          if (c != null) {
-            total += c;
-            anyCost = true;
+        final summary = step >= stops.length;
+
+        Widget body;
+        if (!summary) {
+          final i = step;
+          final sel = candidatesPerStop[i][selected[i]];
+          body = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.evWizardStep(i + 1, stops.length),
+                style: const TextStyle(
+                  color: Color(0xFF6a4a28),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${l.ebikePlanChargingDetails(
+                  sel.routeKm.toStringAsFixed(1),
+                  sel.sideMeters.round(),
+                )} · ${l.evChargeTime(EvChargingPlanner.chargeMinutes(sel, perStopKwh))}',
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Text(l.evWizardCard,
+                  style: const TextStyle(
+                      color: Color(0xFF6a4a28),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700)),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final card in ChargingTariffs.cards)
+                    ChoiceChip(
+                      label:
+                          Text(card.name, style: const TextStyle(fontSize: 12)),
+                      selected: cardSel[i] == card.id,
+                      onSelected: (_) => setLocal(() {
+                        cardSel[i] = card.id;
+                        lastCard = card.id;
+                        ChargingTariffs.setLastCardId(card.id);
+                      }),
+                      selectedColor: const Color(0xFF6a4a28),
+                      backgroundColor: const Color(0xFFece0cd),
+                      labelStyle: TextStyle(
+                          color: cardSel[i] == card.id
+                              ? const Color(0xFFf5e9d8)
+                              : Colors.black87),
+                    ),
+                ],
+              ),
+              const Divider(height: 16),
+              for (int j = 0; j < candidatesPerStop[i].length; j++)
+                Builder(builder: (_) {
+                  final c = candidatesPerStop[i][j];
+                  final op = EvChargingPlanner.operatorName(c) ??
+                      c.name ??
+                      l.poiCatCharging;
+                  final rc = costFor(c, cardSel[i]);
+                  final status = _afirStatus(c, l);
+                  final isSel = selected[i] == j;
+                  final dc = isDc(c);
+                  return InkWell(
+                    onTap: () => setLocal(() => selected[i] = j),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            isSel
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            size: 18,
+                            color: const Color(0xFF6a4a28),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(op,
+                                          style: TextStyle(
+                                              color: Colors.black87,
+                                              fontSize: 13,
+                                              fontWeight: isSel
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500)),
+                                    ),
+                                    Text(dc ? 'DC' : 'AC',
+                                        style: const TextStyle(
+                                            color: Colors.black38,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700)),
+                                  ],
+                                ),
+                                Text(
+                                  rc == null
+                                      ? (_chargingPrice(c, l) ?? l.evPriceUnknown)
+                                      : '${rc.rate.toStringAsFixed(2)} €/kWh · ≈ ${rc.cost.toStringAsFixed(2)} €${rc.roaming ? ' · ${l.evRoaming}' : ''}',
+                                  style: const TextStyle(
+                                      color: Colors.black54, fontSize: 12),
+                                ),
+                                if (status != null)
+                                  Text('● ${status.$1}',
+                                      style: TextStyle(
+                                          color: status.$2,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              if (resolvedPlan.incomplete) ...[
+                const SizedBox(height: 6),
+                Text(
+                  l.ebikePlanChargingIncomplete,
+                  style: const TextStyle(
+                    color: Color(0xFFc62828),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          );
+        } else {
+          var total = 0.0;
+          var anyCost = false;
+          final rows = <Widget>[];
+          for (int i = 0; i < stops.length; i++) {
+            final c = candidatesPerStop[i][selected[i]];
+            final op =
+                EvChargingPlanner.operatorName(c) ?? c.name ?? l.poiCatCharging;
+            final rc = costFor(c, cardSel[i]);
+            if (rc != null) {
+              total += rc.cost;
+              anyCost = true;
+            }
+            rows.add(Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${i + 1}. $op',
+                      style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                  Text(
+                    [
+                      ChargingTariffs.byId(cardSel[i]).name,
+                      if (rc != null) '≈ ${rc.cost.toStringAsFixed(2)} €',
+                    ].join(' · '),
+                    style:
+                        const TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
+                ],
+              ),
+            ));
           }
+          body = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                stops.length == 1
+                    ? l.ebikePlanChargingOneStop
+                    : l.ebikePlanChargingManyStops(stops.length),
+                style: const TextStyle(
+                  color: Color(0xFF6a4a28),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...rows,
+              if (anyCost) ...[
+                const Divider(height: 12),
+                Text(
+                  l.evChargingCostTotal(total.toStringAsFixed(2)),
+                  style: const TextStyle(
+                      color: Color(0xFF2e6a4a),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800),
+                ),
+              ],
+            ],
+          );
         }
+
         return AlertDialog(
           backgroundColor: const Color(0xFFf5e9d8),
           title: Row(
@@ -5062,136 +5280,28 @@ class _MapScreenState extends State<MapScreen> {
           ),
           content: SizedBox(
             width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    stops.length == 1
-                        ? l.ebikePlanChargingOneStop
-                        : l.ebikePlanChargingManyStops(stops.length),
-                    style: const TextStyle(
-                      color: Color(0xFF6a4a28),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  for (int i = 0; i < stops.length; i++) ...[
-                    Builder(builder: (_) {
-                      final sel = candidatesPerStop[i][selected[i]];
-                      return Text(
-                        '${l.ebikePlanChargingDetails(
-                          sel.routeKm.toStringAsFixed(1),
-                          sel.sideMeters.round(),
-                        )} · ${l.evChargeTime(EvChargingPlanner.chargeMinutes(sel, perStopKwh))}',
-                        style:
-                            const TextStyle(color: Colors.black54, fontSize: 12),
-                      );
-                    }),
-                    const SizedBox(height: 2),
-                    for (int j = 0; j < candidatesPerStop[i].length; j++)
-                      Builder(builder: (_) {
-                        final c = candidatesPerStop[i][j];
-                        final op = EvChargingPlanner.operatorName(c) ??
-                            c.name ??
-                            l.poiCatCharging;
-                        final price = _chargingPrice(c, l);
-                        final k = _afirKwh(c);
-                        final cost = k == null ? null : perStopKwh * k;
-                        final status = _afirStatus(c, l);
-                        final isSel = selected[i] == j;
-                        return InkWell(
-                          onTap: () => setLocal(() => selected[i] = j),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  isSel
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_unchecked,
-                                  size: 18,
-                                  color: const Color(0xFF6a4a28),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(op,
-                                          style: TextStyle(
-                                              color: Colors.black87,
-                                              fontSize: 13,
-                                              fontWeight: isSel
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w500)),
-                                      Text(
-                                        [
-                                          if (price != null) price,
-                                          if (cost != null)
-                                            '≈ ${cost.toStringAsFixed(2)} €',
-                                        ].join(' · '),
-                                        style: const TextStyle(
-                                            color: Colors.black54,
-                                            fontSize: 12),
-                                      ),
-                                      if (status != null)
-                                        Text('● ${status.$1}',
-                                            style: TextStyle(
-                                                color: status.$2,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                    const SizedBox(height: 8),
-                  ],
-                  if (anyCost) ...[
-                    const Divider(height: 4),
-                    Text(
-                      l.evChargingCostTotal(total.toStringAsFixed(2)),
-                      style: const TextStyle(
-                          color: Color(0xFF2e6a4a),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                  if (resolvedPlan.incomplete) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      l.ebikePlanChargingIncomplete,
-                      style: const TextStyle(
-                        color: Color(0xFFc62828),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            child: SingleChildScrollView(child: body),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l.commonCancel),
-            ),
+            if (step == 0)
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(l.commonCancel),
+              )
+            else
+              TextButton(
+                onPressed: () => setLocal(() => step -= 1),
+                child: Text(l.evWizardBack),
+              ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF6a4a28),
                 foregroundColor: const Color(0xFFf5e9d8),
               ),
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l.ebikePlanChargingInsert),
+              onPressed: () => summary
+                  ? Navigator.of(ctx).pop(true)
+                  : setLocal(() => step += 1),
+              child: Text(summary ? l.ebikePlanChargingInsert : l.evWizardNext),
             ),
           ],
         );

@@ -81,10 +81,13 @@ services:
       STATUS_FILE: /data/charging_status.json
       STORE_FILE: /data/charging_status_store.json
       STATUS_INTERVAL: "150"
+      # Hand-maintained charging-card tariff table (live-editable on the host).
+      TARIFFS_FILE: /config/tariffs.json
     volumes:
       - /opt/wegwiesel/charging-prices/secrets:/secrets:ro
       - /opt/wegwiesel/charging-prices/subscriptions.txt:/config/subscriptions.txt:ro
       - /opt/wegwiesel/charging-prices/status_subscriptions.txt:/config/status_subscriptions.txt:ro
+      - /opt/wegwiesel/charging-prices/tariffs.json:/config/tariffs.json:ro
       - /opt/wegwiesel/charging-prices-data:/data
     restart: unless-stopped
     expose:

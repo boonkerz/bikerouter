@@ -858,5 +858,19 @@
   "ebikePlanChargingOneStop": "1 charging stop suggested",
   "ebikePlanChargingManyStops": "{n} charging stops suggested",
   "@ebikePlanChargingManyStops": { "placeholders": { "n": { "type": "int" } } },
-  "ebikePlanChargingIncomplete": "Heads up: one leg has no reachable charging station — the battery still won't last everywhere."
+  "ebikePlanChargingIncomplete": "Heads up: one leg has no reachable charging station — the battery still won't last everywhere.",
+  "evWizardStep": "Stop {step} of {total}",
+  "@evWizardStep": {
+    "placeholders": { "step": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "evWizardCard": "Which charging card?",
+  "@evWizardCard": {},
+  "evWizardBack": "Back",
+  "@evWizardBack": {},
+  "evWizardNext": "Next",
+  "@evWizardNext": {},
+  "evPriceUnknown": "Price unknown",
+  "@evPriceUnknown": {},
+  "evRoaming": "roaming",
+  "@evRoaming": {}
 }

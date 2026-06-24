@@ -2290,4 +2290,24 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get ebikePlanChargingIncomplete =>
       'Achtung: Auf einer Etappe gibt es keine erreichbare Ladestation — der Akku reicht trotzdem nicht überall.';
+
+  @override
+  String evWizardStep(int step, int total) {
+    return 'Stopp $step von $total';
+  }
+
+  @override
+  String get evWizardCard => 'Mit welcher Ladekarte?';
+
+  @override
+  String get evWizardBack => 'Zurück';
+
+  @override
+  String get evWizardNext => 'Weiter';
+
+  @override
+  String get evPriceUnknown => 'Preis unbekannt';
+
+  @override
+  String get evRoaming => 'Roaming';
 }

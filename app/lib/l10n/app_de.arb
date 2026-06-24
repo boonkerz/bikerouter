@@ -858,5 +858,19 @@
   "ebikePlanChargingOneStop": "1 Ladestopp vorgeschlagen",
   "ebikePlanChargingManyStops": "{n} Ladestopps vorgeschlagen",
   "@ebikePlanChargingManyStops": { "placeholders": { "n": { "type": "int" } } },
-  "ebikePlanChargingIncomplete": "Achtung: Auf einer Etappe gibt es keine erreichbare Ladestation — der Akku reicht trotzdem nicht überall."
+  "ebikePlanChargingIncomplete": "Achtung: Auf einer Etappe gibt es keine erreichbare Ladestation — der Akku reicht trotzdem nicht überall.",
+  "evWizardStep": "Stopp {step} von {total}",
+  "@evWizardStep": {
+    "placeholders": { "step": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "evWizardCard": "Mit welcher Ladekarte?",
+  "@evWizardCard": {},
+  "evWizardBack": "Zurück",
+  "@evWizardBack": {},
+  "evWizardNext": "Weiter",
+  "@evWizardNext": {},
+  "evPriceUnknown": "Preis unbekannt",
+  "@evPriceUnknown": {},
+  "evRoaming": "Roaming",
+  "@evRoaming": {}
 }

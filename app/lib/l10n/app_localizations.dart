@@ -4339,6 +4339,42 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Achtung: Auf einer Etappe gibt es keine erreichbare Ladestation — der Akku reicht trotzdem nicht überall.'**
   String get ebikePlanChargingIncomplete;
+
+  /// No description provided for @evWizardStep.
+  ///
+  /// In de, this message translates to:
+  /// **'Stopp {step} von {total}'**
+  String evWizardStep(int step, int total);
+
+  /// No description provided for @evWizardCard.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit welcher Ladekarte?'**
+  String get evWizardCard;
+
+  /// No description provided for @evWizardBack.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück'**
+  String get evWizardBack;
+
+  /// No description provided for @evWizardNext.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get evWizardNext;
+
+  /// No description provided for @evPriceUnknown.
+  ///
+  /// In de, this message translates to:
+  /// **'Preis unbekannt'**
+  String get evPriceUnknown;
+
+  /// No description provided for @evRoaming.
+  ///
+  /// In de, this message translates to:
+  /// **'Roaming'**
+  String get evRoaming;
 }
 
 class _AppLocalizationsDelegate

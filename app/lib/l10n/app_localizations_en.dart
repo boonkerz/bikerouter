@@ -2291,4 +2291,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ebikePlanChargingIncomplete =>
       'Heads up: one leg has no reachable charging station — the battery still won\'t last everywhere.';
+
+  @override
+  String evWizardStep(int step, int total) {
+    return 'Stop $step of $total';
+  }
+
+  @override
+  String get evWizardCard => 'Which charging card?';
+
+  @override
+  String get evWizardBack => 'Back';
+
+  @override
+  String get evWizardNext => 'Next';
+
+  @override
+  String get evPriceUnknown => 'Price unknown';
+
+  @override
+  String get evRoaming => 'roaming';
 }

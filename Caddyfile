@@ -48,6 +48,11 @@ wegwiesel.app {
 		reverse_proxy charging-prices:8080
 	}
 
+	# Charging-card tariff table (hand-maintained JSON)
+	handle /api/charging-tariffs* {
+		reverse_proxy charging-prices:8080
+	}
+
 	# Flutter Web App
 	handle {
 		root * /srv/web

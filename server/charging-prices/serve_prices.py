@@ -25,12 +25,14 @@ from urllib.parse import urlparse, parse_qs
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.environ.get("DATA_FILE", os.path.join(HERE, "data", "charging_prices.json"))
 STATUS_FILE = os.environ.get("STATUS_FILE", os.path.join(HERE, "data", "charging_status.json"))
+TARIFFS_FILE = os.environ.get("TARIFFS_FILE", os.path.join(HERE, "tariffs.json"))
 MAX_SPAN = float(os.environ.get("MAX_SPAN_DEG", "3.0"))
 MAX_POINTS = int(os.environ.get("MAX_POINTS", "1000"))
 
 _lock = threading.Lock()
 _cache = {"mtime": 0, "data": {"points": [], "generated": None, "attribution": None}}
 _status = {"mtime": 0, "sites": {}}
+_tariffs = {"mtime": 0, "data": {"cards": []}}
 
 
 def load_data():
@@ -64,6 +66,23 @@ def load_status():
         return _status["sites"]
 
 
+def load_tariffs():
+    """Hand-maintained charging-card tariff table; reload when the file changes."""
+    try:
+        mtime = os.path.getmtime(TARIFFS_FILE)
+    except OSError:
+        return _tariffs["data"]
+    with _lock:
+        if mtime != _tariffs["mtime"]:
+            try:
+                with open(TARIFFS_FILE) as f:
+                    _tariffs["data"] = json.load(f)
+                _tariffs["mtime"] = mtime
+            except (OSError, ValueError):
+                pass
+        return _tariffs["data"]
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -80,7 +99,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
-        if u.path.rstrip("/") != "/api/charging-prices":
+        path = u.path.rstrip("/")
+        if path == "/api/charging-tariffs":
+            return self._send(200, load_tariffs())
+        if path != "/api/charging-prices":
             return self._send(404, {"error": "not found"})
         q = parse_qs(u.query)
         bbox = (q.get("bbox") or [""])[0]

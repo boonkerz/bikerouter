@@ -1,0 +1,75 @@
+{
+  "updated": "2026-06-23",
+  "note": "Gross EUR charging-card tariffs, hand-maintained from provider pages (June 2026). 'home' = AFIR operator ids where the card's own-network price (homePerKwh) applies; otherwise the AC/DC roaming estimate. monthlyFee is a subscription, NOT per charge. Approximate: several providers use tiered/dynamic/customer-dependent prices we flatten. No open feed exists for EMP roaming tariffs.",
+  "cards": [
+    { "id": "adhoc", "name": "Ad-hoc" },
+    {
+      "id": "enbw_s",
+      "name": "EnBW mobility+ S",
+      "home": ["DE-NAP-EnBWAG"],
+      "homePerKwh": 0.56,
+      "acPerKwh": 0.56,
+      "dcPerKwh": 0.56,
+      "monthlyFee": 0.0,
+      "blockingPerMin": 0.10,
+      "blockingAfterMin": 240,
+      "blockingMaxEur": 12.0,
+      "blockingDcOnly": false
+    },
+    {
+      "id": "enbw_m",
+      "name": "EnBW mobility+ M",
+      "home": ["DE-NAP-EnBWAG"],
+      "homePerKwh": 0.46,
+      "acPerKwh": 0.56,
+      "dcPerKwh": 0.56,
+      "monthlyFee": 5.99,
+      "blockingPerMin": 0.10,
+      "blockingAfterMin": 240,
+      "blockingMaxEur": 12.0,
+      "blockingDcOnly": false
+    },
+    {
+      "id": "enbw_l",
+      "name": "EnBW mobility+ L",
+      "home": ["DE-NAP-EnBWAG"],
+      "homePerKwh": 0.39,
+      "acPerKwh": 0.56,
+      "dcPerKwh": 0.56,
+      "monthlyFee": 11.99,
+      "blockingPerMin": 0.10,
+      "blockingAfterMin": 240,
+      "blockingMaxEur": 12.0,
+      "blockingDcOnly": false
+    },
+    {
+      "id": "adac",
+      "name": "ADAC e-Charge",
+      "acPerKwh": 0.55,
+      "dcPerKwh": 0.55,
+      "monthlyFee": 0.0
+    },
+    {
+      "id": "maingau",
+      "name": "Maingau",
+      "acPerKwh": 0.52,
+      "dcPerKwh": 0.62,
+      "monthlyFee": 0.0,
+      "blockingPerMin": 0.10,
+      "blockingAfterMin": 240,
+      "blockingDcOnly": true
+    },
+    {
+      "id": "ewego",
+      "name": "EWE Go",
+      "acPerKwh": 0.62,
+      "dcPerKwh": 0.62,
+      "monthlyFee": 0.0,
+      "blockingPerMin": 0.10,
+      "blockingAfterMin": 240,
+      "blockingMaxEur": 24.0,
+      "blockingDcOnly": false
+    },
+    { "id": "shell", "name": "Shell Recharge", "acPerKwh": 0.59, "dcPerKwh": 0.79 }
+  ]
+}
