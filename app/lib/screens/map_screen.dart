@@ -4926,14 +4926,15 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// EV mode button: find the nearest charging station that is reporting live
+  /// EV mode button: list the charging stations that are reporting live
   /// availability around the rider (GPS, or the map centre when GPS is off),
-  /// move the camera onto it, drop a marker and show distance + free-points +
-  /// price. "Nearest free" = nearest station whose dyn feed says 'available'.
+  /// nearest first, in a bottom sheet. Picking one centres the camera on it and
+  /// drops a marker. "Free" = station whose dyn feed currently says 'available'.
   Future<void> _showNearestFreeStation() async {
     if (_findingStation) return;
     final l = AppLocalizations.of(context);
     setState(() => _findingStation = true);
+    List<NearbyStation> stations;
     try {
       var pos = _currentPosition;
       if (pos == null) {
@@ -4941,35 +4942,86 @@ class _MapScreenState extends State<MapScreen> {
         pos = _currentPosition;
       }
       pos ??= _mapController.camera.center;
-      final station = await ChargingPriceService.instance
-          .nearestAvailable(pos.latitude, pos.longitude);
-      if (!mounted) return;
-      if (station == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.evNearestFreeNone)),
-        );
-        return;
-      }
-      final target = LatLng(station.lat, station.lon);
-      setState(() => _nearestFreeStation = target);
-      _mapController.move(target, 15);
-
-      final parts = <String>[
-        l.evNearestFreeDistance((station.distanceM / 1000).toStringAsFixed(1)),
-      ];
-      final avail = station.price.avail;
-      if (avail != null && avail > 0) parts.add(l.evStatusAvailableN(avail));
-      final kwh = station.price.kwh;
-      if (kwh != null) parts.add(l.evPriceAdhoc(kwh.toStringAsFixed(2)));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(parts.join(' · ')),
-          duration: const Duration(seconds: 6),
-        ),
-      );
+      stations = await ChargingPriceService.instance
+          .nearbyAvailable(pos.latitude, pos.longitude);
     } finally {
       if (mounted) setState(() => _findingStation = false);
     }
+    if (!mounted) return;
+    if (stations.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.evNearestFreeNone)),
+      );
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFFf5ecdc),
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  l.evNearbyTitle,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF6a4a28),
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: stations.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, color: Color(0x22000000)),
+                  itemBuilder: (_, i) {
+                    final st = stations[i];
+                    final sub = <String>[];
+                    final avail = st.price.avail;
+                    if (avail != null && avail > 0) {
+                      sub.add(l.evStatusAvailableN(avail));
+                    }
+                    final kwh = st.price.kwh;
+                    if (kwh != null) {
+                      sub.add(l.evPriceAdhoc(kwh.toStringAsFixed(2)));
+                    }
+                    final kw = st.price.kw;
+                    if (kw != null && kw > 0) {
+                      sub.add('${kw.round()} kW');
+                    }
+                    return ListTile(
+                      dense: true,
+                      leading: const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Color(0xFF2e6a4a),
+                        child: Icon(Icons.ev_station,
+                            color: Colors.white, size: 18),
+                      ),
+                      title: Text(l.evNearestFreeDistance(
+                          (st.distanceM / 1000).toStringAsFixed(1))),
+                      subtitle: sub.isEmpty ? null : Text(sub.join(' · ')),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        final target = LatLng(st.lat, st.lon);
+                        setState(() => _nearestFreeStation = target);
+                        _mapController.move(target, 15);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   /// Current charging-stop waypoints as [lat, lon] pairs, in waypoint

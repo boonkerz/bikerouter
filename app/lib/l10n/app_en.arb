@@ -875,6 +875,8 @@
   "@evRoaming": {},
   "evNearestFreeNone": "No free charging station found nearby",
   "@evNearestFreeNone": {},
+  "evNearbyTitle": "Free charging stations nearby",
+  "@evNearbyTitle": {},
   "evNearestFreeDistance": "{km} km away",
   "@evNearestFreeDistance": {
     "placeholders": { "km": { "type": "String" } }

@@ -2315,6 +2315,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get evNearestFreeNone => 'Keine freie Ladesäule im Umkreis gefunden';
 
   @override
+  String get evNearbyTitle => 'Freie Ladesäulen in der Nähe';
+
+  @override
   String evNearestFreeDistance(String km) {
     return '$km km entfernt';
   }

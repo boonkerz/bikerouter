@@ -875,6 +875,8 @@
   "@evRoaming": {},
   "evNearestFreeNone": "Keine freie Ladesäule im Umkreis gefunden",
   "@evNearestFreeNone": {},
+  "evNearbyTitle": "Freie Ladesäulen in der Nähe",
+  "@evNearbyTitle": {},
   "evNearestFreeDistance": "{km} km entfernt",
   "@evNearestFreeDistance": {
     "placeholders": { "km": { "type": "String" } }

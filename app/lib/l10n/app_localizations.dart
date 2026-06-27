@@ -4382,6 +4382,12 @@ abstract class AppLocalizations {
   /// **'Keine freie Ladesäule im Umkreis gefunden'**
   String get evNearestFreeNone;
 
+  /// No description provided for @evNearbyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Freie Ladesäulen in der Nähe'**
+  String get evNearbyTitle;
+
   /// No description provided for @evNearestFreeDistance.
   ///
   /// In de, this message translates to:

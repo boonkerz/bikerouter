@@ -100,12 +100,13 @@ class ChargingPriceService {
     }
   }
 
-  /// Nearest charging station around (lat, lon) that is currently reporting
-  /// live availability ('available'), within a [radiusKm] box, or null. Fetched
-  /// fresh on every call (live status is time-sensitive, so never cached) and
-  /// independent of the route-planner cache.
-  Future<NearbyStation?> nearestAvailable(double lat, double lon,
-      {double radiusKm = 12}) async {
+  /// Charging stations around (lat, lon) that are currently reporting live
+  /// availability ('available'), within a [radiusKm] box, sorted nearest-first
+  /// and capped at [limit]. Empty on error/none. Fetched fresh on every call
+  /// (live status is time-sensitive, so never cached) and independent of the
+  /// route-planner cache.
+  Future<List<NearbyStation>> nearbyAvailable(double lat, double lon,
+      {double radiusKm = 12, int limit = 25}) async {
     final dLat = radiusKm / 111.0;
     final dLon = radiusKm / (111.0 * cos(lat * pi / 180).abs().clamp(0.01, 1.0));
     try {
@@ -113,36 +114,34 @@ class ChargingPriceService {
       final uri = Uri.parse(
           '$_base?bbox=${w.toStringAsFixed(4)},${s.toStringAsFixed(4)},${e.toStringAsFixed(4)},${n.toStringAsFixed(4)}');
       final resp = await http.get(uri).timeout(const Duration(seconds: 8));
-      if (resp.statusCode != 200) return null;
+      if (resp.statusCode != 200) return const [];
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
-      NearbyStation? best;
+      final out = <NearbyStation>[];
       for (final p in (data['points'] as List? ?? const [])) {
         final m = p as Map<String, dynamic>;
         if (m['st'] != 'available') continue;
         final plat = (m['lat'] as num?)?.toDouble();
         final plon = (m['lon'] as num?)?.toDouble();
         if (plat == null || plon == null) continue;
-        final d = _haversineM(lat, lon, plat, plon);
-        if (best == null || d < best.distanceM) {
-          best = NearbyStation(
-            plat,
-            plon,
-            AfirPrice(
-              kwh: (m['kwh'] as num?)?.toDouble(),
-              perMin: (m['min'] as num?)?.toDouble(),
-              kw: (m['kw'] as num?)?.toDouble(),
-              operator: m['op'] as String?,
-              currency: (m['cur'] as String?) ?? 'EUR',
-              state: m['st'] as String?,
-              avail: (m['av'] as num?)?.toInt(),
-            ),
-            d,
-          );
-        }
+        out.add(NearbyStation(
+          plat,
+          plon,
+          AfirPrice(
+            kwh: (m['kwh'] as num?)?.toDouble(),
+            perMin: (m['min'] as num?)?.toDouble(),
+            kw: (m['kw'] as num?)?.toDouble(),
+            operator: m['op'] as String?,
+            currency: (m['cur'] as String?) ?? 'EUR',
+            state: m['st'] as String?,
+            avail: (m['av'] as num?)?.toInt(),
+          ),
+          _haversineM(lat, lon, plat, plon),
+        ));
       }
-      return best;
+      out.sort((a, b) => a.distanceM.compareTo(b.distanceM));
+      return out.length > limit ? out.sublist(0, limit) : out;
     } catch (_) {
-      return null;
+      return const [];
     }
   }
 
