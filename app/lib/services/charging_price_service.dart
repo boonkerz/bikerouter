@@ -34,6 +34,16 @@ class _PricePoint {
   const _PricePoint(this.lat, this.lon, this.price);
 }
 
+/// One charging station with its live price/status and how far it is from the
+/// query point — result of the "nearest free station" search.
+class NearbyStation {
+  final double lat;
+  final double lon;
+  final AfirPrice price;
+  final double distanceM;
+  const NearbyStation(this.lat, this.lon, this.price, this.distanceM);
+}
+
 /// Fetches real ad-hoc charging prices for the area around the planned charging
 /// stops and matches them to charging POIs by proximity. The app never holds the
 /// Mobilithek mTLS certificate — it only asks the server for a small bbox, so the
@@ -87,6 +97,52 @@ class ChargingPriceService {
       }
     } catch (_) {
       // best-effort
+    }
+  }
+
+  /// Nearest charging station around (lat, lon) that is currently reporting
+  /// live availability ('available'), within a [radiusKm] box, or null. Fetched
+  /// fresh on every call (live status is time-sensitive, so never cached) and
+  /// independent of the route-planner cache.
+  Future<NearbyStation?> nearestAvailable(double lat, double lon,
+      {double radiusKm = 12}) async {
+    final dLat = radiusKm / 111.0;
+    final dLon = radiusKm / (111.0 * cos(lat * pi / 180).abs().clamp(0.01, 1.0));
+    try {
+      final w = lon - dLon, s = lat - dLat, e = lon + dLon, n = lat + dLat;
+      final uri = Uri.parse(
+          '$_base?bbox=${w.toStringAsFixed(4)},${s.toStringAsFixed(4)},${e.toStringAsFixed(4)},${n.toStringAsFixed(4)}');
+      final resp = await http.get(uri).timeout(const Duration(seconds: 8));
+      if (resp.statusCode != 200) return null;
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      NearbyStation? best;
+      for (final p in (data['points'] as List? ?? const [])) {
+        final m = p as Map<String, dynamic>;
+        if (m['st'] != 'available') continue;
+        final plat = (m['lat'] as num?)?.toDouble();
+        final plon = (m['lon'] as num?)?.toDouble();
+        if (plat == null || plon == null) continue;
+        final d = _haversineM(lat, lon, plat, plon);
+        if (best == null || d < best.distanceM) {
+          best = NearbyStation(
+            plat,
+            plon,
+            AfirPrice(
+              kwh: (m['kwh'] as num?)?.toDouble(),
+              perMin: (m['min'] as num?)?.toDouble(),
+              kw: (m['kw'] as num?)?.toDouble(),
+              operator: m['op'] as String?,
+              currency: (m['cur'] as String?) ?? 'EUR',
+              state: m['st'] as String?,
+              avail: (m['av'] as num?)?.toInt(),
+            ),
+            d,
+          );
+        }
+      }
+      return best;
+    } catch (_) {
+      return null;
     }
   }
 

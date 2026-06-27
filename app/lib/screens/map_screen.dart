@@ -129,6 +129,10 @@ class _MapScreenState extends State<MapScreen> {
   int? _highlightIndex;
   LatLng? _currentPosition;
   bool _locatingUser = false;
+  // EV mode: marker for the nearest currently-free charging station (the
+  // "show me the nearest free station" button), plus its in-flight flag.
+  LatLng? _nearestFreeStation;
+  bool _findingStation = false;
   // 'surface' colors the route by OSM surface tags, 'gradient' by elevation slope.
   String _routeVizMode = 'surface';
   int? _draggingWaypointIndex;
@@ -524,6 +528,29 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ],
                       ),
+                    // Nearest free charging station (EV mode "find free" button)
+                    if (_nearestFreeStation != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _nearestFreeStation!,
+                            width: 36,
+                            height: 36,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2e6a4a),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [
+                                  BoxShadow(color: Colors.black38, blurRadius: 4)
+                                ],
+                              ),
+                              child: const Icon(Icons.ev_station,
+                                  color: Colors.white, size: 22),
+                            ),
+                          ),
+                        ],
+                      ),
                     // Hover preview point on route
                     if (_routeHoverPoint != null)
                       MarkerLayer(
@@ -796,6 +823,15 @@ class _MapScreenState extends State<MapScreen> {
                   _locateUser,
                 ),
                 const SizedBox(height: 8),
+                // EV mode: jump to the nearest currently-free charging station.
+                if (_isEv) ...[
+                  _fab(
+                    _findingStation ? Icons.hourglass_top : Icons.ev_station,
+                    _showNearestFreeStation,
+                    heroTag: 'ev_nearest_free',
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 if (_route != null) ...[
                   _fab(
                     _showElevation ? Icons.expand_more : Icons.expand_less,
@@ -1842,9 +1878,9 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _fab(IconData icon, VoidCallback onTap) {
+  Widget _fab(IconData icon, VoidCallback onTap, {Object? heroTag}) {
     return FloatingActionButton.small(
-      heroTag: icon.hashCode,
+      heroTag: heroTag ?? icon.hashCode,
       backgroundColor: const Color(0xFFe8d5b8),
       foregroundColor: const Color(0xFF6a4a28),
       onPressed: onTap,
@@ -4887,6 +4923,52 @@ class _MapScreenState extends State<MapScreen> {
       await _sendToWahoo();
     } else if (action == 'watch') {
       await _sendToWatch();
+    }
+  }
+
+  /// EV mode button: find the nearest charging station that is reporting live
+  /// availability around the rider (GPS, or the map centre when GPS is off),
+  /// move the camera onto it, drop a marker and show distance + free-points +
+  /// price. "Nearest free" = nearest station whose dyn feed says 'available'.
+  Future<void> _showNearestFreeStation() async {
+    if (_findingStation) return;
+    final l = AppLocalizations.of(context);
+    setState(() => _findingStation = true);
+    try {
+      var pos = _currentPosition;
+      if (pos == null) {
+        await _locateUser();
+        pos = _currentPosition;
+      }
+      pos ??= _mapController.camera.center;
+      final station = await ChargingPriceService.instance
+          .nearestAvailable(pos.latitude, pos.longitude);
+      if (!mounted) return;
+      if (station == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.evNearestFreeNone)),
+        );
+        return;
+      }
+      final target = LatLng(station.lat, station.lon);
+      setState(() => _nearestFreeStation = target);
+      _mapController.move(target, 15);
+
+      final parts = <String>[
+        l.evNearestFreeDistance((station.distanceM / 1000).toStringAsFixed(1)),
+      ];
+      final avail = station.price.avail;
+      if (avail != null && avail > 0) parts.add(l.evStatusAvailableN(avail));
+      final kwh = station.price.kwh;
+      if (kwh != null) parts.add(l.evPriceAdhoc(kwh.toStringAsFixed(2)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(parts.join(' · ')),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _findingStation = false);
     }
   }
 

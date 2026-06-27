@@ -4375,6 +4375,18 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Roaming'**
   String get evRoaming;
+
+  /// No description provided for @evNearestFreeNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine freie Ladesäule im Umkreis gefunden'**
+  String get evNearestFreeNone;
+
+  /// No description provided for @evNearestFreeDistance.
+  ///
+  /// In de, this message translates to:
+  /// **'{km} km entfernt'**
+  String evNearestFreeDistance(String km);
 }
 
 class _AppLocalizationsDelegate

@@ -872,5 +872,11 @@
   "evPriceUnknown": "Price unknown",
   "@evPriceUnknown": {},
   "evRoaming": "roaming",
-  "@evRoaming": {}
+  "@evRoaming": {},
+  "evNearestFreeNone": "No free charging station found nearby",
+  "@evNearestFreeNone": {},
+  "evNearestFreeDistance": "{km} km away",
+  "@evNearestFreeDistance": {
+    "placeholders": { "km": { "type": "String" } }
+  }
 }

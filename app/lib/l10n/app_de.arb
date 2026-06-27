@@ -872,5 +872,11 @@
   "evPriceUnknown": "Preis unbekannt",
   "@evPriceUnknown": {},
   "evRoaming": "Roaming",
-  "@evRoaming": {}
+  "@evRoaming": {},
+  "evNearestFreeNone": "Keine freie Ladesäule im Umkreis gefunden",
+  "@evNearestFreeNone": {},
+  "evNearestFreeDistance": "{km} km entfernt",
+  "@evNearestFreeDistance": {
+    "placeholders": { "km": { "type": "String" } }
+  }
 }

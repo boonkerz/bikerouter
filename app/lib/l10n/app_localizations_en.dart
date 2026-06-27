@@ -2311,4 +2311,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get evRoaming => 'roaming';
+
+  @override
+  String get evNearestFreeNone => 'No free charging station found nearby';
+
+  @override
+  String evNearestFreeDistance(String km) {
+    return '$km km away';
+  }
 }
