@@ -23,6 +23,16 @@ echo "Syncing BRouter custom profiles..."
 ssh root@$SERVER "mkdir -p $REMOTE_PATH/customprofiles"
 rsync -avz --delete customprofiles/ root@$SERVER:$REMOTE_PATH/customprofiles/
 
+# Hinweis: Caddy liest die Caddyfile nicht automatisch neu. Nach Aenderungen
+# an der TLS-Konfiguration (z.B. key_type) zusaetzlich auf dem Server:
+#   cd /opt/wegwiesel
+#   docker compose -f docker-compose.prod.yml exec caddy \
+#     rm -rf /data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/wegwiesel.app
+#   docker compose -f docker-compose.prod.yml restart caddy
+# Sonst wird das alte Zertifikat bis zur naechsten Verlaengerung weiterverwendet.
+echo "Reloading Caddy config..."
+ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+
 echo "Restarting BRouter so entrypoint picks up new custom profiles..."
 ssh root@$SERVER "cd $REMOTE_PATH && docker compose -f docker-compose.prod.yml restart brouter"
 

@@ -1,4 +1,15 @@
 wegwiesel.app {
+	# RSA-Key erzwingen: Let's Encrypt stellt dann aus der YR-Hierarchie aus
+	# (Kette: Leaf <- YR1 <- Root YR <- ISRG Root X1, 3 Zertifikate). Die
+	# ECDSA-Variante (YE1 <- Root YE <- ISRG Root X2 <- X1, 4 Zertifikate)
+	# braucht ISRG Root X2 (erst ab iOS 16) bzw. die erst im Mai 2026 neu
+	# ausgestellte X2<-X1-Cross-Signatur und schlug bei App-Store-Nutzern mit
+	# CERTIFICATE_VERIFY_FAILED fehl. Nach Aenderung: gespeichertes Zertifikat
+	# loeschen + Caddy neu starten (siehe scripts/deploy-web.sh).
+	tls {
+		key_type rsa2048
+	}
+
 	# BRouter API
 	handle /brouter* {
 		reverse_proxy brouter:17777
