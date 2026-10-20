@@ -167,6 +167,12 @@ class ProfileSelector extends StatelessWidget {
         final width = (MediaQuery.of(ctx).size.width * 0.85).clamp(280.0, 360.0);
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
+            // The content (slider + hiking presets + routing-flag accordion
+            // + EV fields) easily outgrows the dialog on small phones or
+            // with large system fonts. Without `scrollable` the Column
+            // overflows and the action row paints on top of the last
+            // switches, making them untappable (App Store review).
+            scrollable: true,
             backgroundColor: const Color(0xFFf5e9d8),
             title: Text('${p.icon} ${p.localizedName(l)}',
                 style: const TextStyle(color: Colors.black87)),
