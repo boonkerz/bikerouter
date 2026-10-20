@@ -2322,4 +2322,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String evNearestFreeDistance(String km) {
     return '$km km away';
   }
+
+  @override
+  String get roundtripSettings => 'Round-trip settings';
 }

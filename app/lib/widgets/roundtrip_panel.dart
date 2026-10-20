@@ -24,6 +24,9 @@ class RoundtripPanel extends StatefulWidget {
   final ValueChanged<RoundtripRequest> onGenerate;
   final ValueChanged<RoundtripRequest> onShuffle;
   final ValueChanged<RoundtripRequest> onWindOptimize;
+  /// Collapses the panel. Shown as a small ✕ in the header row since the
+  /// top bar no longer has a dedicated toggle button for it.
+  final VoidCallback? onClose;
 
   const RoundtripPanel({
     super.key,
@@ -36,6 +39,7 @@ class RoundtripPanel extends StatefulWidget {
     required this.onGenerate,
     required this.onShuffle,
     required this.onWindOptimize,
+    this.onClose,
   });
 
   @override
@@ -92,6 +96,15 @@ class _RoundtripPanelState extends State<RoundtripPanel> {
               _toggleChip(l.roundtripDistance, !_useTime, false),
               const SizedBox(width: 8),
               _toggleChip(l.roundtripTime, _useTime, true),
+              const Spacer(),
+              if (widget.onClose != null)
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  color: Colors.black54,
+                  visualDensity: VisualDensity.compact,
+                  tooltip: l.commonClose,
+                  onPressed: widget.onClose,
+                ),
             ],
           ),
           const SizedBox(height: 8),

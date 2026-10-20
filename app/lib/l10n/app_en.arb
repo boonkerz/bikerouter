@@ -880,5 +880,6 @@
   "evNearestFreeDistance": "{km} km away",
   "@evNearestFreeDistance": {
     "placeholders": { "km": { "type": "String" } }
-  }
+  },
+  "roundtripSettings": "Round-trip settings"
 }

@@ -4393,6 +4393,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'{km} km entfernt'**
   String evNearestFreeDistance(String km);
+
+  /// No description provided for @roundtripSettings.
+  ///
+  /// In de, this message translates to:
+  /// **'Rundkurs-Einstellungen'**
+  String get roundtripSettings;
 }
 
 class _AppLocalizationsDelegate

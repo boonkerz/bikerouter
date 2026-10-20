@@ -610,8 +610,6 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                _routeSourcesMenu(context),
-                const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _showActivityPicker(context),
@@ -654,29 +652,13 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                // Routing-options button for the *current* profile —
-                // skips the picker sheet, opens the speed+flags dialog
-                // straight away. If anything routing-relevant changed,
-                // re-run the current route so the user immediately sees
-                // the effect of the new settings.
+                const SizedBox(width: 8),
+                // Everything that isn't "mode" or "profile" lives behind one
+                // button: routing options, map style, route sources and (in
+                // roundtrip mode) the roundtrip panel. The old top bar had up
+                // to seven controls and clipped on narrow phones.
                 GestureDetector(
-                  onTap: () async {
-                    NewFeaturePrefs.markSeen(NewFeature.routingOptionsDialog);
-                    final changed = await ProfileSelector.showOptionsDialog(
-                        context, _profile);
-                    if (!mounted) return;
-                    setState(() {});
-                    if (!changed) return;
-                    if (_roundtripMode) {
-                      if (_lastRoundtripRequest != null &&
-                          _waypoints.isNotEmpty) {
-                        _calculateRoundtrip(_lastRoundtripRequest!);
-                      }
-                    } else if (_waypoints.length >= 2) {
-                      _calculateRoute();
-                    }
-                  },
+                  onTap: () => _showMoreSheet(context),
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -686,7 +668,7 @@ class _MapScreenState extends State<MapScreen> {
                           color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.tune,
+                        child: const Icon(Icons.more_horiz,
                             color: Color(0xFF6a4a28), size: 20),
                       ),
                       const Positioned(
@@ -698,36 +680,6 @@ class _MapScreenState extends State<MapScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Map style button
-                GestureDetector(
-                  onTap: () => _showMapStyleSheet(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.layers, color: Color(0xFF6a4a28), size: 20),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (_roundtripMode)
-                  GestureDetector(
-                    onTap: () => setState(() => _showControls = !_showControls),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        _showControls ? Icons.close : Icons.tune,
-                        color: const Color(0xFF6a4a28),
-                        size: 20,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -758,6 +710,7 @@ class _MapScreenState extends State<MapScreen> {
                     setState(() => _rtDirection = (_rtDirection + 60) % 360);
                     _calculateRoundtrip(req);
                   },
+                  onClose: () => setState(() => _showControls = false),
                   onWindOptimize: _generateWindOptimizedRoundtrip,
                 ),
               ),
@@ -1772,76 +1725,92 @@ class _MapScreenState extends State<MapScreen> {
     return markers;
   }
 
-  /// "Where does my route come from"-menu rendered as a pill next to the
-  /// A-B / Rundtour mode chips. The popup-menu on the right side of the
-  /// screen now focuses on actions-on-the-current-route; this one groups
-  /// the route-source / discovery entries that used to clutter it
-  /// (gespeicherte Routen, entdecken, GPX-/URL-Import, FTP-Finder).
-  Widget _routeSourcesMenu(BuildContext context) {
+  /// Opens the routing-options dialog for the current profile. If anything
+  /// routing-relevant changed, re-run the current route so the user
+  /// immediately sees the effect of the new settings.
+  Future<void> _openRoutingOptions() async {
+    NewFeaturePrefs.markSeen(NewFeature.routingOptionsDialog);
+    final changed = await ProfileSelector.showOptionsDialog(context, _profile);
+    if (!mounted) return;
+    setState(() {});
+    if (!changed) return;
+    if (_roundtripMode) {
+      if (_lastRoundtripRequest != null && _waypoints.isNotEmpty) {
+        _calculateRoundtrip(_lastRoundtripRequest!);
+      }
+    } else if (_waypoints.length >= 2) {
+      _calculateRoute();
+    }
+  }
+
+  /// "More" sheet behind the top-bar ⋯ button: routing options, map style,
+  /// roundtrip panel (roundtrip mode only) and the route-source / discovery
+  /// entries (saved routes, library, GPX-/URL-import, FTP finder).
+  void _showMoreSheet(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Material(
-      color: const Color(0xFFf5e9d8).withValues(alpha: 0.95),
-      borderRadius: BorderRadius.circular(10),
-      child: PopupMenuButton<String>(
-        tooltip: l.menuRouteSourcesTooltip,
-        onSelected: _onMenuSelected,
-        color: const Color(0xFFf5e9d8),
-        offset: const Offset(0, 40),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        itemBuilder: (ctx) => [
-          PopupMenuItem(
-            value: 'load',
-            child: Row(children: [
-              const Icon(Icons.bookmarks_outlined, color: Color(0xFF6a4a28), size: 20),
-              const SizedBox(width: 12),
-              Text(l.menuSavedRoutes, style: const TextStyle(color: Colors.black87)),
-            ]),
+    const brown = Color(0xFF6a4a28);
+    const beige = Color(0xFFf5e9d8);
+
+    Widget tile(IconData icon, String label, VoidCallback onTap,
+        {Widget? trailing}) {
+      return ListTile(
+        dense: true,
+        leading: Icon(icon, color: brown, size: 22),
+        title: Text(label,
+            style: const TextStyle(color: Colors.black87, fontSize: 14)),
+        trailing: trailing,
+        onTap: () {
+          Navigator.pop(context);
+          onTap();
+        },
+      );
+    }
+
+    Widget header(String text) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
+          child: Text(
+            text.toUpperCase(),
+            style: TextStyle(
+              color: Colors.black.withValues(alpha: 0.5),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
           ),
-          PopupMenuItem(
-            value: 'library',
-            child: Row(children: [
-              const Icon(Icons.travel_explore, color: Color(0xFF6a4a28), size: 20),
-              const SizedBox(width: 12),
-              Text(l.menuLibrary, style: const TextStyle(color: Colors.black87)),
-            ]),
-          ),
-          const PopupMenuDivider(),
-          PopupMenuItem(
-            value: 'import_gpx',
-            child: Row(children: [
-              const Icon(Icons.upload_file_outlined, color: Color(0xFF6a4a28), size: 20),
-              const SizedBox(width: 12),
-              Text(l.menuImportGpx, style: const TextStyle(color: Colors.black87)),
-            ]),
-          ),
-          PopupMenuItem(
-            value: 'import_url',
-            child: Row(children: [
-              const Icon(Icons.cloud_download_outlined, color: Color(0xFF6a4a28), size: 20),
-              const SizedBox(width: 12),
-              Text(l.menuImportUrl, style: const TextStyle(color: Colors.black87)),
-            ]),
-          ),
-          const PopupMenuDivider(),
-          PopupMenuItem(
-            value: 'ftp_finder',
-            child: Row(children: [
-              const Icon(Icons.timer_outlined, color: Color(0xFF6a4a28), size: 20),
-              const SizedBox(width: 12),
-              Text(l.menuFindFtpRoute, style: const TextStyle(color: Colors.black87)),
-            ]),
-          ),
-        ],
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.alt_route, color: Color(0xFF6a4a28), size: 18),
-              SizedBox(width: 4),
-              Icon(Icons.expand_more, color: Color(0xFF6a4a28), size: 16),
-            ],
-          ),
+        );
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: beige,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(bottom: 8),
+          children: [
+            tile(Icons.tune, l.routingFlagsTitle, _openRoutingOptions,
+                trailing: const NewPill(
+                    feature: NewFeature.routingOptionsDialog)),
+            tile(Icons.layers, l.mapStyleTitle,
+                () => _showMapStyleSheet(context)),
+            if (_roundtripMode)
+              tile(Icons.loop, l.roundtripSettings,
+                  () => setState(() => _showControls = true)),
+            const Divider(height: 8, color: Colors.black12),
+            header(l.menuRouteSourcesTooltip),
+            tile(Icons.bookmarks_outlined, l.menuSavedRoutes,
+                () => _onMenuSelected('load')),
+            tile(Icons.travel_explore, l.menuLibrary,
+                () => _onMenuSelected('library')),
+            tile(Icons.upload_file_outlined, l.menuImportGpx,
+                () => _onMenuSelected('import_gpx')),
+            tile(Icons.cloud_download_outlined, l.menuImportUrl,
+                () => _onMenuSelected('import_url')),
+            tile(Icons.timer_outlined, l.menuFindFtpRoute,
+                () => _onMenuSelected('ftp_finder')),
+          ],
         ),
       ),
     );
@@ -1851,7 +1820,12 @@ class _MapScreenState extends State<MapScreen> {
     final active = _roundtripMode == isRoundtrip;
     return GestureDetector(
       onTap: () {
-        if (_roundtripMode == isRoundtrip) return;
+        if (_roundtripMode == isRoundtrip) {
+          // Re-tapping the active "Runde" chip toggles the roundtrip panel
+          // (distance / direction) — replaces the former extra tune button.
+          if (isRoundtrip) setState(() => _showControls = !_showControls);
+          return;
+        }
         _clearAll();
         setState(() {
           _roundtripMode = isRoundtrip;
