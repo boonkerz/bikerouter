@@ -91,6 +91,10 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
+  // Start camera; overridden by a share link before the first build.
+  LatLng _initialCenter = const LatLng(51.16, 10.45);
+  double _initialZoom = 6;
+  CameraFit? _initialCameraFit;
   final List<LatLng> _waypoints = [];
   RouteResult? _route;
   List<LatLng> _routePoints = [];
@@ -296,14 +300,26 @@ class _MapScreenState extends State<MapScreen> {
     for (final wp in pts) {
       _resolveWaypointName(wp);
     }
-    if (pts.isNotEmpty) {
-      final bounds = LatLngBounds.fromPoints(pts);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _mapController.fitCamera(CameraFit.bounds(
-          bounds: bounds,
-          padding: const EdgeInsets.all(60),
-        ));
-      });
+    // Hand the start camera to FlutterMap as *initial* options instead of
+    // moving the controller in a post-frame callback. Two reasons:
+    //  * A single waypoint (every round-trip link) yields a zero-size
+    //    bounds; fitting to it drives the zoom to infinity and the map never
+    //    recovers (web froze completely, main thread wedged).
+    //  * flutter_map emits its first non-rotated-size event in a post-frame
+    //    callback that runs *after* ours, carrying the stale initial camera.
+    //    A move done before that event gets its freshly requested tiles
+    //    pruned, and the re-requested ones share the already-aborted
+    //    downloads, so the map stays grey until the user pans.
+    // `_tryLoadSharedRoute` runs in initState, before the first build, so
+    // these land in the MapOptions of the very first frame.
+    if (pts.length == 1) {
+      _initialCenter = pts.first;
+      _initialZoom = 14;
+    } else if (pts.isNotEmpty) {
+      _initialCameraFit = CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints(pts),
+        padding: const EdgeInsets.all(60),
+      );
     }
     if (_roundtripMode && pts.isNotEmpty) {
       _calculateRoundtrip(RoundtripRequest(
@@ -350,8 +366,9 @@ class _MapScreenState extends State<MapScreen> {
                   child: FlutterMap(
                   mapController: _mapController,
                   options: MapOptions(
-                    initialCenter: const LatLng(51.16, 10.45),
-                    initialZoom: 6,
+                    initialCenter: _initialCenter,
+                    initialZoom: _initialZoom,
+                    initialCameraFit: _initialCameraFit,
                     onTap: (tapPos, latLng) => _onMapTap(latLng),
                     onLongPress: (tapPos, latLng) => _onMapLongPress(latLng),
                     onPointerHover: (event, latLng) => _onMapHover(latLng),
