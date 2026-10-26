@@ -256,6 +256,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileRandonneur => 'Randonneur';
 
   @override
+  String get profileGravelStrict => 'Gravel “strict” (avoid paved roads)';
+
+  @override
   String get profileGravelM11n => 'Gravel “m11n” (more off-road)';
 
   @override

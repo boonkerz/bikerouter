@@ -584,6 +584,12 @@ abstract class AppLocalizations {
   /// **'Randonneur'**
   String get profileRandonneur;
 
+  /// No description provided for @profileGravelStrict.
+  ///
+  /// In de, this message translates to:
+  /// **'Gravel „strikt“ (Asphalt meiden)'**
+  String get profileGravelStrict;
+
   /// No description provided for @profileGravelM11n.
   ///
   /// In de, this message translates to:

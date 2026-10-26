@@ -87,6 +87,20 @@ const Map<String, Set<RoutingFlag>> _profileCapabilities = {
   // m11n and cxb were minimal upstream (only consider_elevation +
   // avoid_path). Wegwiesel-side patches add the full fastbike-style
   // knob set so all bike profiles surface the same options.
+  // gravel-strict is m11n-gravel with a much harsher surfacepenalty block,
+  // so it exposes the identical knob set.
+  'gravel-strict': {
+    RoutingFlag.considerElevation,
+    RoutingFlag.avoidSteepInclines,
+    RoutingFlag.avoidPath,
+    RoutingFlag.considerTraffic,
+    RoutingFlag.preferQuiet,
+    RoutingFlag.preferForest,
+    RoutingFlag.preferRiver,
+    RoutingFlag.avoidTowns,
+    RoutingFlag.avoidSteps,
+    RoutingFlag.avoidFerries,
+  },
   'm11n-gravel': {
     RoutingFlag.considerElevation,
     RoutingFlag.avoidSteepInclines,

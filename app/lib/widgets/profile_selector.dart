@@ -385,6 +385,7 @@ class _RoutingFlagsSectionState extends State<_RoutingFlagsSection> {
     'wegwiesel-ebike': [RoutingFlag.avoidMainRoads, RoutingFlag.preferCycleRoutes, RoutingFlag.avoidSteepInclines],
     'hiking-beta': [RoutingFlag.avoidNaturalPaths, RoutingFlag.avoidFarmTracks],
     'quaelnix-gravel': [RoutingFlag.avoidSteepInclines, RoutingFlag.preferCycleRoutes, RoutingFlag.considerElevation],
+    'gravel-strict': [RoutingFlag.avoidPath, RoutingFlag.avoidSteepInclines, RoutingFlag.considerElevation],
     'm11n-gravel': [RoutingFlag.avoidPath, RoutingFlag.avoidSteepInclines, RoutingFlag.considerElevation],
     'cxb-gravel': [RoutingFlag.avoidPath, RoutingFlag.avoidSteepInclines, RoutingFlag.considerElevation],
   };

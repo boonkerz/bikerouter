@@ -25,6 +25,8 @@ class BikeProfile {
         return l.profileFastbikeVeryLowTraffic;
       case 'randonneur':
         return l.profileRandonneur;
+      case 'gravel-strict':
+        return l.profileGravelStrict;
       case 'm11n-gravel':
         return l.profileGravelM11n;
       case 'quaelnix-gravel':
@@ -90,6 +92,7 @@ const profiles = [
   BikeProfile(id: 'fastbike-verylowtraffic', category: ProfileCategory.road, icon: '🏎️', avgSpeedKmh: 26),
   BikeProfile(id: 'randonneur', category: ProfileCategory.road, icon: '🏎️', avgSpeedKmh: 25),
   // Gravel
+  BikeProfile(id: 'gravel-strict', category: ProfileCategory.gravel, icon: '🪨', avgSpeedKmh: 20),
   BikeProfile(id: 'm11n-gravel', category: ProfileCategory.gravel, icon: '🪨', avgSpeedKmh: 22),
   BikeProfile(id: 'quaelnix-gravel', category: ProfileCategory.gravel, icon: '🪨', avgSpeedKmh: 22),
   BikeProfile(id: 'cxb-gravel', category: ProfileCategory.gravel, icon: '🪨', avgSpeedKmh: 22),
