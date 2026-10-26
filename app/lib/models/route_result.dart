@@ -105,6 +105,7 @@ class RouteResult {
     final rawCoords = (geometry['coordinates'] as List)
         .map((c) => (c as List).map((v) => (v as num).toDouble()).toList())
         .toList();
+    _fillMissingElevation(rawCoords);
 
     double distance = 0;
     if (props.containsKey('track-length')) {
@@ -156,6 +157,36 @@ class RouteResult {
       segments: segments,
       turnHints: hints,
     );
+  }
+
+  /// BRouter omits the elevation for nodes it has no height data for
+  /// (tunnels, indoor steps, …: elevation -8192 in `messages`), so a
+  /// coordinate may arrive as `[lon, lat]` instead of `[lon, lat, ele]`.
+  /// Everything downstream (ascent/descent, elevation profile, GPX export)
+  /// indexes `[2]` unconditionally and blew up with a RangeError, which
+  /// surfaced to users as "Rundtour fehlgeschlagen" on routes through
+  /// e.g. the Munich S-Bahn tunnel. Normalise to 3 entries by carrying the
+  /// nearest known elevation along; routes without any elevation get 0.
+  static void _fillMissingElevation(List<List<double>> coords) {
+    double? last;
+    for (final c in coords) {
+      if (c.length >= 3) {
+        last = c[2];
+      } else if (last != null) {
+        c.add(last);
+      }
+    }
+    // Leading gap: backfill from the first known elevation.
+    for (final c in coords) {
+      if (c.length >= 3) {
+        last = c[2];
+        break;
+      }
+    }
+    for (final c in coords) {
+      if (c.length >= 3) break;
+      c.add(last ?? 0);
+    }
   }
 
   /// Parses BRouter `messages` into segments. Each row is one OSM way
