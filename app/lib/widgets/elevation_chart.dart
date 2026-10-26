@@ -323,7 +323,92 @@ class _ElevationChartState extends State<ElevationChart> {
               },
             ),
           ),
+          // Share of the route per colour class, so the user sees at a
+          // glance how much of it is asphalt vs. track etc. instead of
+          // having to eyeball the coloured line.
+          if (_mode == ProfileMode.surface ||
+              _mode == ProfileMode.highway ||
+              _mode == ProfileMode.smoothness)
+            _ShareLegend(entries: _shareEntries(l)),
         ],
+      ),
+    );
+  }
+
+  /// Length share per category of the current [_mode], largest first.
+  /// Categories below half a percent are dropped so the row stays short.
+  List<_ShareEntry> _shareEntries(AppLocalizations l) {
+    final byKey = <Object, double>{};
+    var total = 0.0;
+    for (final seg in widget.segments) {
+      final len = seg.lengthKm;
+      if (len <= 0) continue;
+      final key = switch (_mode) {
+        ProfileMode.surface => seg.category,
+        ProfileMode.highway => seg.highwayCategory,
+        _ => seg.smoothnessCategory,
+      };
+      byKey[key] = (byKey[key] ?? 0) + len;
+      total += len;
+    }
+    if (total <= 0) return const [];
+    final out = <_ShareEntry>[];
+    for (final e in byKey.entries) {
+      final share = e.value / total;
+      if (share < 0.005) continue;
+      final (color, label) = switch (e.key) {
+        SurfaceCategory c => (c.color, c.localizedLabel(l)),
+        HighwayCategory c => (c.color, c.localizedLabel(l)),
+        SmoothnessCategory c => (c.color, c.localizedLabel(l)),
+        _ => (Colors.grey, '?'),
+      };
+      out.add(_ShareEntry(color: color, label: label, share: share));
+    }
+    out.sort((a, b) => b.share.compareTo(a.share));
+    return out;
+  }
+}
+
+class _ShareEntry {
+  final Color color;
+  final String label;
+  final double share;
+  const _ShareEntry({required this.color, required this.label, required this.share});
+}
+
+/// One scrollable line of "● Schotter 41 %" chips under the chart.
+class _ShareLegend extends StatelessWidget {
+  final List<_ShareEntry> entries;
+  const _ShareLegend({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 26,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: entries.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        itemBuilder: (_, i) {
+          final e = entries[i];
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(color: e.color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                '${e.label} ${(e.share * 100).round()} %',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF4e342e)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
