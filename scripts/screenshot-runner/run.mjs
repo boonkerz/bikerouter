@@ -48,46 +48,79 @@ const shots = [
   },
 ];
 
-const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport });
+// A shot whose renderer wedges (observed with the roundtrip URL: the page
+// stops answering CDP and even page.close() never returns, so Playwright's
+// own timeouts don't fire) must not stall the whole run. Each shot races a
+// hard deadline; on a miss the browser is killed and relaunched for the next
+// shot. SHOT_SKIP=04,05 skips shots by their numeric prefix.
+const skip = (process.env.SHOT_SKIP || '').split(',').filter(Boolean);
+let browser = null;
+let ctx = null;
+async function launch() {
+  browser = await chromium.launch({ headless: true });
+  ctx = await browser.newContext({ viewport });
+}
+async function shutdown() {
+  const b = browser;
+  browser = null; ctx = null;
+  if (!b) return;
+  await Promise.race([
+    b.close().catch(() => {}),
+    new Promise((r) => setTimeout(r, 5000)),
+  ]);
+  // Playwright's close() can hang on a dead renderer; make sure the
+  // process is gone either way.
+  try { b.process()?.kill('SIGKILL'); } catch {}
+}
 
-// Each shot runs on a fresh page so a hung/detached page can't cascade into
-// the following shots — important for unattended CI runs.
-let saved = 0;
-for (const s of shots) {
-  console.log(`→ ${s.file} (${s.desc})`);
+async function takeShot(s) {
   const page = await ctx.newPage();
   page.setDefaultTimeout(120000);
   try {
-    try {
-      await page.goto(s.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    } catch (e) {
-      console.log(`  goto warn: ${e.message.split('\n')[0]}`);
-    }
-    await page.waitForTimeout(s.wait);
-    try {
-      await page.screenshot({ path: `${out}/${s.file}`, fullPage: false, timeout: 60000 });
-      console.log(`  saved ${s.file}`);
-      saved++;
-    } catch (e) {
-      // A busy renderer (e.g. roundtrip still calculating) can make the first
-      // screenshot time out; give it one more breather and retry once.
-      console.log(`  screenshot retry after: ${e.message.split('\n')[0]}`);
-      await page.waitForTimeout(8000);
-      try {
-        await page.screenshot({ path: `${out}/${s.file}`, fullPage: false, timeout: 60000 });
-        console.log(`  saved ${s.file} (retry)`);
-        saved++;
-      } catch (e2) {
-        console.log(`  screenshot failed: ${e2.message.split('\n')[0]}`);
-      }
-    }
-  } finally {
-    await page.close().catch(() => {});
+    await page.goto(s.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  } catch (e) {
+    console.log(`  goto warn: ${e.message.split('\n')[0]}`);
+  }
+  await page.waitForTimeout(s.wait);
+  try {
+    await page.screenshot({ path: `${out}/${s.file}`, fullPage: false, timeout: 60000 });
+    console.log(`  saved ${s.file}`);
+  } catch (e) {
+    // A busy renderer (e.g. roundtrip still calculating) can make the first
+    // screenshot time out; give it one more breather and retry once.
+    console.log(`  screenshot retry after: ${e.message.split('\n')[0]}`);
+    await page.waitForTimeout(8000);
+    await page.screenshot({ path: `${out}/${s.file}`, fullPage: false, timeout: 60000 });
+    console.log(`  saved ${s.file} (retry)`);
+  }
+  await page.close().catch(() => {});
+}
+
+await launch();
+let saved = 0;
+for (const s of shots) {
+  if (skip.some((k) => s.file.startsWith(k))) {
+    console.log(`→ ${s.file} skipped (SHOT_SKIP)`);
+    continue;
+  }
+  console.log(`→ ${s.file} (${s.desc})`);
+  if (!browser) await launch();
+  const deadline = s.wait + 150000;
+  let timer;
+  const result = await Promise.race([
+    takeShot(s).then(() => 'ok', (e) => `failed: ${e.message.split('\n')[0]}`),
+    new Promise((r) => { timer = setTimeout(() => r('hung'), deadline); }),
+  ]);
+  clearTimeout(timer);
+  if (result === 'ok') {
+    saved++;
+  } else {
+    console.log(`  screenshot ${result === 'hung' ? `hung for ${deadline / 1000}s` : result} — restarting browser`);
+    await shutdown();
   }
 }
 
-await browser.close();
+await shutdown();
 console.log(`done — ${saved}/${shots.length} screenshots saved to ${out}`);
 // Non-zero exit if nothing was produced, so CI surfaces a total failure.
 if (saved === 0) process.exit(1);
